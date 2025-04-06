@@ -3,6 +3,7 @@ import { BadRequestError } from '../../models/api/responses/errors.js';
 import { QueryParamDataType, type ExpectedQueryParam } from '../../models/api/validations.js';
 import Ajv from 'ajv/dist/2020.js';
 import type { ErrorObject } from 'ajv';
+import { hashObject } from './object.js';
 
 // Path params
 export function validateAndParsePathParams<T>(request: APIGatewayProxyEventV2, requiredPathParams: string[] = []): T {
@@ -32,25 +33,35 @@ const ajv = new Ajv.default({
   },
 });
 
+const ajvValidatorStore: Record<string, Ajv.ValidateFunction> = {};
+
 /**
  * Validates and parses the request body against a JSON schema.
  */
-export function validateAndParseBody<T>(request: APIGatewayProxyEventV2, schema: object): T {
+export function validateAndParseBody<T>(request: APIGatewayProxyEventV2, schema: Record<string, unknown>): T {
   if (!request.body) {
-    throw new BadRequestError('Event body not found');
+    throw new BadRequestError('Request body not found');
+  }
+
+  // Generate a unique identifier for the schema
+  const schemaId = hashObject(schema);
+
+  // Compile the schema if it hasn't been compiled yet
+  if (!ajvValidatorStore[schemaId]) {
+    ajvValidatorStore[schemaId] = ajv.compile(schema);
   }
 
   // Parse the event and body
-  const parsedEvent = typeof request === 'object' ? request : JSON.parse(request);
-  const parsedBody = typeof parsedEvent.body === 'string' ? JSON.parse(parsedEvent.body) : parsedEvent.body;
+  const parsedRequest = typeof request === 'object' ? request : JSON.parse(request);
+  const parsedRequestBody = typeof parsedRequest.body === 'string' ? JSON.parse(parsedRequest.body) : parsedRequest.body;
 
   // Compile the schema and validate the body
-  const validate = ajv.compile(schema);
-  const isValid = validate(parsedBody);
+  const ajvValidator: Ajv.ValidateFunction = ajvValidatorStore[schemaId];
+  const isValid = ajvValidator(parsedRequestBody);
 
   // If validation fails, throw an error with detailed messages
   if (!isValid) {
-    const missingFields = validate.errors
+    const missingFields = ajvValidator.errors
       ?.filter((err: ErrorObject) => err.keyword === 'required')
       .map((err: ErrorObject) => err.params.missingProperty)
       .join(', ');
@@ -60,7 +71,7 @@ export function validateAndParseBody<T>(request: APIGatewayProxyEventV2, schema:
     }
 
     const errors =
-      validate.errors
+      ajvValidator.errors
         ?.map((err: ErrorObject) => {
           return `${err.instancePath || 'body'} ${err.message || 'is invalid'}`;
         })
@@ -69,7 +80,7 @@ export function validateAndParseBody<T>(request: APIGatewayProxyEventV2, schema:
     throw new BadRequestError(`Validation failed: ${errors}`);
   }
 
-  return parsedBody as T;
+  return parsedRequestBody as T;
 }
 
 // Query params
