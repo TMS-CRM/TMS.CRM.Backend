@@ -38,6 +38,8 @@ export default tsEsLint.config(
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
       '@typescript-eslint/explicit-function-return-type': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
       'import/extensions': [
         'error',
         'ignorePackages',
@@ -69,7 +71,6 @@ export default tsEsLint.config(
           allowSeparatedGroups: false,
         },
       ],
-      '@typescript-eslint/no-unused-vars': 'warn',
     },
     settings: {
       'import/extensions': ['.js', '.mjs', '.jsx', '.ts', '.tsx'],
@@ -97,6 +98,12 @@ export default tsEsLint.config(
     },
     rules: {
       ...vitestPlugin.configs.recommended.rules,
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/unbound-method': 'off',
     },
     settings: {
