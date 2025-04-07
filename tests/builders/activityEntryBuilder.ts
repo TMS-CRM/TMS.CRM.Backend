@@ -1,14 +1,14 @@
 import { randomUUID } from 'crypto';
-import type { ActivityEntry } from '../../models/database/activityEntry.js';
+import type { IActivityEntry } from '../../models/database/activityEntry.js';
 
 export class ActivityEntryBuilder {
-  private activityEntry: ActivityEntry;
+  private activityEntry: Partial<IActivityEntry>;
 
   private constructor() {
     this.activityEntry = {
       ExternalUuid: randomUUID(),
-      CreatedOn: new Date(Date.now() - 86400000), // 24 hrs
-    } as any as ActivityEntry;
+      CreatedOn: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
+    };
   }
 
   withTenantId(value: number): this {
@@ -36,7 +36,7 @@ export class ActivityEntryBuilder {
     return this;
   }
 
-  build(): ActivityEntry {
+  build(): Partial<IActivityEntry> {
     return this.activityEntry;
   }
 

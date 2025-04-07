@@ -1,7 +1,7 @@
-import type { PostActivityRequestPayload, PublicActivity, PutActivityRequestPayload } from '../api/payloads/activity.js';
 import type { DealEntry } from './dealEntry.js';
+import type { PostActivityRequestPayload, PublicActivity, PutActivityRequestPayload } from '../api/payloads/activity.js';
 
-export interface ActivityEntry {
+export interface IActivityEntry {
   Id: number;
   ExternalUuid: string;
   TenantId: number;
@@ -14,13 +14,19 @@ export interface ActivityEntry {
   DeletedOn: string | null;
 }
 
-/** Extended ActivityEntry with Deal information */
-export interface ExtendedActivityEntry extends ActivityEntry {
-  Deal: Pick<DealEntry, 'ExternalUuid'>;
-}
+export class ActivityEntry implements IActivityEntry {
+  public Id: number;
+  public ExternalUuid: string;
+  public TenantId: number;
+  public DealId: number;
+  public Description: string;
+  public Date: string;
+  public ImageUrl: string;
+  public CreatedOn: string;
+  public ModifiedOn: string | null;
+  public DeletedOn: string | null;
 
-export class ActivityEntry implements ActivityEntry {
-  public constructor(data: ActivityEntry) {
+  public constructor(data: IActivityEntry) {
     this.Id = data.Id;
     this.ExternalUuid = data.ExternalUuid;
     this.TenantId = data.TenantId;
@@ -54,19 +60,36 @@ export class ActivityEntry implements ActivityEntry {
   }
 }
 
-export class ExtendedActivityEntry implements ExtendedActivityEntry {
-  public constructor(data: Record<string, any>) {
-    this.Id = data.Id;
-    this.ExternalUuid = data.ExternalUuid;
-    this.TenantId = data.TenantId;
-    this.DealId = data.DealId;
-    this.Deal = { ExternalUuid: data.DealExternalUuid };
-    this.Description = data.Description;
-    this.Date = data.Date;
-    this.ImageUrl = data.ImageUrl;
-    this.CreatedOn = data.CreatedOn;
-    this.ModifiedOn = data.ModifiedOn;
-    this.DeletedOn = data.DeletedOn;
+/** Extended ActivityEntry with Deal information */
+export interface IExtendedActivityEntry extends IActivityEntry {
+  Deal: Pick<DealEntry, 'ExternalUuid'>;
+}
+
+export class ExtendedActivityEntry implements IExtendedActivityEntry {
+  public Id: number;
+  public ExternalUuid: string;
+  public TenantId: number;
+  public DealId: number;
+  public Deal: Pick<DealEntry, 'ExternalUuid'>;
+  public Description: string;
+  public Date: string;
+  public ImageUrl: string;
+  public CreatedOn: string;
+  public ModifiedOn: string | null;
+  public DeletedOn: string | null;
+
+  public constructor(data: Record<string, unknown>) {
+    this.Id = data.Id as number;
+    this.ExternalUuid = data.ExternalUuid as string;
+    this.TenantId = data.TenantId as number;
+    this.DealId = data.DealId as number;
+    this.Deal = { ExternalUuid: data.DealExternalUuid as string };
+    this.Description = data.Description as string;
+    this.Date = data.Date as string;
+    this.ImageUrl = data.ImageUrl as string;
+    this.CreatedOn = data.CreatedOn as string;
+    this.ModifiedOn = data.ModifiedOn as string | null;
+    this.DeletedOn = data.DeletedOn as string | null;
   }
 
   /** Convert the ExtendedActivityEntry to a PublicActivity */

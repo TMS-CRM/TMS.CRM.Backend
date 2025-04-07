@@ -1,14 +1,14 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { validateAndParseBody, validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
+import type { PutCustomerRequestPayload, PutCustomerResponsePayload } from '../../../models/api/payloads/customer.js';
+import { putCustomerRequestSchema } from '../../../models/api/payloads/customer.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
-import { PersistSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
-import { validateAndParseBody, validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { CustomerEntry } from '../../../models/database/customerEntry.js';
-import type { PutCustomerRequestPayload, PutCustomerResponsePayload } from '../../../models/api/payloads/customer.js';
 import { selectCustomerByExternalUuid, selectCustomerById, updateCustomer } from '../../../repositories/customerRepository.js';
-import { putCustomerRequestSchema } from '../../../models/api/payloads/customer.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   logger.info('Request received: ', request);
@@ -17,9 +17,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(persistRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PutCustomerRequestPayload>> {
   logger.info('Start - validateRequest');
 

@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-lint-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com/
+          cache: 'npm'
+
+      - name: Install required dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Check code formatting
+        run: npm run lint
+
+      - name: Check CDK can synthesize successfully
+        run: npm run cdk:synth
+
+      - name: Check for any critical vulnerabilities
+        run: |
+          npm audit --json > npm_audit.json || true
+
+          CRITICAL_VULNERABILITIES=$(node -p "require('./npm_audit.json').metadata.vulnerabilities.critical")
+
+          if [ "$CRITICAL_VULNERABILITIES" -gt 0 ]; then
+            echo "Critical vulnerabilities found. Failing the workflow."
+            exit 1
+          else
+            echo "No critical vulnerabilities found."
+          fi
+
+      - name: Startup localstack
+        working-directory: tests
+        run: |
+          docker compose up -d
+          echo "Waiting for localstack to start..."
+          sleep 10
+          docker ps
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Shut down localstack
+        working-directory: tests
+        run: docker compose down -v

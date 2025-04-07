@@ -1,12 +1,12 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { handler } from '../../../../lambdas/api/customer/getCustomers.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
-import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
+import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { handler } from '../../../../lambdas/api/customer/getCustomers.js';
+import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Customers - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
@@ -22,7 +22,7 @@ describe('API - Customers - GET', () => {
     tenantsGlobal.push(...tenant);
 
     // Insert 9 customers
-    const firstCustomers = await knexClient(customerTableName)
+    await knexClient(customerTableName)
       .insert([
         CustomerEntryBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)

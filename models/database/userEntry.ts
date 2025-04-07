@@ -1,6 +1,6 @@
 import type { PostUserRequestPayload, PublicUser, PutUserRequestPayload } from '../api/payloads/user.js';
 
-export interface UserEntry {
+export interface IUserEntry {
   Id: number;
   ExternalUuid: string;
   FirstName: string;
@@ -11,8 +11,17 @@ export interface UserEntry {
   DeletedOn: string | null;
 }
 
-export class UserEntry implements UserEntry {
-  public constructor(data: UserEntry) {
+export class UserEntry implements IUserEntry {
+  public Id: number;
+  public ExternalUuid: string;
+  public FirstName: string;
+  public LastName: string;
+  public Email: string;
+  public CreatedOn: string;
+  public ModifiedOn: string | null;
+  public DeletedOn: string | null;
+
+  public constructor(data: IUserEntry) {
     this.Id = data.Id;
     this.ExternalUuid = data.ExternalUuid;
     this.FirstName = data.FirstName;

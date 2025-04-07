@@ -1,13 +1,13 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { logger } from '../../../lib/utils/logger.js';
-import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
+import { logger } from '../../../lib/utils/logger.js';
+import type { GetActivityResponsePayload } from '../../../models/api/payloads/activity.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
-import { selectActivityByExternalUuid } from '../../../repositories/activityRepository.js';
 import type { ExtendedActivityEntry } from '../../../models/database/activityEntry.js';
-import type { GetActivityResponsePayload } from '../../../models/api/payloads/activity.js';
+import { selectActivityByExternalUuid } from '../../../repositories/activityRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -16,9 +16,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(queryRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<null>> {
   logger.info('Start - validateRequest');
 
@@ -45,7 +46,7 @@ export async function queryRecords(validatedRequest: ValidatedAPIRequest<null>):
   return activity;
 }
 
-export async function formatResponseData(activity: ExtendedActivityEntry): Promise<FetchSuccess<GetActivityResponsePayload>> {
+export function formatResponseData(activity: ExtendedActivityEntry): FetchSuccess<GetActivityResponsePayload> {
   logger.info('Start - formatResponse');
 
   return new FetchSuccess<GetActivityResponsePayload>('Successfully fetched activity', activity.toPublic());

@@ -1,13 +1,13 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { logger } from '../../../lib/utils/logger.js';
-import { PersistSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParseBody, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
-import { QueryParamDataType, type ValidatedAPIRequest } from '../../../models/api/validations.js';
+import { logger } from '../../../lib/utils/logger.js';
 import type { PostCustomerRequestPayload, PostCustomerResponsePayload } from '../../../models/api/payloads/customer.js';
+import { postCustomerRequestSchema } from '../../../models/api/payloads/customer.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
+import { QueryParamDataType, type ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { CustomerEntry } from '../../../models/database/customerEntry.js';
 import { insertCustomer, selectCustomerById } from '../../../repositories/customerRepository.js';
-import { postCustomerRequestSchema } from '../../../models/api/payloads/customer.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -16,9 +16,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(persistRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PostCustomerRequestPayload>> {
   logger.info('Start - validateRequest');
 

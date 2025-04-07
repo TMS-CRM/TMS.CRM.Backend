@@ -1,32 +1,72 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
-import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
-import { DealProgress, RoomAccess, type DealEntry } from '../../../../models/database/dealEntry.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
-import { dealTableName } from '../../../../repositories/dealRepository.js';
-import { activityTableName } from '../../../../repositories/activityRepository.js';
-import { ActivityEntryBuilder } from '../../../builders/activityEntryBuilder.js';
 import { handler } from '../../../../lambdas/api/activity/getActivities.js';
+import { knexClient } from '../../../../lib/utils/knexClient.js';
+import type { ICustomerEntry } from '../../../../models/database/customerEntry.js';
+import { DealProgress, type IDealEntry, RoomAccess } from '../../../../models/database/dealEntry.js';
+import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import { activityTableName } from '../../../../repositories/activityRepository.js';
+import { customerTableName } from '../../../../repositories/customerRepository.js';
+import { dealTableName } from '../../../../repositories/dealRepository.js';
+import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { ActivityEntryBuilder } from '../../../builders/activityEntryBuilder.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
+import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Activities - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const dealsGlobal: DealEntry[] = [];
+  const dealsGlobal: IDealEntry[] = [];
+  const customersGlobal: ICustomerEntry[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName)
-      .insert([TenantEntryBuilder.make().withName('Tenant 1').build(), TenantEntryBuilder.make().withName('Tenant 2').build()])
+    const tenants = await knexClient(tenantTableName)
+      .insert([
+        TenantEntryBuilder.make().withName('Tenant 1').build(),
+        TenantEntryBuilder.make().withName('Tenant 2').build(),
+        TenantEntryBuilder.make().withName('Tenant 3').build(),
+      ])
       .returning('*');
-    tenantsGlobal.push(...tenant);
+    tenantsGlobal.push(...tenants);
 
-    // Insert a deal
-    const deal = await knexClient(dealTableName)
+    // Insert customers
+    const customer = await knexClient(customerTableName)
+      .insert([
+        CustomerEntryBuilder.make()
+          .withTenantId(tenantsGlobal[0].Id)
+          .withFirstName('John')
+          .withLastName('Doe')
+          .withEmail('john.doe@example.com')
+          .withPhone('642103273577')
+          .withStreet('101 Elm Street')
+          .withCity('Wellington')
+          .withState('Wellington Region')
+          .withZipCode('6011')
+          .withCustomerImageUrl('http/5678')
+          .build(),
+
+        CustomerEntryBuilder.make()
+          .withTenantId(tenantsGlobal[0].Id)
+          .withFirstName('Jane')
+          .withLastName('Smith')
+          .withEmail('jane.smith@example.com')
+          .withPhone('642103273578')
+          .withStreet('202 Oak Avenue')
+          .withCity('Auckland')
+          .withState('Auckland Region')
+          .withZipCode('1010')
+          .withCustomerImageUrl('http/6789')
+          .build(),
+      ])
+      .returning('*');
+    customersGlobal.push(...customer);
+
+    // Insert deals
+    const deals = await knexClient(dealTableName)
       .insert([
         DealEntryBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(1)
+          .withCustomerId(customersGlobal[0].Id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')
@@ -43,7 +83,7 @@ describe('API - Activities - GET', () => {
 
         DealEntryBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(2)
+          .withCustomerId(customersGlobal[1].Id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')
@@ -60,7 +100,7 @@ describe('API - Activities - GET', () => {
 
         DealEntryBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(2)
+          .withCustomerId(customersGlobal[1].Id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')
@@ -77,9 +117,9 @@ describe('API - Activities - GET', () => {
       ])
       .returning('*');
 
-    dealsGlobal.push(...deal);
+    dealsGlobal.push(...deals);
 
-    // Insert 9 activities
+    // Insert 9 activities for the first tenant
     await knexClient(activityTableName)
       .insert([
         ActivityEntryBuilder.make()
@@ -156,10 +196,11 @@ describe('API - Activities - GET', () => {
       ])
       .returning('*');
 
+    // Insert 1 activity for the second tenant
     await knexClient(activityTableName)
       .insert([
         ActivityEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[1].Id)
           .withDealId(dealsGlobal[1].Id)
           .withDescription('Develop completed successfully')
           .withDate(new Date().toISOString())
@@ -189,7 +230,7 @@ describe('API - Activities - GET', () => {
     expect(parsedBody.type).toBe('FetchSuccess');
     expect(parsedBody.data.items).toBeDefined();
     expect(parsedBody.data.items.length).toBe(5);
-    expect(parsedBody.data.total).toBe(10);
+    expect(parsedBody.data.total).toBe(9);
   });
 
   it('Success - Should get activities with pagination using offset', async () => {
@@ -211,8 +252,8 @@ describe('API - Activities - GET', () => {
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('FetchSuccess');
     expect(parsedBody.data.items).toBeDefined();
-    expect(parsedBody.data.items.length).toBe(5);
-    expect(parsedBody.data.total).toBe(10);
+    expect(parsedBody.data.items.length).toBe(4);
+    expect(parsedBody.data.total).toBe(9);
   });
 
   it('Success - Should return 0 activities if the tenant has no activities', async () => {
@@ -220,7 +261,7 @@ describe('API - Activities - GET', () => {
       .withQueryStringParameters({
         limit: '5',
         offset: '0',
-        tenantId: tenantsGlobal[1].Id.toString(), // TODO: Remove once the tenant is pulled from the token
+        tenantId: tenantsGlobal[2].Id.toString(), // TODO: Remove once the tenant is pulled from the token
       })
       .build();
 

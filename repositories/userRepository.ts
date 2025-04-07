@@ -1,31 +1,34 @@
+import { userTenantTableName } from './userTenantRepository.js';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
-import { UserEntry } from '../models/database/userEntry.js';
-import { userTenantTableName } from './userTenantRepository.js';
+import { type IUserEntry, UserEntry } from '../models/database/userEntry.js';
+
 export const userTableName = 'User';
 
 /** Insert the User */
-export async function insertUser(user: Partial<UserEntry>): Promise<number> {
+export async function insertUser(user: Partial<IUserEntry>): Promise<number> {
   const query = knexClient(userTableName).insert(user).returning('Id');
-  const record = await query;
+  const records = (await query) as IUserEntry[];
 
-  logger.info(`Successfully inserted User. Id: ${record[0].Id}`);
-  return record[0].Id;
+  logger.info(`Successfully inserted User. Id: ${records[0].Id}`);
+  return records[0].Id;
 }
 
 /** Get the User by Id */
 export async function selectUserById(id: number): Promise<UserEntry | null> {
-  const [user] = await knexClient(userTableName).select('*').where('Id', id);
+  const query = knexClient(userTableName).select('*').where('Id', id);
+  const records = (await query) as IUserEntry[];
 
-  return user ? new UserEntry(user) : null;
+  return records.length > 0 ? new UserEntry(records[0]) : null;
 }
 
 /** Get the User by ExternalUuid */
 export async function selectUserByExternalUuid(externalUuid: string): Promise<UserEntry | null> {
-  const [user] = await knexClient(userTableName).select('*').where('ExternalUuid', externalUuid).whereNull(`${userTableName}.DeletedOn`);
+  const query = knexClient(userTableName).select('*').where('ExternalUuid', externalUuid).whereNull(`${userTableName}.DeletedOn`);
+  const records = (await query) as IUserEntry[];
 
-  return user ? new UserEntry(user) : null;
+  return records.length > 0 ? new UserEntry(records[0]) : null;
 }
 
 export async function selectUsers(limit: number, offset: number, tenantId: number | null): Promise<PaginatedResponse<UserEntry>> {
@@ -40,7 +43,7 @@ export async function selectUsers(limit: number, offset: number, tenantId: numbe
   }
 
   // Get the users
-  const users = await baseQuery.clone().limit(limit).offset(offset).select('*');
+  const users = (await baseQuery.clone().limit(limit).offset(offset).select('*')) as IUserEntry[];
 
   // Get the total number of users
   const total = (await baseQuery.clone().count('*'))[0]['count'];
@@ -52,14 +55,15 @@ export async function selectUsers(limit: number, offset: number, tenantId: numbe
 }
 
 /** Update the User */
-export async function updateUser(userId: number, user: Partial<UserEntry>): Promise<void> {
+export async function updateUser(userId: number, user: Partial<IUserEntry>): Promise<void> {
   await knexClient(userTableName).update(user).where('Id', userId);
 
   logger.info(`Successfully updated User. Id: ${userId}`);
 }
 
 export async function softDeleteUserById(userId: number): Promise<void> {
-  const [record] = await knexClient(userTableName).update({ DeletedOn: new Date().toISOString() }).where('Id', userId).returning('Id');
+  const query = knexClient(userTableName).update({ DeletedOn: new Date().toISOString() }).where('Id', userId).returning('Id');
+  const record = (await query) as IUserEntry[];
 
-  logger.info(`Successfully soft deleted User. Id: ${record.Id}`);
+  logger.info(`Successfully soft deleted User. Id: ${record[0].Id}`);
 }

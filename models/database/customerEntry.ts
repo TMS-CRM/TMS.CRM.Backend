@@ -1,6 +1,6 @@
 import type { PostCustomerRequestPayload, PublicCustomer, PutCustomerRequestPayload } from '../api/payloads/customer.js';
 
-export interface CustomerEntry {
+export interface ICustomerEntry {
   Id: number;
   ExternalUuid: string;
   TenantId: number;
@@ -18,8 +18,24 @@ export interface CustomerEntry {
   DeletedOn: string | null;
 }
 
-export class CustomerEntry implements CustomerEntry {
-  public constructor(data: CustomerEntry) {
+export class CustomerEntry implements ICustomerEntry {
+  public Id: number;
+  public ExternalUuid: string;
+  public TenantId: number;
+  public FirstName: string;
+  public LastName: string;
+  public Email: string;
+  public Phone: string;
+  public Street: string;
+  public City: string;
+  public State: string;
+  public ZipCode: string;
+  public ImageUrl: string;
+  public CreatedOn: string;
+  public ModifiedOn: string | null;
+  public DeletedOn: string | null;
+
+  public constructor(data: ICustomerEntry) {
     this.Id = data.Id;
     this.ExternalUuid = data.ExternalUuid;
     this.TenantId = data.TenantId;

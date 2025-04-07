@@ -38,12 +38,12 @@ export const putActivityRequestSchema = {
 };
 
 // POST activity payloads
-export interface PostActivityRequestPayload extends Omit<PublicActivity, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {}
+export type PostActivityRequestPayload = Omit<PublicActivity, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'>;
 
 export type PostActivityResponsePayload = PublicActivity;
 
 // PUT activity payloads
-export interface PutActivityRequestPayload extends Omit<PublicActivity, 'uuid' | 'dealUuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {}
+export type PutActivityRequestPayload = Omit<PublicActivity, 'uuid' | 'dealUuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'>;
 
 export type PutActivityResponsePayload = PublicActivity;
 

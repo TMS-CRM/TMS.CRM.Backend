@@ -1,20 +1,19 @@
-import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { knexClient } from '../../../../lib/utils/knexClient.js';
 import { randomUUID } from 'crypto';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
-import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
-import { DealProgress, RoomAccess, type DealEntry } from '../../../../models/database/dealEntry.js';
-import { ActivityEntry } from '../../../../models/database/activityEntry.js';
-import { dealTableName } from '../../../../repositories/dealRepository.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
-import { activityTableName } from '../../../../repositories/activityRepository.js';
-import { ActivityEntryBuilder } from '../../../builders/activityEntryBuilder.js';
 import { handler } from '../../../../lambdas/api/activity/getActivity.js';
-import { customerTableName } from '../../../../repositories/customerRepository.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { knexClient } from '../../../../lib/utils/knexClient.js';
+import type { ActivityEntry } from '../../../../models/database/activityEntry.js';
 import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
+import { type DealEntry, DealProgress, RoomAccess } from '../../../../models/database/dealEntry.js';
+import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import { activityTableName } from '../../../../repositories/activityRepository.js';
+import { customerTableName } from '../../../../repositories/customerRepository.js';
+import { dealTableName } from '../../../../repositories/dealRepository.js';
+import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { ActivityEntryBuilder } from '../../../builders/activityEntryBuilder.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
+import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Activity - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
@@ -101,7 +100,7 @@ describe('API - Activity - GET', () => {
       .build();
 
     // Run the handler
-    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+    const res = await handler(event);
 
     // Validate the API response
     expect(res.statusCode).toBe(200);
@@ -127,7 +126,7 @@ describe('API - Activity - GET', () => {
       .build();
 
     // Run the handler
-    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+    const res = await handler(event);
 
     // Validate the API response
     expect(res.statusCode).toBe(400);
@@ -148,7 +147,7 @@ describe('API - Activity - GET', () => {
       .build();
 
     // Run the handler
-    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+    const res = await handler(event);
 
     // Validate the API response
     expect(res.statusCode).toBe(400);

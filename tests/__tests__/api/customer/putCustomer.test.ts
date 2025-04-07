@@ -1,18 +1,14 @@
-import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { selectUserByExternalUuid, userTableName } from '../../../../repositories/userRepository.js';
-import { UserEntryBuilder } from '../../../builders/userEntryBuilder.js';
-import type { UserEntry } from '../../../../models/database/userEntry.js';
-import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { PutUserRequestPayload } from '../../../../models/api/payloads/user.js';
 import { randomUUID } from 'crypto';
-import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
-import { customerTableName, selectCustomerByExternalUuid } from '../../../../repositories/customerRepository.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import type { PutCustomerRequestPayload } from '../../../../models/api/payloads/customer.js';
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/customer/putCustomer.js';
+import { knexClient } from '../../../../lib/utils/knexClient.js';
+import type { PutCustomerRequestPayload } from '../../../../models/api/payloads/customer.js';
+import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
 import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import { customerTableName, selectCustomerByExternalUuid } from '../../../../repositories/customerRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Customer - PUT', () => {

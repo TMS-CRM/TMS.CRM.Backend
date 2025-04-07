@@ -53,12 +53,12 @@ export const putCustomerRequestSchema = {
 };
 
 // POST customer payloads
-export interface PostCustomerRequestPayload extends Omit<PublicCustomer, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {}
+export type PostCustomerRequestPayload = Omit<PublicCustomer, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'>;
 
 export type PostCustomerResponsePayload = PublicCustomer;
 
 // PUT customer payloads
-export interface PutCustomerRequestPayload extends Omit<PublicCustomer, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {}
+export type PutCustomerRequestPayload = Omit<PublicCustomer, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'>;
 
 export type PutCustomerResponsePayload = PublicCustomer;
 

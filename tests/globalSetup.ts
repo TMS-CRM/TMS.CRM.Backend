@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/order
 import * as dotenv from 'dotenv';
 
 // Load the env variables from root/.env

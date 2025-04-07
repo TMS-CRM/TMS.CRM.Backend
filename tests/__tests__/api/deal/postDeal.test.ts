@@ -1,16 +1,14 @@
-import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
 import { handler } from '../../../../lambdas/api/deal/postDeal.js';
-import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { customerTableName } from '../../../../repositories/customerRepository.js';
+import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
 import { DealProgress, RoomAccess } from '../../../../models/database/dealEntry.js';
-import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
-import type { PostDealResponsePayload } from '../../../../models/api/payloads/deal.js';
+import { customerTableName } from '../../../../repositories/customerRepository.js';
+import { selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
+import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Deal - POST', () => {
   const tenantsGlobal: TenantEntry[] = [];
@@ -64,7 +62,7 @@ describe('API - Deal - POST', () => {
       .build();
 
     // Run the handler
-    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+    const res = await handler(event);
 
     // Validate the API response
     expect(res.statusCode).toBe(200);
@@ -115,7 +113,7 @@ describe('API - Deal - POST', () => {
       .build();
 
     // Run the handler
-    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+    const res = await handler(event);
 
     // Validate the API response
     expect(res.statusCode).toBe(400);

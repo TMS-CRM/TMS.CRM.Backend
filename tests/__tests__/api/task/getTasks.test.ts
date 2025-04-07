@@ -1,12 +1,12 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { handler } from '../../../../lambdas/api/task/getTasks.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
-import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 import { taskTableName } from '../../../../repositories/taskRepository.js';
+import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TaskEntryBuilder } from '../../../builders/taskEntryBuilder.js';
-import { handler } from '../../../../lambdas/api/task/getTasks.js';
+import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Tasks - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
@@ -22,7 +22,7 @@ describe('API - Tasks - GET', () => {
     tenantsGlobal.push(...tenant);
 
     // Insert 9 tasks
-    const firstTasks = await knexClient(taskTableName)
+    await knexClient(taskTableName)
       .insert([
         TaskEntryBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)

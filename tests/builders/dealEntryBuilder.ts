@@ -1,20 +1,16 @@
 import { randomUUID } from 'crypto';
-import type { CustomerEntry } from '../../models/database/customerEntry.js';
-import type { DealEntry, DealProgress, RoomAccess } from '../../models/database/dealEntry.js';
-import type { text } from 'aws-sdk/clients/customerprofiles.js';
 import type { integer } from 'aws-sdk/clients/cloudfront.js';
+import type { text } from 'aws-sdk/clients/customerprofiles.js';
+import type { DealProgress, IDealEntry, RoomAccess } from '../../models/database/dealEntry.js';
 
 export class DealEntryBuilder {
-  withExternalUuid(arg0: string) {
-    throw new Error('Method not implemented.');
-  }
-  private dealEntry: DealEntry;
+  private dealEntry: Partial<IDealEntry>;
 
   private constructor() {
     this.dealEntry = {
       ExternalUuid: randomUUID(),
-      CreatedOn: new Date(Date.now() - 86400000), // 24 hrs
-    } as any as DealEntry;
+      CreatedOn: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
+    };
   }
 
   withTenantId(value: number): this {
@@ -87,7 +83,7 @@ export class DealEntryBuilder {
     return this;
   }
 
-  build(): DealEntry {
+  build(): Partial<IDealEntry> {
     return this.dealEntry;
   }
 

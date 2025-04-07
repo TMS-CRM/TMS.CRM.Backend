@@ -1,16 +1,16 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { handler } from '../../../../lambdas/api/deal/getDeals.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
-import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
-import { customerTableName } from '../../../../repositories/customerRepository.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
 import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
 import { DealProgress, RoomAccess } from '../../../../models/database/dealEntry.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
+import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
-import { handler } from '../../../../lambdas/api/deal/getDeals.js';
+import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
+import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Deals - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
@@ -66,7 +66,7 @@ describe('API - Deals - GET', () => {
       .returning('*');
     customersGlobal.push(...customer);
 
-    const deal = await knexClient(dealTableName)
+    await knexClient(dealTableName)
       .insert([
         DealEntryBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)

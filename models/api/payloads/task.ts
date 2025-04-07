@@ -36,12 +36,12 @@ export const putTaskRequestSchema = {
 };
 
 // POST task payloads
-export interface PostTaskRequestPayload extends Omit<PublicTask, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {}
+export type PostTaskRequestPayload = Omit<PublicTask, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'>;
 
 export type PostTaskResponsePayload = PublicTask;
 
 // PUT task payloads
-export interface PutTaskRequestPayload extends Omit<PublicTask, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {}
+export type PutTaskRequestPayload = Omit<PublicTask, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'>;
 
 export type PutTaskResponsePayload = PublicTask;
 

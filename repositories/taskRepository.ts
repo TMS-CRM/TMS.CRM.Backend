@@ -1,31 +1,33 @@
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
-import { TaskEntry } from '../models/database/taskEntry.js';
+import { type ITaskEntry, TaskEntry } from '../models/database/taskEntry.js';
 
 export const taskTableName = 'Task';
 
 /** Insert the task */
-export async function insertTask(task: Partial<TaskEntry>): Promise<number> {
+export async function insertTask(task: Partial<ITaskEntry>): Promise<number> {
   const query = knexClient(taskTableName).insert(task).returning('Id');
-  const record = await query;
+  const records = (await query) as ITaskEntry[];
 
-  logger.info(`Successfully inserted task. Id: ${record[0].Id}`);
-  return record[0].Id;
+  logger.info(`Successfully inserted task. Id: ${records[0].Id}`);
+  return records[0].Id;
 }
 
 /** Get the task by Id */
 export async function selectTaskById(id: number): Promise<TaskEntry | null> {
-  const [task] = await knexClient(taskTableName).select('*').where('Id', id).whereNull(`${taskTableName}.DeletedOn`);
+  const query = knexClient(taskTableName).select('*').where('Id', id).whereNull(`${taskTableName}.DeletedOn`);
+  const records = (await query) as ITaskEntry[];
 
-  return task ? new TaskEntry(task) : null;
+  return records.length > 0 ? new TaskEntry(records[0]) : null;
 }
 
 /** Get the Task by ExternalUuid */
 export async function selectTaskByExternalUuid(externalUuid: string): Promise<TaskEntry | null> {
-  const [task] = await knexClient(taskTableName).select('*').where('ExternalUuid', externalUuid).whereNull(`${taskTableName}.DeletedOn`);
+  const query = knexClient(taskTableName).select('*').where('ExternalUuid', externalUuid).whereNull(`${taskTableName}.DeletedOn`);
+  const records = (await query) as ITaskEntry[];
 
-  return task ? new TaskEntry(task) : null;
+  return records.length > 0 ? new TaskEntry(records[0]) : null;
 }
 
 export async function selectTasks(limit: number, offset: number, tenantId: number | null): Promise<PaginatedResponse<TaskEntry>> {
@@ -37,7 +39,7 @@ export async function selectTasks(limit: number, offset: number, tenantId: numbe
   }
 
   // Get the tasks
-  const tasks = await baseQuery.clone().limit(limit).offset(offset).select('*');
+  const tasks = (await baseQuery.clone().limit(limit).offset(offset).select('*')) as ITaskEntry[];
 
   // Get the total number of tasks
   const total = (await baseQuery.clone().count('*'))[0]['count'];
@@ -49,7 +51,7 @@ export async function selectTasks(limit: number, offset: number, tenantId: numbe
 }
 
 /** Update the task */
-export async function updateTask(taskId: number, task: Partial<TaskEntry>): Promise<void> {
+export async function updateTask(taskId: number, task: Partial<ITaskEntry>): Promise<void> {
   await knexClient(taskTableName).update(task).where('Id', taskId);
 
   logger.info(`Successfully updated Task. Id: ${taskId}`);
@@ -57,7 +59,8 @@ export async function updateTask(taskId: number, task: Partial<TaskEntry>): Prom
 
 /** Delete the Task */
 export async function softDeleteTaskById(taskId: number): Promise<void> {
-  const [record] = await knexClient(taskTableName).update({ DeletedOn: new Date().toISOString() }).where('Id', taskId).returning('Id');
+  const query = knexClient(taskTableName).update({ DeletedOn: new Date().toISOString() }).where('Id', taskId).returning('Id');
+  const records = (await query) as ITaskEntry[];
 
-  logger.info(`Successfully soft deleted Task. Id: ${record.Id}`);
+  logger.info(`Successfully soft deleted Task. Id: ${records[0].Id}`);
 }

@@ -1,6 +1,6 @@
 import type { PostTaskRequestPayload, PublicTask, PutTaskRequestPayload } from '../api/payloads/task.js';
 
-export interface TaskEntry {
+export interface ITaskEntry {
   Id: number;
   ExternalUuid: string;
   TenantId: number;
@@ -12,8 +12,18 @@ export interface TaskEntry {
   DeletedOn: string | null;
 }
 
-export class TaskEntry implements TaskEntry {
-  public constructor(data: TaskEntry) {
+export class TaskEntry implements ITaskEntry {
+  public Id: number;
+  public ExternalUuid: string;
+  public TenantId: number;
+  public Description: string;
+  public DueDate: string;
+  public Completed: boolean;
+  public CreatedOn: string;
+  public ModifiedOn: string | null;
+  public DeletedOn: string | null;
+
+  public constructor(data: ITaskEntry) {
     this.Id = data.Id;
     this.ExternalUuid = data.ExternalUuid;
     this.TenantId = data.TenantId;

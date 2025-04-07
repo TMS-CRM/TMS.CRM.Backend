@@ -1,14 +1,14 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { logger } from '../../../lib/utils/logger.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
+import { logger } from '../../../lib/utils/logger.js';
 import type { GetUserListFilter, GetUserListResponsePayload, PublicUser } from '../../../models/api/payloads/user.js';
-import type { UserEntry } from '../../../models/database/userEntry.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
-import { selectUsers } from '../../../repositories/userRepository.js';
-import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
+import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
+import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
+import { QueryParamDataType } from '../../../models/api/validations.js';
+import type { UserEntry } from '../../../models/database/userEntry.js';
+import { selectUsers } from '../../../repositories/userRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   logger.info('Request received: ', request);
@@ -17,9 +17,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(queryRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<null, GetUserListFilter>> {
   logger.info('Start - validateRequest');
 
@@ -43,7 +44,7 @@ export async function queryRecords(validatedRequest: ValidatedAPIRequest<null, G
   return queryResult;
 }
 
-export async function formatResponseData(queryResult: PaginatedResponse<UserEntry>): Promise<FetchSuccess<GetUserListResponsePayload>> {
+export function formatResponseData(queryResult: PaginatedResponse<UserEntry>): FetchSuccess<GetUserListResponsePayload> {
   logger.info('Start - formatResponse');
 
   const paginatedResponse: PaginatedResponse<PublicUser> = {

@@ -1,11 +1,11 @@
 import { handler } from '../../../../lambdas/api/user/postUser.js';
-import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { selectUserByExternalUuid } from '../../../../repositories/userRepository.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
+import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { selectUserByExternalUuid } from '../../../../repositories/userRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+
 describe('API - User - POST', () => {
   const tenantsGlobal: TenantEntry[] = [];
 
@@ -29,7 +29,7 @@ describe('API - User - POST', () => {
       .build();
 
     // Run the handler
-    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+    const res = await handler(event);
 
     // Validate the API response
     expect(res.statusCode).toBe(200);
@@ -60,7 +60,7 @@ describe('API - User - POST', () => {
       .build();
 
     // Run the handler
-    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+    const res = await handler(event);
 
     // Validate the API response
     expect(res.statusCode).toBe(400);

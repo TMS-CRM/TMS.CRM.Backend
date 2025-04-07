@@ -1,15 +1,15 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { logger } from '../../../lib/utils/logger.js';
-import { PersistSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParseBody, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
+import { logger } from '../../../lib/utils/logger.js';
 import {
-  postActivityRequestSchema,
   type PostActivityRequestPayload,
   type PostActivityResponsePayload,
+  postActivityRequestSchema,
 } from '../../../models/api/payloads/activity.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
+import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
+import { QueryParamDataType } from '../../../models/api/validations.js';
 import { ActivityEntry } from '../../../models/database/activityEntry.js';
 import { insertActivity, selectActivityById } from '../../../repositories/activityRepository.js';
 import { selectDealByExternalUuid } from '../../../repositories/dealRepository.js';
@@ -21,9 +21,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(persistRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PostActivityRequestPayload>> {
   logger.info('Start - validateRequest');
 

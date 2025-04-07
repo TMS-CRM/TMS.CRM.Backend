@@ -1,14 +1,14 @@
 import { randomUUID } from 'crypto';
-import type { UserEntry } from '../../models/database/userEntry.js';
+import type { IUserEntry } from '../../models/database/userEntry.js';
 
 export class UserEntryBuilder {
-  private userEntry: UserEntry;
+  private userEntry: Partial<IUserEntry>;
 
   private constructor() {
     this.userEntry = {
       ExternalUuid: randomUUID(),
-      CreatedOn: new Date(Date.now() - 86400000), // 24 hrs
-    } as any as UserEntry;
+      CreatedOn: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
+    };
   }
 
   withFirstName(value: string): this {
@@ -26,7 +26,7 @@ export class UserEntryBuilder {
     return this;
   }
 
-  build(): UserEntry {
+  build(): Partial<IUserEntry> {
     return this.userEntry;
   }
 
