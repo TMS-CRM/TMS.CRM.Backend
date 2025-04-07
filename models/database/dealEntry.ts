@@ -1,7 +1,7 @@
 import type { integer } from 'aws-sdk/clients/cloudfront.js';
 import type { text } from 'aws-sdk/clients/customerprofiles.js';
-import type { PostDealRequestPayload, PublicDeal, PutDealRequestPayload } from '../api/payloads/deal.js';
 import type { CustomerEntry } from './customerEntry.js';
+import type { PostDealRequestPayload, PublicDeal, PutDealRequestPayload } from '../api/payloads/deal.js';
 
 export enum DealProgress {
   InProgress = 'InProgress',
@@ -18,7 +18,7 @@ export enum RoomAccess {
 }
 
 /** Represents the Deal entry in the database */
-export interface DealEntry {
+export interface IDealEntry {
   Id: number;
   ExternalUuid: string;
   TenantId: number;
@@ -40,13 +40,28 @@ export interface DealEntry {
   DeletedOn: string | null;
 }
 
-/** Extended DealEntry with Customer information */
-export interface ExtendedDealEntry extends DealEntry {
-  Customer: Pick<CustomerEntry, 'ExternalUuid' | 'FirstName' | 'LastName' | 'Email' | 'Phone' | 'ImageUrl'>;
-}
+export class DealEntry implements IDealEntry {
+  public Id: number;
+  public ExternalUuid: string;
+  public TenantId: number;
+  public CustomerId: number;
+  public ImageUrl: string;
+  public Street: string;
+  public City: string;
+  public State: string;
+  public ZipCode: string;
+  public RoomArea: number;
+  public Price: number;
+  public NumberOfPeople: number;
+  public AppointmentDate: string;
+  public Progress: DealProgress;
+  public SpecialInstructions: string;
+  public RoomAccess: RoomAccess;
+  public CreatedOn: string;
+  public ModifiedOn: string | null;
+  public DeletedOn: string | null;
 
-export class DealEntry implements DealEntry {
-  public constructor(data: DealEntry) {
+  public constructor(data: IDealEntry) {
     this.Id = data.Id;
     this.ExternalUuid = data.ExternalUuid;
     this.TenantId = data.TenantId;
@@ -107,35 +122,61 @@ export class DealEntry implements DealEntry {
   }
 }
 
-export class ExtendedDealEntry implements ExtendedDealEntry {
-  public constructor(data: Record<string, any>) {
-    this.Id = data.Id;
-    this.ExternalUuid = data.ExternalUuid;
-    this.TenantId = data.TenantId;
-    this.CustomerId = data.CustomerId;
+/** Extended DealEntry with Customer information */
+export interface IExtendedDealEntry extends IDealEntry {
+  Customer: Pick<CustomerEntry, 'ExternalUuid' | 'FirstName' | 'LastName' | 'Email' | 'Phone' | 'ImageUrl'>;
+}
+
+export class ExtendedDealEntry implements IExtendedDealEntry {
+  public Id: number;
+  public ExternalUuid: string;
+  public TenantId: number;
+  public CustomerId: number;
+  public Customer: Pick<CustomerEntry, 'ExternalUuid' | 'FirstName' | 'LastName' | 'Email' | 'Phone' | 'ImageUrl'>;
+  public Price: number;
+  public Street: string;
+  public City: string;
+  public State: string;
+  public ZipCode: string;
+  public ImageUrl: string;
+  public RoomArea: number;
+  public NumberOfPeople: number;
+  public AppointmentDate: string;
+  public Progress: DealProgress;
+  public SpecialInstructions: string;
+  public RoomAccess: RoomAccess;
+  public CreatedOn: string;
+  public ModifiedOn: string | null;
+  public DeletedOn: string | null;
+
+  public constructor(data: Record<string, unknown>) {
+    this.Id = data.Id as number;
+    this.ExternalUuid = data.ExternalUuid as string;
+    this.TenantId = data.TenantId as number;
+    this.CustomerId = data.CustomerId as number;
     this.Customer = {
-      ExternalUuid: data.CustomerExternalUuid,
-      FirstName: data.CustomerFirstName,
-      LastName: data.CustomerLastName,
-      Email: data.CustomerEmail,
-      Phone: data.CustomerPhone,
-      ImageUrl: data.CustomerImageUrl,
+      ExternalUuid: data.CustomerExternalUuid as string,
+      FirstName: data.CustomerFirstName as string,
+      LastName: data.CustomerLastName as string,
+      Email: data.CustomerEmail as string,
+      Phone: data.CustomerPhone as string,
+      ImageUrl: data.CustomerImageUrl as string,
     };
-    this.Price = data.Price;
-    this.Street = data.Street;
-    this.City = data.City;
-    this.State = data.State;
-    this.ZipCode = data.ZipCode;
-    this.ImageUrl = data.ImageUrl;
-    this.RoomArea = data.RoomArea;
-    this.NumberOfPeople = data.NumberOfPeople;
-    this.AppointmentDate = data.AppointmentDate;
-    this.Progress = data.Progress;
-    this.SpecialInstructions = data.SpecialInstructions;
-    this.RoomAccess = data.RoomAccess;
-    this.CreatedOn = data.CreatedOn;
-    this.ModifiedOn = data.ModifiedOn;
-    this.DeletedOn = data.DeletedOn;
+    this.Price = data.Price as number;
+    this.Street = data.Street as string;
+    this.City = data.City as string;
+    this.State = data.State as string;
+    this.ZipCode = data.ZipCode as string;
+    this.ImageUrl = data.ImageUrl as string;
+    this.RoomArea = data.RoomArea as number;
+    this.NumberOfPeople = data.NumberOfPeople as number;
+    this.AppointmentDate = data.AppointmentDate as string;
+    this.Progress = data.Progress as DealProgress;
+    this.SpecialInstructions = data.SpecialInstructions as string;
+    this.RoomAccess = data.RoomAccess as RoomAccess;
+    this.CreatedOn = data.CreatedOn as string;
+    this.ModifiedOn = data.ModifiedOn as string | null;
+    this.DeletedOn = data.DeletedOn as string | null;
   }
 
   /** Convert the ExtendedDealEntry to a PublicDeal */

@@ -18,12 +18,14 @@ export class HttpErrorResponse {
   }
 }
 
-abstract class HttpError {
+abstract class HttpError extends Error {
   type: string;
   message: string;
   statusCode: number;
 
   constructor(statusCode: number, type: string, message: string) {
+    super(message);
+
     this.type = type;
     this.message = message;
     this.statusCode = statusCode;

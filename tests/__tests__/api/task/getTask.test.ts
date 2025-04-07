@@ -1,14 +1,14 @@
-import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { knexClient } from '../../../../lib/utils/knexClient.js';
 import { randomUUID } from 'crypto';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
-import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
-import type { TaskEntry } from '../../../../models/database/taskEntry.js';
-import { taskTableName } from '../../../../repositories/taskRepository.js';
-import { TaskEntryBuilder } from '../../../builders/taskEntryBuilder.js';
 import { handler } from '../../../../lambdas/api/task/getTask.js';
+import { knexClient } from '../../../../lib/utils/knexClient.js';
+import type { TaskEntry } from '../../../../models/database/taskEntry.js';
+import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import { taskTableName } from '../../../../repositories/taskRepository.js';
+import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { TaskEntryBuilder } from '../../../builders/taskEntryBuilder.js';
+import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+
 describe('API - Task - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
   const tasksGlobal: TaskEntry[] = [];
@@ -42,7 +42,7 @@ describe('API - Task - GET', () => {
       .build();
 
     // Run the handler
-    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+    const res = await handler(event);
 
     // Validate the API response
     expect(res.statusCode).toBe(200);
@@ -67,7 +67,7 @@ describe('API - Task - GET', () => {
       .build();
 
     // Run the handler
-    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+    const res = await handler(event);
 
     // Validate the API response
     expect(res.statusCode).toBe(400);
@@ -88,7 +88,7 @@ describe('API - Task - GET', () => {
       .build();
 
     // Run the handler
-    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+    const res = await handler(event);
 
     // Validate the API response
     expect(res.statusCode).toBe(400);

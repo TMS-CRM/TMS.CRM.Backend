@@ -1,14 +1,14 @@
 import { randomUUID } from 'crypto';
-import type { CustomerEntry } from '../../models/database/customerEntry.js';
+import type { ICustomerEntry } from '../../models/database/customerEntry.js';
 
 export class CustomerEntryBuilder {
-  private customerEntry: CustomerEntry;
+  private customerEntry: Partial<ICustomerEntry>;
 
   private constructor() {
     this.customerEntry = {
       ExternalUuid: randomUUID(),
-      CreatedOn: new Date(Date.now() - 86400000), // 24 hrs
-    } as any as CustomerEntry;
+      CreatedOn: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
+    };
   }
 
   withTenantId(value: number): this {
@@ -61,7 +61,7 @@ export class CustomerEntryBuilder {
     return this;
   }
 
-  build(): CustomerEntry {
+  build(): Partial<ICustomerEntry> {
     return this.customerEntry;
   }
 

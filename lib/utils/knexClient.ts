@@ -2,8 +2,8 @@ import type { Knex } from 'knex';
 import knexFactory from 'knex';
 import { getSecret } from '../aws/secretsManager.js';
 
-export interface KnexTransaction extends Knex.Transaction {}
-export interface KnexQueryBuilder extends Knex.QueryBuilder {}
+export type KnexTransaction = Knex.Transaction;
+export type KnexQueryBuilder = Knex.QueryBuilder;
 
 export interface KnexRawResponse {
   data: Record<string, any>;
@@ -33,7 +33,13 @@ async function loadConfigSecret(): Promise<object> {
     throw Error('Could not load database secret');
   }
 
-  const config = JSON.parse(secret);
+  const config = JSON.parse(secret) as {
+    engine: string;
+    username: string;
+    password: string;
+    host: string;
+    dbname: string;
+  };
 
   const connectionString = `${config.engine}://${config.username}:${config.password}@${config.host}/${config.dbname}`;
 

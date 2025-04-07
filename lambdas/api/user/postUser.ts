@@ -1,13 +1,13 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { logger } from '../../../lib/utils/logger.js';
-import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { validateAndParseBody, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { selectUserById, insertUser } from '../../../repositories/userRepository.js';
+import { logger } from '../../../lib/utils/logger.js';
+import { type PostUserRequestPayload, type PostUserResponsePayload, postUserRequestSchema } from '../../../models/api/payloads/user.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
-import { UserEntry } from '../../../models/database/userEntry.js';
-import { postUserRequestSchema, type PostUserRequestPayload, type PostUserResponsePayload } from '../../../models/api/payloads/user.js';
+import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
+import { UserEntry } from '../../../models/database/userEntry.js';
+import { insertUser, selectUserById } from '../../../repositories/userRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -16,9 +16,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(persistRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PostUserRequestPayload>> {
   logger.info('Start - validateRequest');
 

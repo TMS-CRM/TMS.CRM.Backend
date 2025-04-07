@@ -35,12 +35,12 @@ export const putUserRequestSchema = {
 };
 
 // POST user payloads
-export interface PostUserRequestPayload extends Pick<PublicUser, 'firstName' | 'lastName' | 'email'> {}
+export type PostUserRequestPayload = Pick<PublicUser, 'firstName' | 'lastName' | 'email'>;
 
 export type PostUserResponsePayload = PublicUser;
 
 // PUT user payloads
-export interface PutUserRequestPayload extends Pick<PublicUser, 'firstName' | 'lastName' | 'email'> {}
+export type PutUserRequestPayload = Pick<PublicUser, 'firstName' | 'lastName' | 'email'>;
 
 export type PutUserResponsePayload = PublicUser;
 

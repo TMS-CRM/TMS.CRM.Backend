@@ -1,23 +1,23 @@
-import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { knexClient } from '../../../../lib/utils/knexClient.js';
 import { randomUUID } from 'crypto';
-import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
-import { customerTableName } from '../../../../repositories/customerRepository.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { DealProgress, RoomAccess, type DealEntry } from '../../../../models/database/dealEntry.js';
-import { dealTableName, selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
-import type { PutDealRequestPayload } from '../../../../models/api/payloads/deal.js';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/deal/putDeal.js';
+import { knexClient } from '../../../../lib/utils/knexClient.js';
+import type { PutDealRequestPayload } from '../../../../models/api/payloads/deal.js';
+import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
+import { type DealEntry, DealProgress, RoomAccess } from '../../../../models/database/dealEntry.js';
 import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import { customerTableName } from '../../../../repositories/customerRepository.js';
+import { dealTableName, selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Deal - PUT', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  let customersGlobal: CustomerEntry[] = [];
-  let dealsGlobal: DealEntry[] = [];
+  const customersGlobal: CustomerEntry[] = [];
+  const dealsGlobal: DealEntry[] = [];
 
   beforeEach(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');

@@ -1,14 +1,14 @@
 import { randomUUID } from 'crypto';
-import type { TaskEntry } from '../../models/database/taskEntry.js';
+import type { ITaskEntry } from '../../models/database/taskEntry.js';
 
 export class TaskEntryBuilder {
-  private taskEntry: TaskEntry;
+  private taskEntry: Partial<ITaskEntry>;
 
   private constructor() {
     this.taskEntry = {
       ExternalUuid: randomUUID(),
-      CreatedOn: new Date(Date.now() - 86400000), // 24 hrs
-    } as any as TaskEntry;
+      CreatedOn: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
+    };
   }
 
   withTenantId(value: number): this {
@@ -31,7 +31,7 @@ export class TaskEntryBuilder {
     return this;
   }
 
-  build(): TaskEntry {
+  build(): Partial<ITaskEntry> {
     return this.taskEntry;
   }
 

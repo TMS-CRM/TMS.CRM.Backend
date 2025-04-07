@@ -1,11 +1,11 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { validateAndParseBody, validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
+import { type PutDealRequestPayload, type PutDealResponsePayload, putDealRequestSchema } from '../../../models/api/payloads/deal.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
-import { PersistSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
-import { validateAndParseBody, validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
-import { putDealRequestSchema, type PutDealRequestPayload, type PutDealResponsePayload } from '../../../models/api/payloads/deal.js';
 import { DealEntry } from '../../../models/database/dealEntry.js';
 import { selectDealByExternalUuid, selectDealById, updateDeal } from '../../../repositories/dealRepository.js';
 
@@ -16,9 +16,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(persistRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PutDealRequestPayload>> {
   logger.info('Start - validateRequest');
   // Declare required field

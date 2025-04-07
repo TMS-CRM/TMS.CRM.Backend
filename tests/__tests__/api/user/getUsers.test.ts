@@ -1,13 +1,13 @@
-import { handler } from '../../../../lambdas/api/user/getUsers.js';
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { userTableName } from '../../../../repositories/userRepository.js';
-import { UserEntryBuilder } from '../../../builders/userEntryBuilder.js';
+import { handler } from '../../../../lambdas/api/user/getUsers.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { userTableName } from '../../../../repositories/userRepository.js';
 import { userTenantTableName } from '../../../../repositories/userTenantRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { UserEntryBuilder } from '../../../builders/userEntryBuilder.js';
 import { UserTenantEntryBuilder } from '../../../builders/userTenantEntryBuilder.js';
 
 describe('API - User - GET', () => {

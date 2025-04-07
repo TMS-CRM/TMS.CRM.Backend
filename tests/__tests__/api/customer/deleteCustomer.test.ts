@@ -1,14 +1,14 @@
-import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { knexClient } from '../../../../lib/utils/knexClient.js';
 import { randomUUID } from 'crypto';
-import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
-import { customerTableName, selectCustomerByExternalUuid } from '../../../../repositories/customerRepository.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/customer/deleteCustomer.js';
-import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { knexClient } from '../../../../lib/utils/knexClient.js';
+import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
 import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import { customerTableName, selectCustomerByExternalUuid } from '../../../../repositories/customerRepository.js';
+import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Customer - DELETE', () => {
   const tenantsGlobal: TenantEntry[] = [];

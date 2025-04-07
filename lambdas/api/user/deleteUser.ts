@@ -1,11 +1,11 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { logger } from '../../../lib/utils/logger.js';
-import { DeleteSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { selectUserByExternalUuid, softDeleteUserById } from '../../../repositories/userRepository.js';
+import { logger } from '../../../lib/utils/logger.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { DeleteSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
+import { selectUserByExternalUuid, softDeleteUserById } from '../../../repositories/userRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   logger.info('Request received: ', request);
@@ -14,9 +14,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(persistRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<null>> {
   logger.info('Start - validateRequest');
 
@@ -44,7 +45,7 @@ export async function persistRecords(validatedRequest: ValidatedAPIRequest<null>
   await softDeleteUserById(user.Id);
 }
 
-export async function formatResponseData(): Promise<DeleteSuccess<null>> {
+export function formatResponseData(): DeleteSuccess<null> {
   logger.info('Start - formatResponse');
 
   return new DeleteSuccess<null>('User has been deleted');

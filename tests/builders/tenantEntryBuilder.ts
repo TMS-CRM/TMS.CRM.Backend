@@ -8,7 +8,7 @@ export class TenantEntryBuilder {
     this.tenantEntry = {
       ExternalUuid: randomUUID(),
       CreatedOn: new Date(Date.now() - 86400000), // 24 hrs
-    } as any as TenantEntry;
+    } as unknown as TenantEntry;
   }
 
   withName(value: string): this {

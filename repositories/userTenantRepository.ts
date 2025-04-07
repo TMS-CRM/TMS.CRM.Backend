@@ -7,8 +7,8 @@ export const userTenantTableName = 'UserTenant';
 /** Insert the UserTenant */
 export async function insertUserTenant(userTenant: Partial<UserTenantEntry>): Promise<number> {
   const query = knexClient(userTenantTableName).insert(userTenant).returning('Id');
-  const record = await query;
+  const records = (await query) as UserTenantEntry[];
 
-  logger.info(`Successfully inserted UserTenant. Id: ${record[0].Id}`);
-  return record[0].Id;
+  logger.info(`Successfully inserted UserTenant. Id: ${records[0].Id}`);
+  return records[0].Id;
 }

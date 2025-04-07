@@ -1,14 +1,14 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { logger } from '../../../lib/utils/logger.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
-import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
-import { selectActivities } from '../../../repositories/activityRepository.js';
+import { logger } from '../../../lib/utils/logger.js';
 import type { GetActivityListFilter, GetActivityListResponsePayload, PublicActivity } from '../../../models/api/payloads/activity.js';
-import type { ExtendedActivityEntry } from '../../../models/database/activityEntry.js';
 import { HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
+import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
+import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
+import { QueryParamDataType } from '../../../models/api/validations.js';
+import type { ExtendedActivityEntry } from '../../../models/database/activityEntry.js';
+import { selectActivities } from '../../../repositories/activityRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   logger.info('Request received: ', request);
@@ -17,9 +17,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(queryRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<null, GetActivityListFilter>> {
   logger.info('Start - validateRequest');
 
@@ -45,13 +46,11 @@ export async function queryRecords(
   return queryResult;
 }
 
-export async function formatResponseData(
-  queryResult: PaginatedResponse<ExtendedActivityEntry>,
-): Promise<FetchSuccess<GetActivityListResponsePayload>> {
+export function formatResponseData(queryResult: PaginatedResponse<ExtendedActivityEntry>): FetchSuccess<GetActivityListResponsePayload> {
   logger.info('Start - formatResponse');
 
   const paginatedResponse: PaginatedResponse<PublicActivity> = {
-    items: await Promise.all(queryResult.items.map((activity) => activity.toPublic())),
+    items: queryResult.items.map((activity) => activity.toPublic()),
     total: queryResult.total,
   };
 

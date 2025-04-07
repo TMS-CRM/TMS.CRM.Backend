@@ -1,15 +1,15 @@
-import { handler } from '../../../../lambdas/api/user/putUser.js';
+import { randomUUID } from 'crypto';
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { selectUserByExternalUuid, userTableName } from '../../../../repositories/userRepository.js';
-import { UserEntryBuilder } from '../../../builders/userEntryBuilder.js';
-import type { UserEntry } from '../../../../models/database/userEntry.js';
+import { handler } from '../../../../lambdas/api/user/putUser.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { PutUserRequestPayload } from '../../../../models/api/payloads/user.js';
-import { randomUUID } from 'crypto';
 import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import type { UserEntry } from '../../../../models/database/userEntry.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { selectUserByExternalUuid, userTableName } from '../../../../repositories/userRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { UserEntryBuilder } from '../../../builders/userEntryBuilder.js';
 
 describe('API - User - PUT', () => {
   const usersGlobal: UserEntry[] = [];

@@ -1,7 +1,6 @@
 import type { integer } from 'aws-sdk/clients/cloudfront.js';
 import { DealProgress, RoomAccess } from '../../database/dealEntry.js';
 import type { PaginatedResponse } from '../responses/pagination.js';
-import type { text } from 'aws-sdk/clients/customerprofiles.js';
 
 /** The exposed Deal object */
 export interface PublicDeal {
@@ -15,10 +14,10 @@ export interface PublicDeal {
     phone: string;
   };
   price: number;
-  street: text;
-  city: text;
-  state: text;
-  zipCode: text;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
   imageUrl: string;
   roomArea: number;
   numberOfPeople: integer;
@@ -102,16 +101,16 @@ export const putDealRequestSchema = {
 };
 
 // POST deal payloads
-export interface PostDealRequestPayload extends Omit<PublicDeal, 'uuid' | 'customer' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {
+export type PostDealRequestPayload = Omit<PublicDeal, 'uuid' | 'customer' | 'createdOn' | 'modifiedOn' | 'deletedOn'> & {
   customerUuid: string;
-}
+};
 
 export type PostDealResponsePayload = PublicDeal;
 
 // PUT deal payloads
-export interface PutDealRequestPayload extends Omit<PublicDeal, 'uuid' | 'customer' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {
+export type PutDealRequestPayload = Omit<PublicDeal, 'uuid' | 'customer' | 'createdOn' | 'modifiedOn' | 'deletedOn'> & {
   customerUuid: string;
-}
+};
 
 export type PutDealResponsePayload = PublicDeal;
 

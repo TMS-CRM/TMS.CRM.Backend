@@ -1,14 +1,14 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { logger } from '../../../lib/utils/logger.js';
-import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { validateAndParseBody, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
+import { logger } from '../../../lib/utils/logger.js';
+import { type PostDealRequestPayload, type PostDealResponsePayload, postDealRequestSchema } from '../../../models/api/payloads/deal.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
-import { postDealRequestSchema, type PostDealRequestPayload, type PostDealResponsePayload } from '../../../models/api/payloads/deal.js';
 import { DealEntry } from '../../../models/database/dealEntry.js';
-import { insertDeal, selectDealById } from '../../../repositories/dealRepository.js';
 import { selectCustomerByExternalUuid } from '../../../repositories/customerRepository.js';
+import { insertDeal, selectDealById } from '../../../repositories/dealRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -17,9 +17,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(persistRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse<PostDealResponsePayload>(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PostDealRequestPayload>> {
   logger.info('Start - validateRequest');
 

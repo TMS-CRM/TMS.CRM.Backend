@@ -60,7 +60,7 @@ export default tsEsLint.config(
           alphabetize: { order: 'asc', caseInsensitive: false },
         },
       ],
-      'prettier/prettier': 'warn',
+      'prettier/prettier': ['warn', { endOfLine: 'auto' }],
       'sort-imports': [
         'error',
         {
@@ -87,7 +87,7 @@ export default tsEsLint.config(
     ...tsConfigs.disableTypeChecked,
   },
   {
-    files: ['test/**'],
+    files: ['tests/**'],
     languageOptions: {
       globals: {
         ...vitestPlugin.environments.env.globals,

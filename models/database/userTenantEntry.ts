@@ -1,5 +1,3 @@
-import type { PostUserRequestPayload, PublicUser, PutUserRequestPayload } from '../api/payloads/user.js';
-
 export interface UserTenantEntry {
   Id: number;
   UserId: number;

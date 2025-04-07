@@ -1,13 +1,13 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { logger } from '../../../lib/utils/logger.js';
-import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { selectUserByExternalUuid } from '../../../repositories/userRepository.js';
-import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { logger } from '../../../lib/utils/logger.js';
 import type { GetUserResponsePayload } from '../../../models/api/payloads/user.js';
-import type { UserEntry } from '../../../models/database/userEntry.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
+import type { UserEntry } from '../../../models/database/userEntry.js';
+import { selectUserByExternalUuid } from '../../../repositories/userRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -16,9 +16,10 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(queryRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error) => new HttpErrorResponse(error));
+    .catch((error: Error) => new HttpErrorResponse(error));
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<null>> {
   logger.info('Start - validateRequest');
 
@@ -45,7 +46,7 @@ export async function queryRecords(validatedRequest: ValidatedAPIRequest<null>):
   return user;
 }
 
-export async function formatResponseData(user: UserEntry): Promise<FetchSuccess<GetUserResponsePayload>> {
+export function formatResponseData(user: UserEntry): FetchSuccess<GetUserResponsePayload> {
   logger.info('Start - formatResponse');
 
   return new FetchSuccess<GetUserResponsePayload>('Successfully fetched user', user.toPublic());

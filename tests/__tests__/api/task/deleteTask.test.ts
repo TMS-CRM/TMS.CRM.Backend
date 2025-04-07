@@ -1,18 +1,17 @@
-import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { knexClient } from '../../../../lib/utils/knexClient.js';
 import { randomUUID } from 'crypto';
-import type { TaskEntry } from '../../../../models/database/taskEntry.js';
-import { taskTableName, selectTaskByExternalUuid } from '../../../../repositories/taskRepository.js';
-import { TaskEntryBuilder } from '../../../builders/taskEntryBuilder.js';
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/task/deleteTask.js';
-import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { knexClient } from '../../../../lib/utils/knexClient.js';
+import type { TaskEntry } from '../../../../models/database/taskEntry.js';
 import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
-import type { DealEntry } from '../../../../models/database/dealEntry.js';
+import { selectTaskByExternalUuid, taskTableName } from '../../../../repositories/taskRepository.js';
+import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
+import { TaskEntryBuilder } from '../../../builders/taskEntryBuilder.js';
+import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+
 describe('API - Task - DELETE', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const dealsGlobal: DealEntry[] = [];
   const tasksGlobal: TaskEntry[] = [];
 
   beforeAll(async () => {

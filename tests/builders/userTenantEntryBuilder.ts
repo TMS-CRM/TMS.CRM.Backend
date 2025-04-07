@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import type { UserTenantEntry } from '../../models/database/userTenantEntry.js';
 
 export class UserTenantEntryBuilder {
@@ -8,7 +7,7 @@ export class UserTenantEntryBuilder {
     this.userTenantEntry = {
       UserId: 0,
       TenantId: 0,
-    } as any as UserTenantEntry;
+    } as unknown as UserTenantEntry;
   }
 
   withUserId(value: number): this {
