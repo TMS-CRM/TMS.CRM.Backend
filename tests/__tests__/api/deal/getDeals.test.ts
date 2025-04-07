@@ -204,10 +204,11 @@ describe('API - Deals - GET', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.items).toBeDefined();
-    expect(resultData.items.length).toBe(5);
-    expect(resultData.total).toBe(7);
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(5);
+    expect(parsedBody.data.total).toBe(7);
   });
 
   it('Success - Should get deals with pagination using offset', async () => {
@@ -225,11 +226,11 @@ describe('API - Deals - GET', () => {
     // Validate the API response
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
-
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.items).toBeDefined();
-    expect(resultData.items.length).toBe(2); // Exclude the first 5 deals
-    expect(resultData.total).toBe(7); // Total number of deals should still be 6
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(2); // Exclude the first 5 deals
+    expect(parsedBody.data.total).toBe(7); // Total number of deals should still be 6
   });
 
   it('Success - Should return 0 deals if the tenant has no deals', async () => {
@@ -248,10 +249,11 @@ describe('API - Deals - GET', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.items).toBeDefined();
-    expect(resultData.items.length).toBe(0);
-    expect(resultData.total).toBe(0);
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(0);
+    expect(parsedBody.data.total).toBe(0);
   });
 
   it('Error - Should return a 400 error if the query parameters are missing', async () => {
@@ -269,7 +271,8 @@ describe('API - Deals - GET', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toContain('Missing required query parameters: limit, offset');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toContain('Missing required query parameters: limit, offset');
   });
 });

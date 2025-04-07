@@ -50,16 +50,17 @@ describe('API - User - PUT', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.firstName).toBe(payload.firstName);
-    expect(resultData.lastName).toBe(payload.lastName);
-    expect(resultData.email).toBe(payload.email);
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeDefined();
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('PersistSuccess');
+    expect(parsedBody.data.firstName).toBe(payload.firstName);
+    expect(parsedBody.data.lastName).toBe(payload.lastName);
+    expect(parsedBody.data.email).toBe(payload.email);
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeDefined();
 
     // Validate the database record
-    const user = await selectUserByExternalUuid(resultData.uuid);
+    const user = await selectUserByExternalUuid(parsedBody.data.uuid);
     expect(user).toBeDefined();
     expect(user!.Email).toBe(payload.email);
   });
@@ -86,8 +87,9 @@ describe('API - User - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing path parameters: uuid');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing path parameters: uuid');
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
@@ -112,8 +114,9 @@ describe('API - User - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing fields: email');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing fields: email');
   });
 
   it('Error - Should return a 400 error if the user does not exist', async () => {
@@ -139,7 +142,8 @@ describe('API - User - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('User not found');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('User not found');
   });
 });

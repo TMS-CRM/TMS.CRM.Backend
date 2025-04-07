@@ -2,10 +2,9 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 }
 import { logger } from '../../../lib/utils/logger.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
-import { PersistSuccess } from '../../../models/api/responses/success.js';
-import { formatErrorResponse, formatOkResponse } from '../../../lib/utils/apiResponseFormatters.js';
+import { PersistSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParseBody, validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { BadRequestError, InternalError } from '../../../models/api/responses/errors.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import type { PutActivityRequestPayload, PutActivityResponsePayload } from '../../../models/api/payloads/activity.js';
 import { selectActivityByExternalUuid, selectActivityById, updateActivity } from '../../../repositories/activityRepository.js';
 import { ActivityEntry } from '../../../models/database/activityEntry.js';
@@ -17,8 +16,8 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
   return validateRequest(request)
     .then(persistRecords)
     .then(formatResponseData)
-    .then((response) => formatOkResponse(response))
-    .catch((error) => formatErrorResponse(error));
+    .then((response) => new HttpOkResponse(response))
+    .catch((error) => new HttpErrorResponse(error));
 }
 
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PutActivityRequestPayload>> {
@@ -61,5 +60,5 @@ export async function formatResponseData(activityId: number): Promise<PersistSuc
     throw new BadRequestError('Activity not found');
   }
 
-  return new PersistSuccess<PutActivityResponsePayload>('Activity has been updated', activity.toPublic(), 200);
+  return new PersistSuccess<PutActivityResponsePayload>('Activity has been updated', activity.toPublic());
 }

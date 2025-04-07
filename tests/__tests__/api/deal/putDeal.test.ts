@@ -100,31 +100,32 @@ describe('API - Deal - PUT', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.customer.uuid).toBe(customersGlobal[0].ExternalUuid);
-    expect(resultData.customer.imageUrl).toBe(customersGlobal[0].ImageUrl);
-    expect(resultData.customer.firstName).toBe(customersGlobal[0].FirstName);
-    expect(resultData.customer.lastName).toBe(customersGlobal[0].LastName);
-    expect(resultData.customer.email).toBe(customersGlobal[0].Email);
-    expect(resultData.customer.phone).toBe(customersGlobal[0].Phone);
-    expect(resultData.street).toBe('New Street Name');
-    expect(resultData.city).toBe(payload.city);
-    expect(resultData.state).toBe(payload.state);
-    expect(resultData.zipCode).toBe(payload.zipCode);
-    expect(resultData.roomArea).toBe(payload.roomArea);
-    expect(resultData.price).toBe(payload.price);
-    expect(resultData.numberOfPeople).toBe(payload.numberOfPeople);
-    expect(new Date(resultData.appointmentDate).getTime()).toBeCloseTo(new Date(dealsGlobal[0].AppointmentDate).getTime());
-    expect(resultData.progress).toBe(payload.progress);
-    expect(resultData.specialInstructions).toBe(payload.specialInstructions);
-    expect(resultData.roomAccess).toBe(payload.roomAccess);
-    expect(resultData.imageUrl).toBe(payload.imageUrl);
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeDefined();
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('PersistSuccess');
+    expect(parsedBody.data.customer.uuid).toBe(customersGlobal[0].ExternalUuid);
+    expect(parsedBody.data.customer.imageUrl).toBe(customersGlobal[0].ImageUrl);
+    expect(parsedBody.data.customer.firstName).toBe(customersGlobal[0].FirstName);
+    expect(parsedBody.data.customer.lastName).toBe(customersGlobal[0].LastName);
+    expect(parsedBody.data.customer.email).toBe(customersGlobal[0].Email);
+    expect(parsedBody.data.customer.phone).toBe(customersGlobal[0].Phone);
+    expect(parsedBody.data.street).toBe('New Street Name');
+    expect(parsedBody.data.city).toBe(payload.city);
+    expect(parsedBody.data.state).toBe(payload.state);
+    expect(parsedBody.data.zipCode).toBe(payload.zipCode);
+    expect(parsedBody.data.roomArea).toBe(payload.roomArea);
+    expect(parsedBody.data.price).toBe(payload.price);
+    expect(parsedBody.data.numberOfPeople).toBe(payload.numberOfPeople);
+    expect(new Date(parsedBody.data.appointmentDate).getTime()).toBeCloseTo(new Date(dealsGlobal[0].AppointmentDate).getTime());
+    expect(parsedBody.data.progress).toBe(payload.progress);
+    expect(parsedBody.data.specialInstructions).toBe(payload.specialInstructions);
+    expect(parsedBody.data.roomAccess).toBe(payload.roomAccess);
+    expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeDefined();
 
     // Validate the database record (filds was changed)
-    const deal = await selectDealByExternalUuid(resultData.uuid);
+    const deal = await selectDealByExternalUuid(parsedBody.data.uuid);
     expect(deal).toBeDefined();
     expect(deal!.Street).toBe(payload.street);
   });
@@ -161,8 +162,9 @@ describe('API - Deal - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing path parameters: uuid');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing path parameters: uuid');
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
@@ -197,8 +199,9 @@ describe('API - Deal - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing fields: street, roomArea, numberOfPeople, specialInstructions');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing fields: street, roomArea, numberOfPeople, specialInstructions');
   });
 
   it('Error - Should return a 400 error if the deal does not exist', async () => {
@@ -234,7 +237,8 @@ describe('API - Deal - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Deal not found');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Deal not found');
   });
 });

@@ -48,13 +48,14 @@ describe('API - Task - GET', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.description).toBe(tasksGlobal[0].Description);
-    expect(new Date(resultData.dueDate).getTime()).toBeCloseTo(new Date(tasksGlobal[0].DueDate).getTime());
-    expect(resultData.completed).toBe(tasksGlobal[0].Completed);
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeDefined();
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.description).toBe(tasksGlobal[0].Description);
+    expect(new Date(parsedBody.data.dueDate).getTime()).toBeCloseTo(new Date(tasksGlobal[0].DueDate).getTime());
+    expect(parsedBody.data.completed).toBe(tasksGlobal[0].Completed);
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeDefined();
   });
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
@@ -72,8 +73,9 @@ describe('API - Task - GET', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing path parameters: uuid');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing path parameters: uuid');
   });
 
   it('Error - Should return a 400 error if the task does not exist', async () => {
@@ -92,7 +94,8 @@ describe('API - Task - GET', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Task not found');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Task not found');
   });
 });

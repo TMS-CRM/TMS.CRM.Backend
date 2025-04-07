@@ -2,10 +2,9 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 }
 import { logger } from '../../../lib/utils/logger.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
-import { PersistSuccess } from '../../../models/api/responses/success.js';
-import { formatErrorResponse, formatOkResponse } from '../../../lib/utils/apiResponseFormatters.js';
+import { PersistSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParseBody, validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { BadRequestError } from '../../../models/api/responses/errors.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { putDealRequestSchema, type PutDealRequestPayload, type PutDealResponsePayload } from '../../../models/api/payloads/deal.js';
 import { DealEntry } from '../../../models/database/dealEntry.js';
 import { selectDealByExternalUuid, selectDealById, updateDeal } from '../../../repositories/dealRepository.js';
@@ -16,8 +15,8 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
   return validateRequest(request)
     .then(persistRecords)
     .then(formatResponseData)
-    .then((response) => formatOkResponse(response))
-    .catch((error) => formatErrorResponse(error));
+    .then((response) => new HttpOkResponse(response))
+    .catch((error) => new HttpErrorResponse(error));
 }
 
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PutDealRequestPayload>> {
@@ -60,5 +59,5 @@ async function formatResponseData(dealId: number): Promise<PersistSuccess<PutDea
     throw new BadRequestError('Deal not found');
   }
 
-  return new PersistSuccess<PutDealResponsePayload>('Deal has been updated', deal.toPublic(), 200);
+  return new PersistSuccess<PutDealResponsePayload>('Deal has been updated', deal.toPublic());
 }

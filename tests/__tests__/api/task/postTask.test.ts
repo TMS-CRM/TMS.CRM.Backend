@@ -36,16 +36,17 @@ describe('API - Task - POST', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.description).toBe(payload.description);
-    expect(resultData.dueDate).toBe(payload.dueDate);
-    expect(resultData.completed).toBe(payload.completed);
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeNull();
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('PersistSuccess');
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.description).toBe(payload.description);
+    expect(parsedBody.data.dueDate).toBe(payload.dueDate);
+    expect(parsedBody.data.completed).toBe(payload.completed);
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeNull();
 
     // Validate the database record
-    const task = await selectTaskByExternalUuid(resultData.uuid);
+    const task = await selectTaskByExternalUuid(parsedBody.data.uuid);
     expect(task).toBeDefined();
     expect(task?.TenantId).toBe(tenantsGlobal[0].Id);
   });
@@ -68,7 +69,8 @@ describe('API - Task - POST', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing fields: description');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toContain('Missing fields: description');
   });
 });

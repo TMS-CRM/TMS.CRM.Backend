@@ -1,15 +1,14 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { logger } from '../../../lib/utils/logger.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { FetchSuccess } from '../../../models/api/responses/success.js';
-import { formatErrorResponse, formatOkResponse } from '../../../lib/utils/apiResponseFormatters.js';
+import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { selectActivities } from '../../../repositories/activityRepository.js';
 import type { GetActivityListFilter, GetActivityListResponsePayload, PublicActivity } from '../../../models/api/payloads/activity.js';
 import type { ExtendedActivityEntry } from '../../../models/database/activityEntry.js';
-import { InternalError } from '../../../models/api/responses/errors.js';
+import { HttpErrorResponse } from '../../../models/api/responses/errors.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   logger.info('Request received: ', request);
@@ -17,8 +16,8 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
   return validateRequest(request)
     .then(queryRecords)
     .then(formatResponseData)
-    .then((response) => formatOkResponse(response))
-    .catch((error) => formatErrorResponse(error));
+    .then((response) => new HttpOkResponse(response))
+    .catch((error) => new HttpErrorResponse(error));
 }
 
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<null, GetActivityListFilter>> {

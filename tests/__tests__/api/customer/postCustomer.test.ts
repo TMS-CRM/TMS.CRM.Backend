@@ -43,22 +43,23 @@ describe('API - Customer - POST', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.firstName).toBe(payload.firstName);
-    expect(resultData.lastName).toBe(payload.lastName);
-    expect(resultData.email).toBe(payload.email);
-    expect(resultData.phone).toBe(payload.phone);
-    expect(resultData.street).toBe(payload.street);
-    expect(resultData.city).toBe(payload.city);
-    expect(resultData.state).toBe(payload.state);
-    expect(resultData.zipCode).toBe(payload.zipCode);
-    expect(resultData.imageUrl).toBe(payload.imageUrl);
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeNull();
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('PersistSuccess');
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.firstName).toBe(payload.firstName);
+    expect(parsedBody.data.lastName).toBe(payload.lastName);
+    expect(parsedBody.data.email).toBe(payload.email);
+    expect(parsedBody.data.phone).toBe(payload.phone);
+    expect(parsedBody.data.street).toBe(payload.street);
+    expect(parsedBody.data.city).toBe(payload.city);
+    expect(parsedBody.data.state).toBe(payload.state);
+    expect(parsedBody.data.zipCode).toBe(payload.zipCode);
+    expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeNull();
 
     // Validate the database record
-    const customer = await selectCustomerByExternalUuid(resultData.uuid);
+    const customer = await selectCustomerByExternalUuid(parsedBody.data.uuid);
     expect(customer).toBeDefined();
   });
 
@@ -78,7 +79,8 @@ describe('API - Customer - POST', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing fields: phone, street, city, state, zipCode');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing fields: phone, street, city, state, zipCode');
   });
 });

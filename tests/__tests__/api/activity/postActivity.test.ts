@@ -85,19 +85,25 @@ describe('API - Activity - POST', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.dealUuid).toBe(payload.dealUuid);
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.description).toBe(payload.description);
-    expect(resultData.imageUrl).toBe(payload.imageUrl);
-    expect(resultData.date).toBe(payload.date);
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeNull();
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('PersistSuccess');
+    expect(parsedBody.data.dealUuid).toBe(payload.dealUuid);
+    expect(parsedBody.data.description).toBe(payload.description);
+    expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
+    expect(parsedBody.data.date).toBe(payload.date);
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeNull();
 
     // Validate the database record
-    const activity = await selectActivityByExternalUuid(resultData.uuid);
+    const activity = await selectActivityByExternalUuid(parsedBody.data.uuid);
     expect(activity).toBeDefined();
     expect(activity?.TenantId).toBe(tenantsGlobal[0].Id);
+    expect(activity?.DealId).toBe(dealsGlobal[0].Id);
+    expect(activity?.Description).toBe(payload.description);
+    expect(activity?.ImageUrl).toBe(payload.imageUrl);
+    expect(new Date(activity!.Date).getTime()).toBeCloseTo(new Date(payload.date).getTime());
+    expect(activity?.CreatedOn).toBeDefined();
+    expect(activity?.ModifiedOn).toBeNull();
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
@@ -119,7 +125,8 @@ describe('API - Activity - POST', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing fields: date');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing fields: date');
   });
 });

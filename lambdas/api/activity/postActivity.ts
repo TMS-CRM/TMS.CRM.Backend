@@ -1,9 +1,8 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { logger } from '../../../lib/utils/logger.js';
-import { PersistSuccess } from '../../../models/api/responses/success.js';
-import { formatErrorResponse, formatOkResponse } from '../../../lib/utils/apiResponseFormatters.js';
+import { PersistSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParseBody, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { BadRequestError, InternalError } from '../../../models/api/responses/errors.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
 import {
@@ -21,8 +20,8 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
   return validateRequest(request)
     .then(persistRecords)
     .then(formatResponseData)
-    .then((response) => formatOkResponse(response))
-    .catch((error) => formatErrorResponse(error));
+    .then((response) => new HttpOkResponse(response))
+    .catch((error) => new HttpErrorResponse(error));
 }
 
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PostActivityRequestPayload>> {
