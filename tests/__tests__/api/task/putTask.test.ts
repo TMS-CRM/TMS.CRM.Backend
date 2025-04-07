@@ -53,20 +53,22 @@ describe('API - Task - PUT', () => {
     const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
 
     // Validate the API response
-    expect(res.statusCode).toBe(201);
+    expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.description).toBe(payload.description);
-    expect(new Date(resultData.dueDate).getTime()).toBeCloseTo(new Date(tasksGlobal[0].DueDate).getTime());
-    expect(resultData.completed).toBe(payload.completed);
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('PersistSuccess');
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.description).toBe(payload.description);
+    expect(new Date(parsedBody.data.dueDate).getTime()).toBeCloseTo(new Date(tasksGlobal[0].DueDate).getTime());
+    expect(parsedBody.data.completed).toBe(payload.completed);
 
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeDefined();
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeDefined();
 
     // Validate the database record
-    const task = await selectTaskByExternalUuid(resultData.uuid);
+    const task = await selectTaskByExternalUuid(parsedBody.data.uuid);
     expect(task).toBeDefined();
     expect(task!.Description).toBe(payload.description);
     expect(task!.Completed).toBe(payload.completed);
@@ -94,8 +96,9 @@ describe('API - Task - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing path parameters: uuid');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing path parameters: uuid');
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
@@ -120,8 +123,9 @@ describe('API - Task - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing fields: description, completed');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing fields: description, completed');
   });
 
   it('Error - Should return a 400 error if the task does not exist', async () => {
@@ -147,7 +151,8 @@ describe('API - Task - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Task not found');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Task not found');
   });
 });

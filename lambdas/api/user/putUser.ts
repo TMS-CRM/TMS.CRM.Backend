@@ -1,13 +1,12 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { logger } from '../../../lib/utils/logger.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { PersistSuccess } from '../../../models/api/responses/success.js';
-import { formatErrorResponse, formatOkResponse } from '../../../lib/utils/apiResponseFormatters.js';
+import { PersistSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParseBody, validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { selectUserByExternalUuid, selectUserById, updateUser } from '../../../repositories/userRepository.js';
-import { BadRequestError, InternalError } from '../../../models/api/responses/errors.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { UserEntry } from '../../../models/database/userEntry.js';
-import type { PutUserRequestPayload, PutUserResponsePayload } from '../../../models/api/payloads/user.js';
+import { putUserRequestSchema, type PutUserRequestPayload, type PutUserResponsePayload } from '../../../models/api/payloads/user.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   logger.info('Request received: ', request);
@@ -15,15 +14,15 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
   return validateRequest(request)
     .then(persistRecords)
     .then(formatResponseData)
-    .then((response) => formatOkResponse(response))
-    .catch((error) => formatErrorResponse(error));
+    .then((response) => new HttpOkResponse(response))
+    .catch((error) => new HttpErrorResponse(error));
 }
 
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PutUserRequestPayload>> {
   logger.info('Start - validateRequest');
 
   const parsedPathParameter = validateAndParsePathParams<{ [param: string]: string }>(request, ['uuid']);
-  const parsedRequestBody = validateAndParseBody<PutUserRequestPayload>(request, ['firstName', 'lastName', 'email']);
+  const parsedRequestBody = validateAndParseBody<PutUserRequestPayload>(request, putUserRequestSchema);
 
   // TODO: Pull tenantId and userId from the token
   const eventQueryParams = validateAndParseQueryParams<{ tenantId: number }>(request, [
@@ -56,7 +55,7 @@ export async function formatResponseData(userId: number): Promise<PersistSuccess
   const user = await selectUserById(userId);
 
   if (!user) {
-    throw new InternalError('User not found');
+    throw new BadRequestError('User not found');
   }
 
   return new PersistSuccess<PutUserResponsePayload>('User has been updated', user.toPublic());

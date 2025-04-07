@@ -11,6 +11,30 @@ export interface PublicTask {
   deletedOn: string | null;
 }
 
+// POST task payload schema
+export const postTaskRequestSchema = {
+  type: 'object',
+  properties: {
+    description: { type: 'string' },
+    dueDate: { type: 'string', format: 'date-time' },
+    completed: { type: 'boolean', nullable: true },
+  },
+  required: ['description', 'dueDate'],
+  additionalProperties: false,
+};
+
+// PUT task payload schema
+export const putTaskRequestSchema = {
+  type: 'object',
+  properties: {
+    description: { type: 'string' },
+    dueDate: { type: 'string', format: 'date-time' },
+    completed: { type: 'boolean' },
+  },
+  required: ['description', 'dueDate', 'completed'],
+  additionalProperties: false,
+};
+
 // POST task payloads
 export interface PostTaskRequestPayload extends Omit<PublicTask, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {}
 

@@ -17,6 +17,41 @@ export interface PublicCustomer {
   deletedOn: string | null;
 }
 
+// POST customer payload schema
+export const postCustomerRequestSchema = {
+  type: 'object',
+  properties: {
+    firstName: { type: 'string' },
+    lastName: { type: 'string' },
+    email: { type: 'string' },
+    phone: { type: 'string' },
+    street: { type: 'string' },
+    city: { type: 'string' },
+    state: { type: 'string' },
+    zipCode: { type: 'string' },
+    imageUrl: { type: 'string', nullable: true },
+  },
+  required: ['firstName', 'lastName', 'email', 'phone', 'street', 'city', 'state', 'zipCode'],
+  additionalProperties: false,
+};
+
+export const putCustomerRequestSchema = {
+  type: 'object',
+  properties: {
+    firstName: { type: 'string' },
+    lastName: { type: 'string' },
+    email: { type: 'string' },
+    phone: { type: 'string' },
+    street: { type: 'string' },
+    city: { type: 'string' },
+    state: { type: 'string' },
+    zipCode: { type: 'string' },
+    imageUrl: { type: 'string', nullable: true },
+  },
+  required: ['firstName', 'lastName', 'email', 'phone', 'street', 'city', 'state', 'zipCode'],
+  additionalProperties: false,
+};
+
 // POST customer payloads
 export interface PostCustomerRequestPayload extends Omit<PublicCustomer, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {}
 

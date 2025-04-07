@@ -51,6 +51,9 @@ describe('API - Task - DELETE', () => {
     expect(res.statusCode).toBe(204);
     expect(res.body).toBeDefined();
 
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('DeleteSuccess');
+
     // Validate the database record
     const task = await selectTaskByExternalUuid(tasksGlobal[0].ExternalUuid);
     expect(task).toBeNull();
@@ -70,8 +73,9 @@ describe('API - Task - DELETE', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing path parameters: uuid');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing path parameters: uuid');
   });
 
   it('Error - Should return a 400 error if the task does not exist', async () => {
@@ -90,7 +94,8 @@ describe('API - Task - DELETE', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Task not found');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Task not found');
   });
 });

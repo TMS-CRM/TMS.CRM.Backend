@@ -7,9 +7,7 @@
     "experimentalDecorators": true,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "lib": [
-      "ES2022",
-    ],
+    "lib": ["ES2022"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "noFallthroughCasesInSwitch": false,
@@ -22,19 +20,9 @@
     "strict": true,
     "strictNullChecks": true,
     "target": "ES2022",
-    "types": [
-      "node",
-      "vitest/globals",
-    ],
-    "typeRoots": [
-      "./node_modules",
-      "./node_modules/@types",
-    ],
-    "verbatimModuleSyntax": true,
+    "types": ["node", "vitest/globals"],
+    "typeRoots": ["./node_modules", "./node_modules/@types"],
+    "verbatimModuleSyntax": true
   },
-  "exclude": [
-    "node_modules",
-    "cdk.out",
-    "dist",
-  ],
+  "exclude": ["node_modules", "cdk.out", "dist"]
 }

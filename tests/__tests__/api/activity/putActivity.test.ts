@@ -103,20 +103,21 @@ describe('API - Activity - PUT', () => {
     const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
 
     // Validate the API response
-    expect(res.statusCode).toBe(201);
+    expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.dealUuid).toBe(dealsGlobal[0].ExternalUuid);
-    expect(resultData.description).toBe('This is a test activity');
-    expect(resultData.imageUrl).toBe(payload.imageUrl);
-    expect(new Date(resultData.date).getTime()).toBeCloseTo(new Date(activitiesGlobal[0].Date).getTime());
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeDefined();
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('PersistSuccess');
+    expect(parsedBody.data.dealUuid).toBe(dealsGlobal[0].ExternalUuid);
+    expect(parsedBody.data.description).toBe(payload.description);
+    expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
+    expect(new Date(parsedBody.data.date).getTime()).toBeCloseTo(new Date(activitiesGlobal[0].Date).getTime());
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeDefined();
 
     // Validate the database record
-    const activity = await selectActivityByExternalUuid(resultData.uuid);
+    const activity = await selectActivityByExternalUuid(parsedBody.data.uuid);
     expect(activity).toBeDefined();
     expect(activity!.Description).toBe(payload.description);
   });
@@ -143,8 +144,9 @@ describe('API - Activity - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing path parameters: uuid');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing path parameters: uuid');
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
@@ -172,8 +174,9 @@ describe('API - Activity - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing fields: description');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing fields: description');
   });
 
   it('Error - Should return a 400 error if the activity does not exist', async () => {
@@ -199,7 +202,8 @@ describe('API - Activity - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Activity not found');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Activity not found');
   });
 });

@@ -1,12 +1,15 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { logger } from '../../../lib/utils/logger.js';
-import { PersistSuccess } from '../../../models/api/responses/success.js';
-import { formatErrorResponse, formatOkResponse } from '../../../lib/utils/apiResponseFormatters.js';
+import { PersistSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { validateAndParseBody, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
-import { BadRequestError, InternalError } from '../../../models/api/responses/errors.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
-import type { PostActivityRequestPayload, PostActivityResponsePayload } from '../../../models/api/payloads/activity.js';
+import {
+  postActivityRequestSchema,
+  type PostActivityRequestPayload,
+  type PostActivityResponsePayload,
+} from '../../../models/api/payloads/activity.js';
 import { ActivityEntry } from '../../../models/database/activityEntry.js';
 import { insertActivity, selectActivityById } from '../../../repositories/activityRepository.js';
 import { selectDealByExternalUuid } from '../../../repositories/dealRepository.js';
@@ -17,14 +20,14 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
   return validateRequest(request)
     .then(persistRecords)
     .then(formatResponseData)
-    .then((response) => formatOkResponse(response))
-    .catch((error) => formatErrorResponse(error));
+    .then((response) => new HttpOkResponse(response))
+    .catch((error) => new HttpErrorResponse(error));
 }
 
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PostActivityRequestPayload>> {
   logger.info('Start - validateRequest');
 
-  const parsedRequestBody = validateAndParseBody<PostActivityRequestPayload>(request, ['description', 'date']);
+  const parsedRequestBody = validateAndParseBody<PostActivityRequestPayload>(request, postActivityRequestSchema);
 
   // TODO: Pull tenantId and userId from the token
   const eventQueryParams = validateAndParseQueryParams<{ tenantId: number }>(request, [
@@ -57,7 +60,7 @@ export async function formatResponseData(activityId: number): Promise<PersistSuc
 
   const activity = await selectActivityById(activityId);
   if (!activity) {
-    throw new InternalError('Activity not found');
+    throw new BadRequestError('Activity not found');
   }
 
   return new PersistSuccess<PostActivityResponsePayload>('Activity has been created', activity.toPublic());

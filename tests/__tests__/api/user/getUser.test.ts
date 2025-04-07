@@ -46,13 +46,14 @@ describe('API - User - GET', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.firstName).toBe(usersGlobal[0].FirstName);
-    expect(resultData.lastName).toBe(usersGlobal[0].LastName);
-    expect(resultData.email).toBe(usersGlobal[0].Email);
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeDefined();
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.firstName).toBe(usersGlobal[0].FirstName);
+    expect(parsedBody.data.lastName).toBe(usersGlobal[0].LastName);
+    expect(parsedBody.data.email).toBe(usersGlobal[0].Email);
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeDefined();
   });
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
@@ -70,8 +71,9 @@ describe('API - User - GET', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing path parameters: uuid');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing path parameters: uuid');
   });
 
   it('Error - Should return a 400 error if the user does not exist', async () => {
@@ -90,7 +92,8 @@ describe('API - User - GET', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('User not found');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('User not found');
   });
 });

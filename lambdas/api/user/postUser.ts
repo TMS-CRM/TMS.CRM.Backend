@@ -1,12 +1,11 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { logger } from '../../../lib/utils/logger.js';
-import { PersistSuccess } from '../../../models/api/responses/success.js';
-import { formatErrorResponse, formatOkResponse } from '../../../lib/utils/apiResponseFormatters.js';
+import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { validateAndParseBody, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { selectUserById, insertUser } from '../../../repositories/userRepository.js';
-import { InternalError } from '../../../models/api/responses/errors.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { UserEntry } from '../../../models/database/userEntry.js';
-import type { PostUserRequestPayload, PostUserResponsePayload } from '../../../models/api/payloads/user.js';
+import { postUserRequestSchema, type PostUserRequestPayload, type PostUserResponsePayload } from '../../../models/api/payloads/user.js';
 import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
 import { QueryParamDataType } from '../../../models/api/validations.js';
 
@@ -16,14 +15,14 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
   return validateRequest(request)
     .then(persistRecords)
     .then(formatResponseData)
-    .then((response) => formatOkResponse(response))
-    .catch((error) => formatErrorResponse(error));
+    .then((response) => new HttpOkResponse(response))
+    .catch((error) => new HttpErrorResponse(error));
 }
 
 async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PostUserRequestPayload>> {
   logger.info('Start - validateRequest');
 
-  const parsedRequestBody = validateAndParseBody<PostUserRequestPayload>(request, ['firstName', 'lastName', 'email']);
+  const parsedRequestBody = validateAndParseBody<PostUserRequestPayload>(request, postUserRequestSchema);
 
   // TODO: Pull tenantId and userId from the token
   const eventQueryParams = validateAndParseQueryParams<{ tenantId: number }>(request, [
@@ -49,7 +48,7 @@ export async function formatResponseData(userId: number): Promise<PersistSuccess
   const user = await selectUserById(userId);
 
   if (!user) {
-    throw new InternalError('User not found');
+    throw new BadRequestError('User not found');
   }
 
   return new PersistSuccess<PostUserResponsePayload>('User has been created', user.toPublic());

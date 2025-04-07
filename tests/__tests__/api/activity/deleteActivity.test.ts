@@ -101,6 +101,9 @@ describe('API - Activity - DELETE', () => {
     expect(res.statusCode).toBe(204);
     expect(res.body).toBeDefined();
 
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('DeleteSuccess');
+
     // Validate the database record
     const activity = await selectActivityByExternalUuid(activitiesGlobal[0].ExternalUuid);
     expect(activity).toBeNull();
@@ -120,8 +123,9 @@ describe('API - Activity - DELETE', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing path parameters: uuid');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing path parameters: uuid');
   });
 
   it('Error - Should return a 400 error if the activity does not exist', async () => {
@@ -140,7 +144,8 @@ describe('API - Activity - DELETE', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Activity not found');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Activity not found');
   });
 });

@@ -177,10 +177,11 @@ describe('API - Customers - GET', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.items).toBeDefined();
-    expect(resultData.items.length).toBe(5);
-    expect(resultData.total).toBe(9);
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(5);
+    expect(parsedBody.data.total).toBe(9);
   });
 
   it('Success - Should get customers with pagination using offset', async () => {
@@ -199,10 +200,11 @@ describe('API - Customers - GET', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.items).toBeDefined();
-    expect(resultData.items.length).toBe(4); // Exclude the first 5 customers
-    expect(resultData.total).toBe(9); // Total number of customers should still be 9
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(4); // Exclude the first 5 customers
+    expect(parsedBody.data.total).toBe(9); // Total number of customers should still be 9
   });
 
   it('Success - Should return 0 customers if the tenant has no customers', async () => {
@@ -221,10 +223,11 @@ describe('API - Customers - GET', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.items).toBeDefined();
-    expect(resultData.items.length).toBe(0);
-    expect(resultData.total).toBe(0);
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(0);
+    expect(parsedBody.data.total).toBe(0);
   });
 
   it('Error - Should return a 400 error if the query parameters are missing', async () => {
@@ -238,7 +241,8 @@ describe('API - Customers - GET', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toContain('Missing required query parameters: limit, offset');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toContain('Missing required query parameters: limit, offset');
   });
 });

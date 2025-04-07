@@ -81,28 +81,31 @@ describe('API - Deal - GET', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.customer.uuid).toBe(customersGlobal[0].ExternalUuid);
-    expect(resultData.customer.imageUrl).toBe(customersGlobal[0].ImageUrl);
-    expect(resultData.customer.firstName).toBe(customersGlobal[0].FirstName);
-    expect(resultData.customer.lastName).toBe(customersGlobal[0].LastName);
-    expect(resultData.customer.email).toBe(customersGlobal[0].Email);
-    expect(resultData.customer.phone).toBe(customersGlobal[0].Phone);
-    expect(resultData.street).toBe(dealsGlobal[0].Street);
-    expect(resultData.city).toBe(dealsGlobal[0].City);
-    expect(resultData.state).toBe(dealsGlobal[0].State);
-    expect(resultData.zipCode).toBe(dealsGlobal[0].ZipCode);
-    expect(resultData.imageUrl).toBe(dealsGlobal[0].ImageUrl);
-    expect(resultData.roomArea).toBe(dealsGlobal[0].RoomArea);
-    expect(resultData.price).toBe(dealsGlobal[0].Price);
-    expect(resultData.numberOfPeople).toBe(dealsGlobal[0].NumberOfPeople);
-    expect(new Date(resultData.appointmentDate).getTime()).toBeCloseTo(new Date(dealsGlobal[0].AppointmentDate).getTime());
-    expect(resultData.progress).toBe(dealsGlobal[0].Progress);
-    expect(resultData.roomAccess).toBe(dealsGlobal[0].RoomAccess);
-    expect(resultData.specialInstructions).toBe(dealsGlobal[0].SpecialInstructions);
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeDefined();
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+
+    const responseData = parsedBody.data;
+    expect(responseData.customer.uuid).toBe(customersGlobal[0].ExternalUuid);
+    expect(responseData.customer.imageUrl).toBe(customersGlobal[0].ImageUrl);
+    expect(responseData.customer.firstName).toBe(customersGlobal[0].FirstName);
+    expect(responseData.customer.lastName).toBe(customersGlobal[0].LastName);
+    expect(responseData.customer.email).toBe(customersGlobal[0].Email);
+    expect(responseData.customer.phone).toBe(customersGlobal[0].Phone);
+    expect(responseData.street).toBe(dealsGlobal[0].Street);
+    expect(responseData.city).toBe(dealsGlobal[0].City);
+    expect(responseData.state).toBe(dealsGlobal[0].State);
+    expect(responseData.zipCode).toBe(dealsGlobal[0].ZipCode);
+    expect(responseData.imageUrl).toBe(dealsGlobal[0].ImageUrl);
+    expect(responseData.roomArea).toBe(dealsGlobal[0].RoomArea);
+    expect(responseData.price).toBe(dealsGlobal[0].Price);
+    expect(responseData.numberOfPeople).toBe(dealsGlobal[0].NumberOfPeople);
+    expect(new Date(responseData.appointmentDate).getTime()).toBeCloseTo(new Date(dealsGlobal[0].AppointmentDate).getTime());
+    expect(responseData.progress).toBe(dealsGlobal[0].Progress);
+    expect(responseData.roomAccess).toBe(dealsGlobal[0].RoomAccess);
+    expect(responseData.specialInstructions).toBe(dealsGlobal[0].SpecialInstructions);
+    expect(responseData.uuid).toBeDefined();
+    expect(responseData.createdOn).toBeDefined();
+    expect(responseData.modifiedOn).toBeDefined();
   });
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
@@ -120,8 +123,9 @@ describe('API - Deal - GET', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing path parameters: uuid');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing path parameters: uuid');
   });
 
   it('Error - Should return a 400 error if the deal does not exist', async () => {
@@ -140,7 +144,8 @@ describe('API - Deal - GET', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Deal not found');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Deal not found');
   });
 });

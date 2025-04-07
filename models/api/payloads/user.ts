@@ -10,6 +10,30 @@ export interface PublicUser {
   modifiedOn: string | null;
 }
 
+// POST user payload schema
+export const postUserRequestSchema = {
+  type: 'object',
+  properties: {
+    firstName: { type: 'string' },
+    lastName: { type: 'string' },
+    email: { type: 'string' },
+  },
+  required: ['firstName', 'lastName', 'email'],
+  additionalProperties: false,
+};
+
+// PUT user payload schema
+export const putUserRequestSchema = {
+  type: 'object',
+  properties: {
+    firstName: { type: 'string' },
+    lastName: { type: 'string' },
+    email: { type: 'string' },
+  },
+  required: ['firstName', 'lastName', 'email'],
+  additionalProperties: false,
+};
+
 // POST user payloads
 export interface PostUserRequestPayload extends Pick<PublicUser, 'firstName' | 'lastName' | 'email'> {}
 

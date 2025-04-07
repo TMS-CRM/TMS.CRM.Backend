@@ -32,19 +32,20 @@ describe('API - User - POST', () => {
     const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
 
     // Validate the API response
-    expect(res.statusCode).toBe(201);
+    expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.firstName).toBe(payload.firstName);
-    expect(resultData.lastName).toBe(payload.lastName);
-    expect(resultData.email).toBe(payload.email);
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeNull();
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('PersistSuccess');
+    expect(parsedBody.data.firstName).toBe(payload.firstName);
+    expect(parsedBody.data.lastName).toBe(payload.lastName);
+    expect(parsedBody.data.email).toBe(payload.email);
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeNull();
 
     // Validate the database record
-    const user = await selectUserByExternalUuid(resultData.uuid);
+    const user = await selectUserByExternalUuid(parsedBody.data.uuid);
     expect(user).toBeDefined();
   });
 
@@ -65,7 +66,8 @@ describe('API - User - POST', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing fields: lastName, email');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing fields: lastName, email');
   });
 });

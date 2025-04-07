@@ -12,6 +12,31 @@ export interface PublicActivity {
   deletedOn: string | null;
 }
 
+// POST activity payload schema
+export const postActivityRequestSchema = {
+  type: 'object',
+  properties: {
+    dealUuid: { type: 'string' },
+    description: { type: 'string' },
+    date: { type: 'string', format: 'date-time' },
+    imageUrl: { type: 'string', nullable: true },
+  },
+  required: ['dealUuid', 'description', 'date'],
+  additionalProperties: false,
+};
+
+// PUT activity payload schema
+export const putActivityRequestSchema = {
+  type: 'object',
+  properties: {
+    description: { type: 'string' },
+    date: { type: 'string', format: 'date-time' },
+    imageUrl: { type: 'string', nullable: true },
+  },
+  required: ['description', 'date'],
+  additionalProperties: false,
+};
+
 // POST activity payloads
 export interface PostActivityRequestPayload extends Omit<PublicActivity, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'> {}
 

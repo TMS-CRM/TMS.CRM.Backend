@@ -70,26 +70,27 @@ describe('API - Customer - PUT', () => {
     const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
 
     // Validate the API response
-    expect(res.statusCode).toBe(201);
+    expect(res.statusCode).toBe(200);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).data;
-    expect(resultData.firstName).toBe(payload.firstName);
-    expect(resultData.lastName).toBe(payload.lastName);
-    expect(resultData.email).toBe(payload.email);
-    expect(resultData.phone).toBe(payload.phone);
-    expect(resultData.street).toBe(payload.street);
-    expect(resultData.city).toBe(payload.city);
-    expect(resultData.state).toBe(payload.state);
-    expect(resultData.zipCode).toBe(payload.zipCode);
-    expect(resultData.imageUrl).toBe(payload.imageUrl);
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('PersistSuccess');
+    expect(parsedBody.data.firstName).toBe(payload.firstName);
+    expect(parsedBody.data.lastName).toBe(payload.lastName);
+    expect(parsedBody.data.email).toBe(payload.email);
+    expect(parsedBody.data.phone).toBe(payload.phone);
+    expect(parsedBody.data.street).toBe(payload.street);
+    expect(parsedBody.data.city).toBe(payload.city);
+    expect(parsedBody.data.state).toBe(payload.state);
+    expect(parsedBody.data.zipCode).toBe(payload.zipCode);
+    expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
 
-    expect(resultData.uuid).toBeDefined();
-    expect(resultData.createdOn).toBeDefined();
-    expect(resultData.modifiedOn).toBeDefined();
+    expect(parsedBody.data.uuid).toBeDefined();
+    expect(parsedBody.data.createdOn).toBeDefined();
+    expect(parsedBody.data.modifiedOn).toBeDefined();
 
     // Validate the database record
-    const customer = await selectCustomerByExternalUuid(resultData.uuid);
+    const customer = await selectCustomerByExternalUuid(parsedBody.data.uuid);
     expect(customer).toBeDefined();
     expect(customer!.Email).toBe(payload.email);
   });
@@ -122,8 +123,9 @@ describe('API - Customer - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing path parameters: uuid');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing path parameters: uuid');
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
@@ -131,12 +133,6 @@ describe('API - Customer - PUT', () => {
     const payload: Partial<PutCustomerRequestPayload> = {
       firstName: customersGlobal[0].FirstName,
       lastName: customersGlobal[0].LastName,
-      // email: customersGlobal[0].Email,
-      // phone: customersGlobal[0].Phone,
-      // street: customersGlobal[0].Street,
-      // city: customersGlobal[0].City,
-      // state: customersGlobal[0].State,
-      // zipCode: customersGlobal[0].ZipCode,
       imageUrl: String(customersGlobal[0].ImageUrl),
     };
 
@@ -156,8 +152,9 @@ describe('API - Customer - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Missing fields: email, phone, street, city, state, zipCode');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Missing fields: email, phone, street, city, state, zipCode');
   });
 
   it('Error - Should return a 400 error if the customer does not exist', async () => {
@@ -189,7 +186,8 @@ describe('API - Customer - PUT', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toBeDefined();
 
-    const resultData = JSON.parse(res.body!).message;
-    expect(resultData).toBe('Customer not found');
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('BadRequestError');
+    expect(parsedBody.message).toBe('Customer not found');
   });
 });
