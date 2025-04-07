@@ -16,11 +16,6 @@ export class TaskEntryBuilder {
     return this;
   }
 
-  withDealId(value: number): this {
-    this.taskEntry.DealId = value;
-    return this;
-  }
-
   withDescription(value: string): this {
     this.taskEntry.Description = value;
     return this;
