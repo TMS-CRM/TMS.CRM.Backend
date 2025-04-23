@@ -6,7 +6,7 @@ import { Construct } from 'constructs';
 const MAX_AZS = 3;
 
 export interface VpcImporterProps {
-  Name?: string;
+  Name: string;
 }
 
 export class VpcImporter extends Construct {
@@ -20,7 +20,7 @@ export class VpcImporter extends Construct {
 
   constructor(scope: Construct, id: string, props: VpcImporterProps) {
     super(scope, id);
-    this.defaultName = props.Name ?? 'Hectre-VPC';
+    this.defaultName = props.Name;
 
     // VPC Id
     const vpcIdParam = new CfnParameter(this, 'vpcId', {
@@ -55,6 +55,7 @@ export class VpcImporter extends Construct {
       type: 'AWS::SSM::Parameter::Value<CommaDelimitedList>',
       default: `/${this.defaultName}/vpc/AZs`,
     });
+
     const azs = [...new Array(MAX_AZS).keys()].map((_, index) => Fn.select(index, azsParam.valueAsList));
     this.azs = azs;
 

@@ -1,4 +1,5 @@
-import { join } from 'path';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import * as cdk from 'aws-cdk-lib';
 import { CfnParameter } from 'aws-cdk-lib';
 import type { CfnApi } from 'aws-cdk-lib/aws-apigatewayv2';
@@ -9,24 +10,13 @@ import { LambdaBuilder } from './constructs/lambda-builder.js';
 import { RdsBuilder } from './constructs/rds-builder.js';
 import { RoleBuilder } from './constructs/role-builder.js';
 import { VpcImporter } from './constructs/vpc-importer.js';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export class TmsCrmBackendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-
-    // Create a parameter for the VPC ID
-    const paramVpcId = new CfnParameter(this, 'VpcId', {
-      type: 'String',
-      description: 'The ID of the VPC to use',
-    });
-
-    // Create a parameter for the Sentinel Auto Start tag
-    const paramSentinelAutoStartTag = new CfnParameter(this, 'SentinelAutoStartTag', {
-      type: 'String',
-      description: 'The value for the Sentinel:AutoStart tag',
-      default: 'true',
-    });
+    const serviceName = 'tmsCrm';
 
     const paramUrlTmsCrmApi = new CfnParameter(this, 'UrlTmsCrmApi', {
       type: 'String',
@@ -34,22 +24,18 @@ export class TmsCrmBackendStack extends cdk.Stack {
     });
 
     const vpcImporter = new VpcImporter(this, 'VpcImporter', {
-      Name: paramVpcId.valueAsString,
+      Name: 'TMS-CRM',
     });
 
+    // RDS
     const rdsInstance = new RdsBuilder(this, 'TmsCrmBackendRds', {
       ApplicationName: 'TmsCrmBackend',
       Vpc: vpcImporter,
       MinCapacity: 0.5,
       MaxCapacity: 16,
-      RDSTags: {
-        'Sentinel:AutoStart': paramSentinelAutoStartTag.valueAsString,
-      },
-      EC2Tags: {
-        'Sentinel:AutoStart': paramSentinelAutoStartTag.valueAsString,
-      },
     });
 
+    // Roles
     const roleApiGetActivity = new RoleBuilder(this, 'RoleApiGetActivity', {
       ServicePrincipal: 'lambda.amazonaws.com',
       ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
@@ -57,8 +43,177 @@ export class TmsCrmBackendStack extends cdk.Stack {
       PolicyActions: [],
     });
 
+    const roleApiPostActivity = new RoleBuilder(this, 'RoleApiPostActivity', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiGetActivities = new RoleBuilder(this, 'RoleApiGetActivities', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiPutActivity = new RoleBuilder(this, 'RoleApiPutActivity', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiDeleteActivity = new RoleBuilder(this, 'RoleApiDeleteActivity', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiGetCustomer = new RoleBuilder(this, 'RoleApiGetCustomer', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiGetCustomers = new RoleBuilder(this, 'RoleApiGetCustomers', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiPostCustomer = new RoleBuilder(this, 'RoleApiPostCustomer', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiPutCustomer = new RoleBuilder(this, 'RoleApiPutCustomer', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiDeleteCustomer = new RoleBuilder(this, 'RoleApiDeleteCustomer', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiGetDeal = new RoleBuilder(this, 'RoleApiGetDeal', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiGetDeals = new RoleBuilder(this, 'RoleApiGetDeals', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiPostDeal = new RoleBuilder(this, 'RoleApiPostDeal', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiPutDeal = new RoleBuilder(this, 'RoleApiPutDeal', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiGetTask = new RoleBuilder(this, 'RoleApiGetTask', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiGetTasks = new RoleBuilder(this, 'RoleApiGetTasks', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiPostTask = new RoleBuilder(this, 'RoleApiPostTask', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiPutTask = new RoleBuilder(this, 'RoleApiPutTask', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiDeleteDeal = new RoleBuilder(this, 'RoleApiDeleteDeal', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiDeleteTask = new RoleBuilder(this, 'RoleApiDeleteTask', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiGetUser = new RoleBuilder(this, 'RoleApiGetUser', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiGetUsers = new RoleBuilder(this, 'RoleApiGetUsers', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiPostUser = new RoleBuilder(this, 'RoleApiPostUser', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiPutUser = new RoleBuilder(this, 'RoleApiPutUser', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const roleApiDeleteUser = new RoleBuilder(this, 'RoleApiDeleteUser', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    // Lambdas
     const lambdaApiGetActivity = new LambdaBuilder(this, 'tmsCrmApiGetActivity', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'activity', 'getActivity.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'activity', 'getActivity.ts'),
       LambdaName: 'tms-crm-api-get-activity',
       LambdaRole: roleApiGetActivity.role,
       LambdaEnv: {
@@ -69,15 +224,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiGetActivities = new RoleBuilder(this, 'RoleApiGetActivities', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiGetActivities = new LambdaBuilder(this, 'tmsCrmApiGetActivities', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'activity', 'getActivities.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'activity', 'getActivities.ts'),
       LambdaName: 'tms-crm-api-get-activities',
       LambdaRole: roleApiGetActivities.role,
       LambdaEnv: {
@@ -88,15 +236,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiPostActivity = new RoleBuilder(this, 'RoleApiPostActivity', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiPostActivity = new LambdaBuilder(this, 'tmsCrmApiPostActivity', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'activity', 'postActivity.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'activity', 'postActivity.ts'),
       LambdaName: 'tms-crm-api-post-activity',
       LambdaRole: roleApiPostActivity.role,
       LambdaEnv: {
@@ -107,15 +248,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiPutActivity = new RoleBuilder(this, 'RoleApiPutActivity', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiPutActivity = new LambdaBuilder(this, 'tmsCrmApiPutActivity', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'activity', 'putActivity.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'activity', 'putActivity.ts'),
       LambdaName: 'tms-crm-api-put-activity',
       LambdaRole: roleApiPutActivity.role,
       LambdaEnv: {
@@ -126,15 +260,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiDeleteActivity = new RoleBuilder(this, 'RoleApiDeleteActivity', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiDeleteActivity = new LambdaBuilder(this, 'tmsCrmApiDeleteActivity', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'activity', 'deleteActivity.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'activity', 'deleteActivity.ts'),
       LambdaName: 'tms-crm-api-delete-activity',
       LambdaRole: roleApiDeleteActivity.role,
       LambdaEnv: {
@@ -145,15 +272,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiGetCustomer = new RoleBuilder(this, 'RoleApiGetCustomer', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiGetCustomer = new LambdaBuilder(this, 'tmsCrmApiGetCustomer', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'customer', 'getCustomer.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'customer', 'getCustomer.ts'),
       LambdaName: 'tms-crm-api-get-customer',
       LambdaRole: roleApiGetCustomer.role,
       LambdaEnv: {
@@ -164,15 +284,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiGetCustomers = new RoleBuilder(this, 'RoleApiGetCustomers', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiGetCustomers = new LambdaBuilder(this, 'tmsCrmApiGetCustomers', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'customer', 'getCustomers.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'customer', 'getCustomers.ts'),
       LambdaName: 'tms-crm-api-get-customers',
       LambdaRole: roleApiGetCustomers.role,
       LambdaEnv: {
@@ -183,15 +296,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiPostCustomer = new RoleBuilder(this, 'RoleApiPostCustomer', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiPostCustomer = new LambdaBuilder(this, 'tmsCrmApiPostCustomer', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'customer', 'postCustomer.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'customer', 'postCustomer.ts'),
       LambdaName: 'tms-crm-api-post-customer',
       LambdaRole: roleApiPostCustomer.role,
       LambdaEnv: {
@@ -202,15 +308,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiPutCustomer = new RoleBuilder(this, 'RoleApiPutCustomer', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiPutCustomer = new LambdaBuilder(this, 'tmsCrmApiPutCustomer', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'customer', 'putCustomer.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'customer', 'putCustomer.ts'),
       LambdaName: 'tms-crm-api-put-customer',
       LambdaRole: roleApiPutCustomer.role,
       LambdaEnv: {
@@ -221,15 +320,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiDeleteCustomer = new RoleBuilder(this, 'RoleApiDeleteCustomer', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiDeleteCustomer = new LambdaBuilder(this, 'tmsCrmApiDeleteCustomer', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'customer', 'deleteCustomer.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'customer', 'deleteCustomer.ts'),
       LambdaName: 'tms-crm-api-delete-customer',
       LambdaRole: roleApiDeleteCustomer.role,
       LambdaEnv: {
@@ -240,15 +332,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiGetDeal = new RoleBuilder(this, 'RoleApiGetDeal', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiGetDeal = new LambdaBuilder(this, 'tmsCrmApiGetDeal', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'deal', 'getDeal.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'deal', 'getDeal.ts'),
       LambdaName: 'tms-crm-api-get-deal',
       LambdaRole: roleApiGetDeal.role,
       LambdaEnv: {
@@ -259,15 +344,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiGetDeals = new RoleBuilder(this, 'RoleApiGetDeals', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiGetDeals = new LambdaBuilder(this, 'tmsCrmApiGetDeals', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'deal', 'getDeals.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'deal', 'getDeals.ts'),
       LambdaName: 'tms-crm-api-get-deals',
       LambdaRole: roleApiGetDeals.role,
       LambdaEnv: {
@@ -278,15 +356,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiPostDeal = new RoleBuilder(this, 'RoleApiPostDeal', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiPostDeal = new LambdaBuilder(this, 'tmsCrmApiPostDeal', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'deal', 'postDeal.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'deal', 'postDeal.ts'),
       LambdaName: 'tms-crm-api-post-deal',
       LambdaRole: roleApiPostDeal.role,
       LambdaEnv: {
@@ -297,15 +368,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiPutDeal = new RoleBuilder(this, 'RoleApiPutDeal', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiPutDeal = new LambdaBuilder(this, 'tmsCrmApiPutDeal', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'deal', 'putDeal.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'deal', 'putDeal.ts'),
       LambdaName: 'tms-crm-api-put-deal',
       LambdaRole: roleApiPutDeal.role,
       LambdaEnv: {
@@ -316,15 +380,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiDeleteDeal = new RoleBuilder(this, 'RoleApiDeleteDeal', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiDeleteDeal = new LambdaBuilder(this, 'tmsCrmApiDeleteDeal', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'deal', 'deleteDeal.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'deal', 'deleteDeal.ts'),
       LambdaName: 'tms-crm-api-delete-deal',
       LambdaRole: roleApiDeleteDeal.role,
       LambdaEnv: {
@@ -335,15 +392,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiGetTask = new RoleBuilder(this, 'RoleApiGetTask', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiGetTask = new LambdaBuilder(this, 'tmsCrmApiGetTask', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'task', 'getTask.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'task', 'getTask.ts'),
       LambdaName: 'tms-crm-api-get-task',
       LambdaRole: roleApiGetTask.role,
       LambdaEnv: {
@@ -354,15 +404,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiGetTasks = new RoleBuilder(this, 'RoleApiGetTasks', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiGetTasks = new LambdaBuilder(this, 'tmsCrmApiGetTasks', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'task', 'getTasks.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'task', 'getTasks.ts'),
       LambdaName: 'tms-crm-api-get-tasks',
       LambdaRole: roleApiGetTasks.role,
       LambdaEnv: {
@@ -373,15 +416,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiPostTask = new RoleBuilder(this, 'RoleApiPostTask', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiPostTask = new LambdaBuilder(this, 'tmsCrmApiPostTask', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'task', 'postTask.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'task', 'postTask.ts'),
       LambdaName: 'tms-crm-api-post-task',
       LambdaRole: roleApiPostTask.role,
       LambdaEnv: {
@@ -392,15 +428,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiPutTask = new RoleBuilder(this, 'RoleApiPutTask', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiPutTask = new LambdaBuilder(this, 'tmsCrmApiPutTask', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'task', 'putTask.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'task', 'putTask.ts'),
       LambdaName: 'tms-crm-api-put-task',
       LambdaRole: roleApiPutTask.role,
       LambdaEnv: {
@@ -411,15 +440,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiDeleteTask = new RoleBuilder(this, 'RoleApiDeleteTask', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiDeleteTask = new LambdaBuilder(this, 'tmsCrmApiDeleteTask', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'task', 'deleteTask.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'task', 'deleteTask.ts'),
       LambdaName: 'tms-crm-api-delete-task',
       LambdaRole: roleApiDeleteTask.role,
       LambdaEnv: {
@@ -430,15 +452,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiGetUser = new RoleBuilder(this, 'RoleApiGetUser', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiGetUser = new LambdaBuilder(this, 'tmsCrmApiGetUser', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'user', 'getUser.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'getUser.ts'),
       LambdaName: 'tms-crm-api-get-user',
       LambdaRole: roleApiGetUser.role,
       LambdaEnv: {
@@ -449,15 +464,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiGetUsers = new RoleBuilder(this, 'RoleApiGetUsers', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiGetUsers = new LambdaBuilder(this, 'tmsCrmApiGetUsers', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'user', 'getUsers.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'getUsers.ts'),
       LambdaName: 'tms-crm-api-get-users',
       LambdaRole: roleApiGetUsers.role,
       LambdaEnv: {
@@ -468,15 +476,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiPostUser = new RoleBuilder(this, 'RoleApiPostUser', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiPostUser = new LambdaBuilder(this, 'tmsCrmApiPostUser', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'user', 'postUser.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'postUser.ts'),
       LambdaName: 'tms-crm-api-post-user',
       LambdaRole: roleApiPostUser.role,
       LambdaEnv: {
@@ -487,15 +488,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiPutUser = new RoleBuilder(this, 'RoleApiPutUser', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiPutUser = new LambdaBuilder(this, 'tmsCrmApiPutUser', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'user', 'putUser.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'putUser.ts'),
       LambdaName: 'tms-crm-api-put-user',
       LambdaRole: roleApiPutUser.role,
       LambdaEnv: {
@@ -506,15 +500,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    const roleApiDeleteUser = new RoleBuilder(this, 'RoleApiDeleteUser', {
-      ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
-    });
-
     const lambdaApiDeleteUser = new LambdaBuilder(this, 'tmsCrmApiDeleteUser', {
-      LambdaPath: join(__dirname, '..', 'lambda', 'api', 'user', 'deleteUser.ts'),
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'deleteUser.ts'),
       LambdaName: 'tms-crm-api-delete-user',
       LambdaRole: roleApiDeleteUser.role,
       LambdaEnv: {
@@ -525,7 +512,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter.vpc,
     }).lambda;
 
-    //CORS
+    // ApiGateway
     const corsConfig: CfnApi.CorsProperty = {
       allowHeaders: ['origin', 'Accept', 'Authorization', 'Content-Type', 'X-Requested-With', 'X-Modified-On'],
       allowMethods: ['OPTIONS', 'GET', 'POST', 'DELETE'],
@@ -538,7 +525,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       validation: acm.CertificateValidation.fromDns(),
     });
 
-    const api = new ApiBuilder(this, 'payrollApi', {
+    const api = new ApiBuilder(this, `${serviceName}Api`, {
       ApiName: 'tmsCrmApi',
       ApiProtocol: 'HTTP',
       ApiCors: corsConfig,
@@ -549,7 +536,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Region: this.region,
     });
 
-    api.addRoute('tmsCrmApiGetActivity', {
+    api.addRoute(`${serviceName}ApiGetActivity`, {
       Method: 'GET',
       Route: '/activity{uuid}',
       // Authorizer: apiAuthorizer,

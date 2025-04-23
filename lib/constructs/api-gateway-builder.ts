@@ -49,38 +49,43 @@ export interface ApiRouteProps {
   Authorizer?: CfnAuthorizer;
 }
 
-export interface ApiStageProps {
-  Name: string;
-  AutoDeploy?: boolean;
-}
-
 export class ApiBuilder extends Construct {
-  public api: CfnApi | undefined;
+  public api: CfnApi;
   private principal = new ServicePrincipal('apigateway.amazonaws.com');
-  private deployment: CfnDeployment | undefined;
-  private domainName: CfnDomainName | undefined;
-  private stage: CfnStage | undefined;
+  private deployment: CfnDeployment;
+  private stage: CfnStage;
+  private domainName: CfnDomainName | null;
   private props: ApiBuilderProps;
 
   constructor(scope: Construct, id: string, props: ApiBuilderProps) {
     super(scope, id);
     this.props = props;
-    this.createApi();
-    this.createDeployment();
-    this.addStage({ Name: props.StageName || '$default', AutoDeploy: true });
-    this.setDomainName();
-  }
+    this.domainName = null;
 
-  private createApi() {
+    // Creating api
     this.api = new CfnApi(this, 'CustomApi', {
       corsConfiguration: this.props.ApiCors,
       name: this.props.ApiName,
       protocolType: this.props.ApiProtocol,
     });
+
+    // Adding deployment
+    this.deployment = new CfnDeployment(this, 'CustomDeployment', {
+      apiId: this.api.attrApiId,
+    });
+
+    // Setting stage
+    this.stage = new CfnStage(this, 'customStage', {
+      apiId: this.api.attrApiId,
+      stageName: props.StageName ?? '$default',
+      autoDeploy: true,
+      deploymentId: this.deployment.attrDeploymentId,
+    });
+
+    this.setDomainName();
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  public addRoute(constructName: string, props: ApiRouteProps) {
+  public addRoute(constructName: string, props: ApiRouteProps): void {
     const routeKey = `${props.Method} ${props.Route}`;
     const route = new CfnRoute(this, constructName, {
       apiId: this.api.attrApiId,
@@ -94,7 +99,7 @@ export class ApiBuilder extends Construct {
     this.deployment.addDependency(route);
   }
 
-  public createAuthorizer(constructName: string, props: ApiAuthorizerProps) {
+  public createAuthorizer(constructName: string, props: ApiAuthorizerProps): CfnAuthorizer {
     let AuthorizerUri: string | undefined;
     if (props.Type === 'REQUEST' && props.Lambda && props.Region) {
       // lambda
@@ -120,39 +125,24 @@ export class ApiBuilder extends Construct {
     });
   }
 
-  public createIntegration(constructName: string, props: ApiIntegrationProps) {
+  public createIntegration(constructName: string, props: ApiIntegrationProps): CfnIntegration {
     // grant invoke access to lambda
     props.Lambda?.grantInvoke(this.principal);
 
     return new CfnIntegration(this, constructName, {
       apiId: this.api.attrApiId,
-      integrationType: props.Type || 'AWS_PROXY',
+      integrationType: props.Type ?? 'AWS_PROXY',
       integrationUri: Fn.sub('arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${functionArn}/invocations', {
-        region: props.Region || this.props.Region!,
+        region: props.Region ?? this.props.Region!,
         functionArn: props.Lambda.functionArn,
       }),
-      payloadFormatVersion: props.PayloadVersion || '2.0',
-      timeoutInMillis: props.Timeout || 30000,
-    });
-  }
-
-  public addStage(props?: ApiStageProps) {
-    this.stage = new CfnStage(this, 'customStage', {
-      apiId: this.api.attrApiId,
-      stageName: props?.Name || '$default',
-      autoDeploy: props?.AutoDeploy || true,
-      deploymentId: this.deployment.attrDeploymentId,
-    });
-  }
-
-  private createDeployment() {
-    this.deployment = new CfnDeployment(this, 'CustomDeployment', {
-      apiId: this.api.attrApiId,
+      payloadFormatVersion: props.PayloadVersion ?? '2.0',
+      timeoutInMillis: props.Timeout ?? 30000,
     });
   }
 
   /** Create a custom domain name object. Attaches provided certificate */
-  private setDomainName() {
+  private setDomainName(): void {
     if (this.props.Domain) {
       const { domainName, certificate } = this.props.Domain;
 
@@ -170,17 +160,15 @@ export class ApiBuilder extends Construct {
       });
 
       this.domainName.addDependency(this.stage);
-      this.applyMapping();
+
+      // Apply mapping
+      const mapping = new CfnApiMapping(this, 'CustomApiMapping', {
+        apiId: this.api.attrApiId,
+        domainName: this.domainName.domainName,
+        stage: this.stage.stageName,
+      });
+
+      mapping.addDependency(this.domainName);
     }
-  }
-
-  private applyMapping() {
-    const mapping = new CfnApiMapping(this, 'CustomApiMapping', {
-      apiId: this.api.attrApiId,
-      domainName: this.domainName.domainName,
-      stage: this.stage.stageName,
-    });
-
-    mapping.addDependency(this.domainName);
   }
 }

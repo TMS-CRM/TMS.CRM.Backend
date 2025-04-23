@@ -37,9 +37,11 @@ export class RdsBuilder extends Construct {
     if (props.MinCapacity !== undefined && (props.MinCapacity < 0.5 || props.MinCapacity > 2)) {
       throw new Error('minCapacity must be greater than 0.5 and less than 2');
     }
+
     if (props.MaxCapacity !== undefined && (props.MaxCapacity < 2 || props.MaxCapacity > 32)) {
       throw new Error('maxCapacity must be greater than 2 and less than 32');
     }
+
     if (props.MinCapacity !== undefined && props.MaxCapacity !== undefined && props.MaxCapacity < props.MinCapacity) {
       throw new Error('maxCapacity must be greater than minCapacity');
     }
@@ -63,7 +65,6 @@ export class RdsBuilder extends Construct {
     securityGroupEC2.addEgressRule(Peer.anyIpv4(), Port.tcp(5432), 'allow outgoing traffic to RDS');
 
     // Role
-
     const roleSsmManagedInstance = new RoleBuilder(this, `${props.ApplicationName}RoleBuilderSsmManagedInstance`, {
       ServicePrincipal: 'ec2.amazonaws.com',
       ManagedPolicyNames: ['service-role/AmazonEC2RoleForSSM'],
