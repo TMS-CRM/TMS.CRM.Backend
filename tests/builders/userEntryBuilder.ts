@@ -26,6 +26,11 @@ export class UserEntryBuilder {
     return this;
   }
 
+  withCognitoUuid(value: string): this {
+    this.userEntry.CognitoUuid = value;
+    return this;
+  }
+
   build(): Partial<IUserEntry> {
     return this.userEntry;
   }

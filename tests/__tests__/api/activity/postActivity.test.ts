@@ -73,8 +73,8 @@ describe('API - Activity - POST', () => {
 
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -113,8 +113,8 @@ describe('API - Activity - POST', () => {
         imageUrl: 'https://www.google.com',
         dealUuid: dealsGlobal[0].ExternalUuid,
       })
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 

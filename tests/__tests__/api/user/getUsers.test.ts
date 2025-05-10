@@ -26,15 +26,15 @@ describe('API - User - GET', () => {
     // Insert 9 users and link them to the first tenant
     const firstTenantUsers = await knexClient(userTableName)
       .insert([
-        UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Jane').withLastName('Paul').withEmail('jane.paul@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Marcus').withLastName('Aurelius').withEmail('marcus.aurelius@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Junior').withLastName('Santos').withEmail('junior.santos@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Natalia').withLastName('Pontes').withEmail('natalia.pontes@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Elena').withLastName('Rodriguez').withEmail('elena.rodriguez@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Kai').withLastName('Chen').withEmail('kai.chen@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Sofia').withLastName('Patel').withEmail('sofia.patel@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Lucas').withLastName('Nielsen').withEmail('lucas.nielsen@example.com').build(),
+        UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe3@example.com').build(),
+        UserEntryBuilder.make().withFirstName('Jane').withLastName('Paul').withEmail('jane.paul2@example.com').build(),
+        UserEntryBuilder.make().withFirstName('Marcus').withLastName('Aurelius').withEmail('marcus.aurelius1@example.com').build(),
+        UserEntryBuilder.make().withFirstName('Junior').withLastName('Santos').withEmail('junior.santos1@example.com').build(),
+        UserEntryBuilder.make().withFirstName('Natalia').withLastName('Pontes').withEmail('natalia.pontes1@example.com').build(),
+        UserEntryBuilder.make().withFirstName('Elena').withLastName('Rodriguez').withEmail('elena.rodriguez1@example.com').build(),
+        UserEntryBuilder.make().withFirstName('Kai').withLastName('Chen').withEmail('kai.chen1@example.com').build(),
+        UserEntryBuilder.make().withFirstName('Sofia').withLastName('Patel').withEmail('sofia.patel1@example.com').build(),
+        UserEntryBuilder.make().withFirstName('Lucas').withLastName('Nielsen').withEmail('lucas.nielsen1@example.com').build(),
       ])
       .returning('Id');
 
@@ -44,7 +44,7 @@ describe('API - User - GET', () => {
 
     // Create a user and link it to the second tenant
     const secondTenantUsers = await knexClient(userTableName)
-      .insert([UserEntryBuilder.make().withFirstName('Paulo').withLastName('Albuquerque').withEmail('paulo.albuquerque@example.com').build()])
+      .insert([UserEntryBuilder.make().withFirstName('Paulo').withLastName('Albuquerque').withEmail('paulo.albuquerque1@example.com').build()])
       .returning('Id');
 
     await knexClient(userTenantTableName).insert([
@@ -54,10 +54,12 @@ describe('API - User - GET', () => {
 
   it('Success - Should get users with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+      })
       .withQueryStringParameters({
         limit: '5',
         offset: '0',
-        tenantId: tenantsGlobal[0].Id.toString(), // TODO: Remove once the tenant is pulled from the token
       })
       .build();
 
@@ -77,10 +79,12 @@ describe('API - User - GET', () => {
 
   it('Success - Should get users with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+      })
       .withQueryStringParameters({
         limit: '5',
         offset: '5',
-        tenantId: tenantsGlobal[0].Id.toString(), // TODO: Remove once the tenant is pulled from the token
       })
       .build();
 
@@ -100,10 +104,12 @@ describe('API - User - GET', () => {
 
   it('Success - Should return 0 users if the tenant has no users', async () => {
     const event = APIGatewayProxyEventBuilder.make()
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[2].ExternalUuid,
+      })
       .withQueryStringParameters({
         limit: '5',
         offset: '0',
-        tenantId: tenantsGlobal[2].Id.toString(), // TODO: Remove once the tenant is pulled from the token
       })
       .build();
 
@@ -124,8 +130,8 @@ describe('API - User - GET', () => {
   it('Error - Should return a 400 error if the query parameters are missing', async () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 

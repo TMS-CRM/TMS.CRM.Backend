@@ -15,9 +15,10 @@ export async function up(knex) {
     .createTable('User', (table) => {
       table.increments('Id').primary();
       table.uuid('ExternalUuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
+      table.string('CognitoUuid', 50).unique();
       table.string('FirstName', 50).notNullable();
       table.string('LastName', 50).notNullable();
-      table.string('Email', 100).notNullable();
+      table.string('Email', 100).unique().notNullable();
       table.timestamp('CreatedOn').defaultTo(knex.fn.now()).notNullable();
       table.timestamp('ModifiedOn');
       table.timestamp('DeletedOn');

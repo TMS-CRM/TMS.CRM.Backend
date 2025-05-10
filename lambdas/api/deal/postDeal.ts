@@ -1,14 +1,13 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { validateAndParseBody, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { type PostDealRequestPayload, type PostDealResponsePayload, postDealRequestSchema } from '../../../models/api/payloads/deal.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
+import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import { DealEntry } from '../../../models/database/dealEntry.js';
 import { selectCustomerByExternalUuid } from '../../../repositories/customerRepository.js';
 import { insertDeal, selectDealById } from '../../../repositories/dealRepository.js';
+import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -21,31 +20,30 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PostDealRequestPayload>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<PostDealRequestPayload>> {
   logger.info('Start - validateRequest');
 
-  const parsedRequestBody = validateAndParseBody<PostDealRequestPayload>(request, postDealRequestSchema);
-
-  // TODO: Pull tenantId and userId from the token
-  const eventQueryParams = validateAndParseQueryParams<{ tenantId: number }>(request, [
-    { name: 'tenantId', dataType: QueryParamDataType.number, required: true },
-  ]);
-
-  return { tenantId: eventQueryParams.tenantId, userId: null, payload: parsedRequestBody };
+  return new ValidatedApiRequest<PostDealRequestPayload>({
+    request,
+    expectedAuthenticated: true,
+    expectedBodySchema: postDealRequestSchema,
+  });
 }
 
-export async function persistRecords(validatedRequest: ValidatedAPIRequest<PostDealRequestPayload>): Promise<number> {
+export async function persistRecords(validatedRequest: ValidatedApiRequest<PostDealRequestPayload>): Promise<number> {
   logger.info('Start - persistRecords');
 
-  const customer = await selectCustomerByExternalUuid(validatedRequest.payload.customerUuid);
+  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  if (!tenant) {
+    throw new BadRequestError('Tenant does not exist');
+  }
+
+  const customer = await selectCustomerByExternalUuid(validatedRequest.body!.customerUuid);
   if (!customer) {
     throw new BadRequestError('Customer does not exist');
   }
 
-  const mappedDeal: Partial<DealEntry> = {
-    ...DealEntry.fromPostRequestPayload(validatedRequest.payload, customer.Id),
-    TenantId: validatedRequest.tenantId,
-  };
+  const mappedDeal: Partial<DealEntry> = DealEntry.fromPostRequestPayload(tenant.Id, customer.Id, validatedRequest.body!);
   const dealId = await insertDeal(mappedDeal);
 
   return dealId;

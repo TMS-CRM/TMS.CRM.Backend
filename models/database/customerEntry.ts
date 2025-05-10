@@ -54,7 +54,7 @@ export class CustomerEntry implements ICustomerEntry {
   }
 
   /** Convert the PostCustomerRequestPayload to a Partial<CustomerEntry> */
-  public static fromPostRequestPayload(payload: PostCustomerRequestPayload, tenantId: number): Partial<CustomerEntry> {
+  public static fromPostRequestPayload(tenantId: number, payload: PostCustomerRequestPayload): Partial<CustomerEntry> {
     return {
       TenantId: tenantId,
       FirstName: payload.firstName,

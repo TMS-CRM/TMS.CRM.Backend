@@ -1,10 +1,8 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { DeleteSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
+import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import { selectActivityByExternalUuid, softDeleteActivityById } from '../../../repositories/activityRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
@@ -18,20 +16,17 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<null>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<null>> {
   logger.info('Start - validateRequest');
 
-  const parsedPathParameter = validateAndParsePathParams<{ [param: string]: string }>(request, ['uuid']);
-
-  // TODO: Pull tenantId and userId from the token
-  const eventQueryParams = validateAndParseQueryParams<{ tenantId: number }>(request, [
-    { name: 'tenantId', dataType: QueryParamDataType.number, required: true },
-  ]);
-
-  return { tenantId: eventQueryParams.tenantId, userId: null, payload: null, pathParameter: parsedPathParameter.uuid };
+  return new ValidatedApiRequest({
+    request,
+    expectedAuthenticated: true,
+    expectedPathParameter: 'uuid',
+  });
 }
 
-export async function persistRecords(validatedRequest: ValidatedAPIRequest<null>): Promise<void> {
+export async function persistRecords(validatedRequest: ValidatedApiRequest<null>): Promise<void> {
   logger.info('Start - persistRecords');
 
   // Validate the activity if exists

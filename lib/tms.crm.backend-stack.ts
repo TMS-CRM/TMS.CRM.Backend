@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import { CfnParameter } from 'aws-cdk-lib';
 import type { CfnApi } from 'aws-cdk-lib/aws-apigatewayv2';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import type { Construct } from 'constructs';
 import { ApiBuilder } from './constructs/api-gateway-builder.js';
 import { LambdaBuilder } from './constructs/lambda-builder.js';
@@ -33,6 +34,44 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpcImporter,
       MinCapacity: 0.5,
       MaxCapacity: 16,
+    });
+
+    // Cognito
+    const roleCognitoPreAuthentication = new RoleBuilder(this, `${serviceName}CognitoPreAuthenticationRole`, {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    });
+
+    const lambdaCognitoPreAuthentication = new LambdaBuilder(this, `${serviceName}CognitoPreAuthentication`, {
+      LambdaPath: join(__dirname, '..', 'lambdas', 'auth', 'preAuthentication.ts'),
+      LambdaName: `${serviceName}-cognito-pre-authentication`,
+      LambdaRole: roleCognitoPreAuthentication.role,
+      LambdaEnv: {
+        DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
+        LOG_LEVEL: 'info',
+      },
+      Dependencies: ['knex', 'pg', 'winston'],
+      Vpc: vpcImporter.vpc,
+    }).lambda;
+
+    const cognitoUserPool = new UserPool(this, `${serviceName}UserPool`, {
+      userPoolName: `${serviceName}UserPool`,
+      signInAliases: { email: true },
+      lambdaTriggers: {
+        preAuthentication: lambdaCognitoPreAuthentication,
+      },
+    });
+
+    const userPoolClient = new UserPoolClient(this, `${serviceName}UserPoolClient`, {
+      userPool: cognitoUserPool,
+      generateSecret: false,
+      authFlows: {
+        adminUserPassword: true,
+        userPassword: true,
+        userSrp: true,
+      },
     });
 
     // Roles
@@ -193,8 +232,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
     const roleApiPostUser = new RoleBuilder(this, 'RoleApiPostUser', {
       ServicePrincipal: 'lambda.amazonaws.com',
       ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
-      PolicyResources: [],
-      PolicyActions: [],
+      PolicyResources: [cognitoUserPool.userPoolArn],
+      PolicyActions: ['cognito-idp:AdminCreateUser', 'cognito-idp:AdminSetUserPassword'],
     });
 
     const roleApiPutUser = new RoleBuilder(this, 'RoleApiPutUser', {
@@ -483,8 +522,10 @@ export class TmsCrmBackendStack extends cdk.Stack {
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
+        USER_POOL_ID: cognitoUserPool.userPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
-      Dependencies: ['knex', 'pg', 'winston'],
+      Dependencies: ['knex', 'pg', 'winston', '@aws-sdk/client-cognito-identity-provider'],
       Vpc: vpcImporter.vpc,
     }).lambda;
 
@@ -525,8 +566,9 @@ export class TmsCrmBackendStack extends cdk.Stack {
       validation: acm.CertificateValidation.fromDns(),
     });
 
+    // ApiGateway
     const api = new ApiBuilder(this, `${serviceName}Api`, {
-      ApiName: 'tmsCrmApi',
+      ApiName: `${serviceName}Api`,
       ApiProtocol: 'HTTP',
       ApiCors: corsConfig,
       Domain: {
@@ -536,10 +578,21 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Region: this.region,
     });
 
+    // Create the Cognito JWT authorizer
+    const cognitoAuthorizer = api.createAuthorizer('CognitoAuthorizer', {
+      Name: 'CognitoAuthorizer',
+      Type: 'JWT',
+      IdentitySource: ['$request.header.Authorization'],
+      JwtConfiguration: {
+        audience: [userPoolClient.userPoolClientId],
+        issuer: `https://cognito-idp.${this.region}.amazonaws.com/${cognitoUserPool.userPoolId}`,
+      },
+    });
+
     api.addRoute(`${serviceName}ApiGetActivity`, {
       Method: 'GET',
-      Route: '/activity{uuid}',
-      // Authorizer: apiAuthorizer,
+      Route: '/activity/{uuid}',
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiGetActivityIntegration', {
         Lambda: lambdaApiGetActivity,
@@ -549,7 +602,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiGetActivities', {
       Method: 'GET',
       Route: '/activity',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiGetActivitiesIntegration', {
         Lambda: lambdaApiGetActivities,
@@ -559,7 +612,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiPostActivity', {
       Method: 'POST',
       Route: '/activity',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiPostActivityIntegration', {
         Lambda: lambdaApiPostActivity,
@@ -569,7 +622,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiPutActivity', {
       Method: 'PUT',
       Route: '/activity{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiPutActivityIntegration', {
         Lambda: lambdaApiPutActivity,
@@ -579,7 +632,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiDeleteActivity', {
       Method: 'DELETE',
       Route: '/activity{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiDeleteActivityIntegration', {
         Lambda: lambdaApiDeleteActivity,
@@ -589,7 +642,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiGetCustomer', {
       Method: 'GET',
       Route: '/customer{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiGetCustomerIntegration', {
         Lambda: lambdaApiGetCustomer,
@@ -599,7 +652,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiGetCustomers', {
       Method: 'GET',
       Route: '/customer',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiGetCustomersIntegration', {
         Lambda: lambdaApiGetCustomers,
@@ -609,7 +662,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiPostCustomer', {
       Method: 'POST',
       Route: '/customer',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiPostCustomerIntegration', {
         Lambda: lambdaApiPostCustomer,
@@ -619,7 +672,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiPutCustomer', {
       Method: 'PUT',
       Route: '/customer{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiPutCustomerIntegration', {
         Lambda: lambdaApiPutCustomer,
@@ -629,7 +682,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiDeleteCustomer', {
       Method: 'DELETE',
       Route: '/customer{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiDeleteCustomerIntegration', {
         Lambda: lambdaApiDeleteCustomer,
@@ -639,7 +692,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiGetDeal', {
       Method: 'GET',
       Route: '/deal{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiGetDealIntegration', {
         Lambda: lambdaApiGetDeal,
@@ -649,7 +702,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiGetDeals', {
       Method: 'GET',
       Route: '/deal',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiGetDealsIntegration', {
         Lambda: lambdaApiGetDeals,
@@ -659,7 +712,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiPostDeal', {
       Method: 'POST',
       Route: '/deal',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiPostDealIntegration', {
         Lambda: lambdaApiPostDeal,
@@ -669,7 +722,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiPutDeal', {
       Method: 'PUT',
       Route: '/deal{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiPutDealIntegration', {
         Lambda: lambdaApiPutDeal,
@@ -679,7 +732,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiDeleteDeal', {
       Method: 'DELETE',
       Route: '/deal{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiDeleteDealIntegration', {
         Lambda: lambdaApiDeleteDeal,
@@ -689,7 +742,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiGetTask', {
       Method: 'GET',
       Route: '/task{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiGetTaskIntegration', {
         Lambda: lambdaApiGetTask,
@@ -699,7 +752,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiGetTasks', {
       Method: 'GET',
       Route: '/task',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiGetTasksIntegration', {
         Lambda: lambdaApiGetTasks,
@@ -709,7 +762,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiPostTask', {
       Method: 'POST',
       Route: '/task',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiPostTaskIntegration', {
         Lambda: lambdaApiPostTask,
@@ -719,7 +772,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiPutTask', {
       Method: 'PUT',
       Route: '/task{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiPutTaskIntegration', {
         Lambda: lambdaApiPutTask,
@@ -729,7 +782,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiDeleteTask', {
       Method: 'DELETE',
       Route: '/task{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiDeleteTaskIntegration', {
         Lambda: lambdaApiDeleteTask,
@@ -739,7 +792,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiGetUser', {
       Method: 'GET',
       Route: '/user{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiGetUserIntegration', {
         Lambda: lambdaApiGetUser,
@@ -749,7 +802,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiGetUsers', {
       Method: 'GET',
       Route: '/user',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiGetUsersIntegration', {
         Lambda: lambdaApiGetUsers,
@@ -759,7 +812,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiPostUser', {
       Method: 'POST',
       Route: '/user',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiPostUserIntegration', {
         Lambda: lambdaApiPostUser,
@@ -769,7 +822,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiPutUser', {
       Method: 'PUT',
       Route: '/user{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiPutUserIntegration', {
         Lambda: lambdaApiPutUser,
@@ -779,7 +832,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     api.addRoute('tmsCrmApiDeleteUser', {
       Method: 'DELETE',
       Route: '/user{uuid}',
-      // Authorizer: apiAuthorizer,
+      Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration('tmsCrmApiDeleteUserIntegration', {
         Lambda: lambdaApiDeleteUser,

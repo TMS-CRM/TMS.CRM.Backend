@@ -1,5 +1,4 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { validateAndParseBody, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
 import {
   type PostActivityRequestPayload,
@@ -8,11 +7,11 @@ import {
 } from '../../../models/api/payloads/activity.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
+import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import { ActivityEntry } from '../../../models/database/activityEntry.js';
 import { insertActivity, selectActivityById } from '../../../repositories/activityRepository.js';
 import { selectDealByExternalUuid } from '../../../repositories/dealRepository.js';
+import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -25,32 +24,30 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PostActivityRequestPayload>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<PostActivityRequestPayload>> {
   logger.info('Start - validateRequest');
 
-  const parsedRequestBody = validateAndParseBody<PostActivityRequestPayload>(request, postActivityRequestSchema);
-
-  // TODO: Pull tenantId and userId from the token
-  const eventQueryParams = validateAndParseQueryParams<{ tenantId: number }>(request, [
-    { name: 'tenantId', dataType: QueryParamDataType.number, required: true },
-  ]);
-
-  return { tenantId: eventQueryParams.tenantId, userId: null, payload: parsedRequestBody };
+  return new ValidatedApiRequest<PostActivityRequestPayload>({
+    request,
+    expectedAuthenticated: true,
+    expectedBodySchema: postActivityRequestSchema,
+  });
 }
 
-export async function persistRecords(validatedRequest: ValidatedAPIRequest<PostActivityRequestPayload>): Promise<number> {
+export async function persistRecords(validatedRequest: ValidatedApiRequest<PostActivityRequestPayload>): Promise<number> {
   logger.info('Start - persistRecords');
 
-  // Select deal
-  const deal = await selectDealByExternalUuid(validatedRequest.payload.dealUuid);
+  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  if (!tenant) {
+    throw new BadRequestError('Tenant does not exist');
+  }
+
+  const deal = await selectDealByExternalUuid(validatedRequest.body!.dealUuid);
   if (!deal) {
     throw new BadRequestError('Deal does not exist');
   }
 
-  const mappedActivity: Partial<ActivityEntry> = {
-    ...ActivityEntry.fromPostRequestPayload(validatedRequest.payload, deal.Id),
-    TenantId: validatedRequest.tenantId,
-  };
+  const mappedActivity: Partial<ActivityEntry> = ActivityEntry.fromPostRequestPayload(tenant.Id, deal.Id, validatedRequest.body!);
   const activityId = await insertActivity(mappedActivity);
 
   return activityId;

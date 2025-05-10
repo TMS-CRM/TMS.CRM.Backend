@@ -28,9 +28,8 @@ describe('API - Customer - POST', () => {
     };
 
     const event = APIGatewayProxyEventBuilder.make()
-      .withQueryStringParameters({
-        // TODO: Remove this once the tenantId is pulled from the token
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .withBody(payload)
       .build();
@@ -64,6 +63,9 @@ describe('API - Customer - POST', () => {
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
     const event = APIGatewayProxyEventBuilder.make()
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+      })
       .withBody({
         firstName: 'John',
         lastName: 'Doe',

@@ -30,7 +30,7 @@ export interface ApiIntegrationProps {
 
 export interface ApiAuthorizerProps {
   Name: string;
-  Type: string;
+  Type: 'JWT' | 'REQUEST';
   Region?: string;
   IdentitySource: string[];
   PayloadVersion?: string;
@@ -43,7 +43,7 @@ export interface ApiAuthorizerProps {
 export interface ApiRouteProps {
   Route: string;
   Method: string;
-  AuthorizationType?: string;
+  AuthorizationType?: 'NONE' | 'JWT' | 'AWS_IAM' | 'CUSTOM';
   AuthorizationScopes?: string[];
   Integration: CfnIntegration;
   Authorizer?: CfnAuthorizer;
@@ -101,16 +101,18 @@ export class ApiBuilder extends Construct {
 
   public createAuthorizer(constructName: string, props: ApiAuthorizerProps): CfnAuthorizer {
     let AuthorizerUri: string | undefined;
+
+    // For a custom lambda authorizer, an authorizerUri is required
     if (props.Type === 'REQUEST' && props.Lambda && props.Region) {
-      // lambda
+      // Lambda
       AuthorizerUri = Fn.sub('arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${functionArn}/invocations', {
         region: props.Region,
         functionArn: props.Lambda?.functionArn,
       });
-    }
 
-    // grant invoke access to lambda
-    props.Lambda?.grantInvoke(this.principal);
+      // Grant invoke access to lambda
+      props.Lambda?.grantInvoke(this.principal);
+    }
 
     return new CfnAuthorizer(this, constructName, {
       apiId: this.api.attrApiId,
@@ -126,7 +128,6 @@ export class ApiBuilder extends Construct {
   }
 
   public createIntegration(constructName: string, props: ApiIntegrationProps): CfnIntegration {
-    // grant invoke access to lambda
     props.Lambda?.grantInvoke(this.principal);
 
     return new CfnIntegration(this, constructName, {

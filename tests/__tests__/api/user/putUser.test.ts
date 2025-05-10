@@ -17,7 +17,7 @@ describe('API - User - PUT', () => {
 
   beforeAll(async () => {
     const user = await knexClient(userTableName)
-      .insert(UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe@example.com').build())
+      .insert(UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe4@example.com').build())
       .returning(['Id', 'ExternalUuid', 'FirstName', 'LastName']);
 
     usersGlobal.push(...user);
@@ -38,8 +38,8 @@ describe('API - User - PUT', () => {
         uuid: usersGlobal[0].ExternalUuid,
       })
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -75,8 +75,8 @@ describe('API - User - PUT', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -101,6 +101,9 @@ describe('API - User - PUT', () => {
 
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+      })
       .withBody(payload)
       .withPathParameters({
         uuid: usersGlobal[0].ExternalUuid,
@@ -130,8 +133,8 @@ describe('API - User - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 

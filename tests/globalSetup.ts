@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 // This import must come after dotenv.config to have access to the ENV params
+// import * as cognito from '../lib/aws/cognito.js';
 import * as secretManager from '../lib/aws/secretsManager.js';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
@@ -23,6 +24,7 @@ export async function setup(): Promise<void> {
 /** Create database schema based on the migration files */
 async function setupLocalDatabase(): Promise<void> {
   await createSecret();
+  // await createCognitoPools();
 
   // Rollback the attempted migration
   await knexClient.migrate.rollback();
@@ -41,6 +43,13 @@ async function createSecret(): Promise<void> {
 
   await secretManager.createSecret(secret, true);
 }
+
+// async function createCognitoPools(): Promise<void> {
+//   logger.info('Creating user pool');
+
+//   const userPool = await cognito.createUserPool('user-pool-test');
+//   process.env.USER_POOL_ID = userPool.Id;
+// }
 
 /** Create database schema based on the current migration files */
 async function applyMigrations(): Promise<void> {

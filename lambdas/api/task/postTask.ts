@@ -1,13 +1,12 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { validateAndParseBody, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { type PostTaskRequestPayload, type PostTaskResponsePayload, postTaskRequestSchema } from '../../../models/api/payloads/task.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
+import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import { TaskEntry } from '../../../models/database/taskEntry.js';
 import { insertTask, selectTaskById } from '../../../repositories/taskRepository.js';
+import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -20,26 +19,25 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PostTaskRequestPayload>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<PostTaskRequestPayload>> {
   logger.info('Start - validateRequest');
 
-  const parsedRequestBody = validateAndParseBody<PostTaskRequestPayload>(request, postTaskRequestSchema);
-
-  // TODO: Pull tenantId and userId from the token
-  const eventQueryParams = validateAndParseQueryParams<{ tenantId: number }>(request, [
-    { name: 'tenantId', dataType: QueryParamDataType.number, required: true },
-  ]);
-
-  return { tenantId: eventQueryParams.tenantId, userId: null, payload: parsedRequestBody };
+  return new ValidatedApiRequest<PostTaskRequestPayload>({
+    request,
+    expectedAuthenticated: true,
+    expectedBodySchema: postTaskRequestSchema,
+  });
 }
 
-export async function persistRecords(validatedRequest: ValidatedAPIRequest<PostTaskRequestPayload>): Promise<number> {
+export async function persistRecords(validatedRequest: ValidatedApiRequest<PostTaskRequestPayload>): Promise<number> {
   logger.info('Start - persistRecords');
 
-  const mappedTask: Partial<TaskEntry> = {
-    ...TaskEntry.fromPostRequestPayload(validatedRequest.payload),
-    TenantId: validatedRequest.tenantId,
-  };
+  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  if (!tenant) {
+    throw new BadRequestError('Tenant does not exist');
+  }
+
+  const mappedTask: Partial<TaskEntry> = TaskEntry.fromPostRequestPayload(tenant.Id, validatedRequest.body!);
   const taskId = await insertTask(mappedTask);
 
   return taskId;

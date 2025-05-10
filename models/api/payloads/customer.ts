@@ -71,5 +71,4 @@ export type GetCustomerListResponsePayload = PaginatedResponse<PublicCustomer>;
 export interface GetCustomerListFilter {
   limit: number;
   offset: number;
-  tenantId: number; // TODO: Remove once the tenant is pulled from the token
 }

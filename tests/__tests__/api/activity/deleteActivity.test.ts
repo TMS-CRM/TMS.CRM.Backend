@@ -90,8 +90,8 @@ describe('API - Activity - DELETE', () => {
       .withPathParameters({
         uuid: activitiesGlobal[0].ExternalUuid,
       })
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -112,8 +112,8 @@ describe('API - Activity - DELETE', () => {
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -133,8 +133,8 @@ describe('API - Activity - DELETE', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 

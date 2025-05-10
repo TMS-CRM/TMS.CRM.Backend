@@ -52,12 +52,11 @@ describe('API - Customer - GET', () => {
 
   it('Success - Should get a customer', async () => {
     const event = APIGatewayProxyEventBuilder.make()
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+      })
       .withPathParameters({
         uuid: customersGlobal[0].ExternalUuid,
-      })
-      .withQueryStringParameters({
-        // TODO: Remove this once the tenantId is pulled from the token
-        tenantId: tenantsGlobal[0].Id.toString(),
       })
       .build();
 
@@ -86,7 +85,11 @@ describe('API - Customer - GET', () => {
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     // Event missing the uuid path parameter
-    const event = APIGatewayProxyEventBuilder.make().build();
+    const event = APIGatewayProxyEventBuilder.make()
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+      })
+      .build();
 
     // Run the handler
     const res = await handler(event);
@@ -103,11 +106,10 @@ describe('API - Customer - GET', () => {
   it('Error - Should return a 400 error if the customer does not exist', async () => {
     // Event with a random uuid on the path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withPathParameters({ uuid: randomUUID() })
-      .withQueryStringParameters({
-        // TODO: Remove this once the tenantId is pulled from the token
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
+      .withPathParameters({ uuid: randomUUID() })
       .build();
 
     // Run the handler

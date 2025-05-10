@@ -84,8 +84,9 @@ export class DealEntry implements IDealEntry {
   }
 
   /** Convert the PostDealRequestPayload to a Partial<DealEntry> */
-  public static fromPostRequestPayload(payload: PostDealRequestPayload, customerId: number): Partial<DealEntry> {
+  public static fromPostRequestPayload(tenantId: number, customerId: number, payload: PostDealRequestPayload): Partial<DealEntry> {
     return {
+      TenantId: tenantId,
       CustomerId: customerId,
       Price: payload.price,
       Street: payload.street,

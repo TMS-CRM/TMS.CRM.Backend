@@ -1,10 +1,25 @@
 import { handler } from '../../../../lambdas/api/user/postUser.js';
+import { getCognitoClient } from '../../../../lib/aws/cognito.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { selectUserByExternalUuid } from '../../../../repositories/userRepository.js';
+import { selectUserTenantsByUserId } from '../../../../repositories/userTenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+
+// Mock the getCognitoClient function
+vi.mock('../../../../lib/aws/cognito.js', () => ({
+  getCognitoClient: vi.fn(),
+}));
+
+// Mock the send method of the client
+const mockSend = vi.fn();
+
+// Set up the mock client
+(getCognitoClient as ReturnType<typeof vi.fn>).mockReturnValue({
+  send: mockSend,
+});
 
 describe('API - User - POST', () => {
   const tenantsGlobal: TenantEntry[] = [];
@@ -14,7 +29,19 @@ describe('API - User - POST', () => {
     tenantsGlobal.push(...tenant);
   });
 
+  beforeEach(() => {
+    // Reset the mock before each test
+    mockSend.mockReset();
+  });
+
   it('Success - Should create a user', async () => {
+    // Arrange: Set up the mock response
+    mockSend.mockResolvedValueOnce({
+      User: {
+        Attributes: [{ Name: 'sub', Value: 'mocked-cognito-uuid' }],
+      },
+    });
+
     const payload = {
       firstName: 'John',
       lastName: 'Doe',
@@ -23,8 +50,8 @@ describe('API - User - POST', () => {
 
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -44,9 +71,14 @@ describe('API - User - POST', () => {
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeNull();
 
-    // Validate the database record
+    // Validate the database records
     const user = await selectUserByExternalUuid(parsedBody.data.uuid);
     expect(user).toBeDefined();
+
+    const userTenants = await selectUserTenantsByUserId(user!.Id);
+    expect(userTenants).toBeDefined();
+    expect(userTenants.length).toBe(1);
+    expect(userTenants[0].TenantId).toBe(tenantsGlobal[0].Id);
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
@@ -54,8 +86,8 @@ describe('API - User - POST', () => {
       .withBody({
         firstName: 'John',
       })
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 

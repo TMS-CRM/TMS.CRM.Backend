@@ -1,14 +1,13 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
 import type { GetTaskListFilter, GetTaskListResponsePayload, PublicTask } from '../../../models/api/payloads/task.js';
-import { HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
+import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
 import type { TaskEntry } from '../../../models/database/taskEntry.js';
 import { selectTasks } from '../../../repositories/taskRepository.js';
+import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   logger.info('Request received: ', request);
@@ -21,25 +20,29 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<null, GetTaskListFilter>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<null, GetTaskListFilter>> {
   logger.info('Start - validateRequest');
 
-  const eventQueryParams = validateAndParseQueryParams<GetTaskListFilter>(request, [
-    { name: 'limit', dataType: QueryParamDataType.number, required: true },
-    { name: 'offset', dataType: QueryParamDataType.number, required: true },
-    { name: 'tenantId', dataType: QueryParamDataType.number, required: true },
-  ]);
-
-  // TODO: Pull tenantId and userId from the token
-  return { tenantId: eventQueryParams.tenantId, userId: null, payload: null, queryParameters: eventQueryParams };
+  return new ValidatedApiRequest<null, GetTaskListFilter>({
+    request,
+    expectedAuthenticated: true,
+    expectedQueryParameters: [
+      { name: 'limit', dataType: QueryParamDataType.number, required: true },
+      { name: 'offset', dataType: QueryParamDataType.number, required: true },
+    ],
+  });
 }
 
-export async function queryRecords(validatedRequest: ValidatedAPIRequest<null, GetTaskListFilter>): Promise<PaginatedResponse<TaskEntry>> {
+export async function queryRecords(validatedRequest: ValidatedApiRequest<null, GetTaskListFilter>): Promise<PaginatedResponse<TaskEntry>> {
   logger.info('Start - queryRecords');
 
-  const { limit, offset } = validatedRequest.queryParameters!;
+  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  if (!tenant) {
+    throw new BadRequestError('Tenant does not exist');
+  }
 
-  const queryResult: PaginatedResponse<TaskEntry> = await selectTasks(limit, offset, validatedRequest.tenantId);
+  const { limit, offset } = validatedRequest.queryParameters!;
+  const queryResult: PaginatedResponse<TaskEntry> = await selectTasks(limit, offset, tenant.Id);
 
   return queryResult;
 }
