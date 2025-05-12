@@ -684,7 +684,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/activity/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiGetActivityIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetActivityIntegration`, {
         Lambda: lambdaApiGetActivity,
       }),
     });
@@ -694,7 +694,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/activity',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiGetActivitiesIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetActivitiesIntegration`, {
         Lambda: lambdaApiGetActivities,
       }),
     });
@@ -704,7 +704,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/activity',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiPostActivityIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiPostActivityIntegration`, {
         Lambda: lambdaApiPostActivity,
       }),
     });
@@ -714,7 +714,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/activity/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiPutActivityIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiPutActivityIntegration`, {
         Lambda: lambdaApiPutActivity,
       }),
     });
@@ -724,7 +724,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/activity/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiDeleteActivityIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiDeleteActivityIntegration`, {
         Lambda: lambdaApiDeleteActivity,
       }),
     });
@@ -734,7 +734,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/customer/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiGetCustomerIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetCustomerIntegration`, {
         Lambda: lambdaApiGetCustomer,
       }),
     });
@@ -744,7 +744,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/customer',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiGetCustomersIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetCustomersIntegration`, {
         Lambda: lambdaApiGetCustomers,
       }),
     });
@@ -754,7 +754,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/customer',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiPostCustomerIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiPostCustomerIntegration`, {
         Lambda: lambdaApiPostCustomer,
       }),
     });
@@ -764,7 +764,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/customer/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiPutCustomerIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiPutCustomerIntegration`, {
         Lambda: lambdaApiPutCustomer,
       }),
     });
@@ -774,7 +774,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/customer/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiDeleteCustomerIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiDeleteCustomerIntegration`, {
         Lambda: lambdaApiDeleteCustomer,
       }),
     });
@@ -784,7 +784,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/deal/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiGetDealIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetDealIntegration`, {
         Lambda: lambdaApiGetDeal,
       }),
     });
@@ -794,7 +794,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/deal',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiGetDealsIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetDealsIntegration`, {
         Lambda: lambdaApiGetDeals,
       }),
     });
@@ -804,7 +804,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/deal',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiPostDealIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiPostDealIntegration`, {
         Lambda: lambdaApiPostDeal,
       }),
     });
@@ -814,7 +814,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/deal/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiPutDealIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiPutDealIntegration`, {
         Lambda: lambdaApiPutDeal,
       }),
     });
@@ -824,7 +824,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/deal/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiDeleteDealIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiDeleteDealIntegration`, {
         Lambda: lambdaApiDeleteDeal,
       }),
     });
@@ -834,7 +834,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/task/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiGetTaskIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetTaskIntegration`, {
         Lambda: lambdaApiGetTask,
       }),
     });
@@ -844,7 +844,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/task',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiGetTasksIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetTasksIntegration`, {
         Lambda: lambdaApiGetTasks,
       }),
     });
@@ -854,7 +854,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/task',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiPostTaskIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiPostTaskIntegration`, {
         Lambda: lambdaApiPostTask,
       }),
     });
@@ -864,7 +864,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/task/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiPutTaskIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiPutTaskIntegration`, {
         Lambda: lambdaApiPutTask,
       }),
     });
@@ -874,7 +874,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/task/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiDeleteTaskIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiDeleteTaskIntegration`, {
         Lambda: lambdaApiDeleteTask,
       }),
     });
@@ -884,7 +884,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/user/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiGetUserIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetUserIntegration`, {
         Lambda: lambdaApiGetUser,
       }),
     });
@@ -894,7 +894,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/user',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiGetUsersIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetUsersIntegration`, {
         Lambda: lambdaApiGetUsers,
       }),
     });
@@ -904,7 +904,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/user',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiPostUserIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiPostUserIntegration`, {
         Lambda: lambdaApiPostUser,
       }),
     });
@@ -914,7 +914,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/user/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiPutUserIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiPutUserIntegration`, {
         Lambda: lambdaApiPutUser,
       }),
     });
@@ -924,7 +924,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/user/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
-      Integration: api.createIntegration('tmsCrmApiDeleteUserIntegration', {
+      Integration: api.createIntegration(`${serviceNameCamelCase}ApiDeleteUserIntegration`, {
         Lambda: lambdaApiDeleteUser,
       }),
     });
