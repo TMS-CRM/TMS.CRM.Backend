@@ -582,6 +582,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
+        USER_POOL_ID: cognitoUserPool.userPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
       Dependencies: ['knex', 'pg', 'winston'],
       Vpc: vpcImporter.vpc,
@@ -606,6 +608,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
+        USER_POOL_ID: cognitoUserPool.userPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
       Dependencies: ['knex', 'pg', 'winston'],
       Vpc: vpcImporter.vpc,
