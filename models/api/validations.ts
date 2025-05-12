@@ -16,11 +16,13 @@ export class ValidatedApiRequest<T, Q = null> {
   body: T | null;
   pathParameter: string | null;
   queryParameters: Q | null;
+  accessToken: string | null;
   refreshToken: string | null;
 
   constructor(params: ValidatedApiRequestParams) {
     this.userCognitoUuid = this.setUserCognitoUuid(params);
     this.tenantUuid = this.setTenantUuid(params);
+    this.accessToken = params.request.headers.authorization?.replace('Bearer ', '') ?? null;
     this.refreshToken = params.request.headers.refreshToken ?? null;
     this.pathParameter = this.setPathParameter(params);
     this.queryParameters = this.setQueryParameters(params);
