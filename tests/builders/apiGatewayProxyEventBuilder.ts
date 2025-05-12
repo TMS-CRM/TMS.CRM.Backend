@@ -81,11 +81,15 @@ export class APIGatewayProxyEventBuilder {
     return this;
   }
 
-  withAuthorizerClaims(claims: { [key: string]: string | number | boolean | string[] }): this {
-    this.event.requestContext.authorizer.jwt.claims = {
-      ...this.event.requestContext.authorizer.jwt.claims,
-      ...claims,
-    };
+  withAuthorizerClaims(claims: { [key: string]: string | number | boolean | string[] }, override?: boolean): this {
+    if (override) {
+      this.event.requestContext.authorizer.jwt.claims = claims;
+    } else {
+      this.event.requestContext.authorizer.jwt.claims = {
+        ...this.event.requestContext.authorizer.jwt.claims,
+        ...claims,
+      };
+    }
     return this;
   }
 }

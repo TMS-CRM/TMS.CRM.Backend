@@ -7,6 +7,7 @@ export class UserEntryBuilder {
   private constructor() {
     this.userEntry = {
       ExternalUuid: randomUUID(),
+      CognitoUuid: randomUUID(),
       CreatedOn: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
     };
   }
