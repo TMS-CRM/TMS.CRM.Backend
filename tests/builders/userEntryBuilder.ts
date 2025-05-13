@@ -7,6 +7,7 @@ export class UserEntryBuilder {
   private constructor() {
     this.userEntry = {
       ExternalUuid: randomUUID(),
+      CognitoUuid: randomUUID(),
       CreatedOn: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
     };
   }
@@ -23,6 +24,11 @@ export class UserEntryBuilder {
 
   withEmail(value: string): this {
     this.userEntry.Email = value;
+    return this;
+  }
+
+  withCognitoUuid(value: string): this {
+    this.userEntry.CognitoUuid = value;
     return this;
   }
 

@@ -1,12 +1,10 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { validateAndParseBody, validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
 import type { PutActivityRequestPayload, PutActivityResponsePayload } from '../../../models/api/payloads/activity.js';
 import { putActivityRequestSchema } from '../../../models/api/payloads/activity.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
+import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import { ActivityEntry } from '../../../models/database/activityEntry.js';
 import { selectActivityByExternalUuid, selectActivityById, updateActivity } from '../../../repositories/activityRepository.js';
 
@@ -21,21 +19,18 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PutActivityRequestPayload>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<PutActivityRequestPayload>> {
   logger.info('Start - validateRequest');
 
-  const parsedRequestBody = validateAndParseBody<PutActivityRequestPayload>(request, putActivityRequestSchema);
-  const parsedPathParameter = validateAndParsePathParams<{ [param: string]: string }>(request, ['uuid']);
-
-  // TODO: Pull tenantId and userId from the token
-  const eventQueryParams = validateAndParseQueryParams<{ tenantId: number }>(request, [
-    { name: 'tenantId', dataType: QueryParamDataType.number, required: true },
-  ]);
-
-  return { tenantId: eventQueryParams.tenantId, userId: null, payload: parsedRequestBody, pathParameter: parsedPathParameter.uuid };
+  return new ValidatedApiRequest<PutActivityRequestPayload>({
+    request,
+    expectedAuthenticated: true,
+    expectedBodySchema: putActivityRequestSchema,
+    expectedPathParameter: 'uuid',
+  });
 }
 
-export async function persistRecords(validatedRequest: ValidatedAPIRequest<PutActivityRequestPayload>): Promise<number> {
+export async function persistRecords(validatedRequest: ValidatedApiRequest<PutActivityRequestPayload>): Promise<number> {
   logger.info('Start - persistRecords');
 
   // Validate the activity exists
@@ -46,7 +41,7 @@ export async function persistRecords(validatedRequest: ValidatedAPIRequest<PutAc
   }
 
   // Update the activity
-  const mappedActivity: Partial<ActivityEntry> = ActivityEntry.fromPutRequestPayload(validatedRequest.payload);
+  const mappedActivity: Partial<ActivityEntry> = ActivityEntry.fromPutRequestPayload(validatedRequest.body!);
   await updateActivity(activity.Id, mappedActivity);
 
   return activity.Id;

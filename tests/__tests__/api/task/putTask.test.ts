@@ -45,8 +45,8 @@ describe('API - Task - PUT', () => {
         uuid: tasksGlobal[0].ExternalUuid,
       })
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -85,8 +85,8 @@ describe('API - Task - PUT', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -112,8 +112,8 @@ describe('API - Task - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: tasksGlobal[0].ExternalUuid })
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -140,8 +140,8 @@ describe('API - Task - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 

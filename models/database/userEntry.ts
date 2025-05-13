@@ -3,6 +3,7 @@ import type { PostUserRequestPayload, PublicUser, PutUserRequestPayload } from '
 export interface IUserEntry {
   Id: number;
   ExternalUuid: string;
+  CognitoUuid: string;
   FirstName: string;
   LastName: string;
   Email: string;
@@ -14,6 +15,7 @@ export interface IUserEntry {
 export class UserEntry implements IUserEntry {
   public Id: number;
   public ExternalUuid: string;
+  public CognitoUuid: string;
   public FirstName: string;
   public LastName: string;
   public Email: string;
@@ -24,6 +26,7 @@ export class UserEntry implements IUserEntry {
   public constructor(data: IUserEntry) {
     this.Id = data.Id;
     this.ExternalUuid = data.ExternalUuid;
+    this.CognitoUuid = data.CognitoUuid;
     this.FirstName = data.FirstName;
     this.LastName = data.LastName;
     this.Email = data.Email;

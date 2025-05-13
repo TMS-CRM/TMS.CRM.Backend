@@ -36,8 +36,9 @@ export class TaskEntry implements ITaskEntry {
   }
 
   /** Convert the PostTaskRequestPayload to a Partial<TaskEntry> */
-  public static fromPostRequestPayload(payload: PostTaskRequestPayload): Partial<TaskEntry> {
+  public static fromPostRequestPayload(tenantId: number, payload: PostTaskRequestPayload): Partial<TaskEntry> {
     return {
+      TenantId: tenantId,
       Description: payload.description,
       DueDate: payload.dueDate,
       Completed: payload.completed,

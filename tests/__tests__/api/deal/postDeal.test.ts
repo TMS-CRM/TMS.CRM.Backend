@@ -56,8 +56,8 @@ describe('API - Deal - POST', () => {
 
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -107,8 +107,8 @@ describe('API - Deal - POST', () => {
         state: 'CA',
         customerUuid: '12345678-1234-1234-1234-123456789012',
       })
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 

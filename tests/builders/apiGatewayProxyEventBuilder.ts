@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import type { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda';
 
 export class APIGatewayProxyEventBuilder {
@@ -14,7 +15,9 @@ export class APIGatewayProxyEventBuilder {
           principalId: 'principalId',
           integrationLatency: 100,
           jwt: {
-            claims: {},
+            claims: {
+              sub: randomUUID(),
+            },
             scopes: [],
           },
         },
@@ -78,8 +81,15 @@ export class APIGatewayProxyEventBuilder {
     return this;
   }
 
-  withAuthorizerClaims(claims: { [key: string]: string | number | boolean | string[] }): this {
-    this.event.requestContext.authorizer.jwt.claims = claims;
+  withAuthorizerClaims(claims: { [key: string]: string | number | boolean | string[] }, override?: boolean): this {
+    if (override) {
+      this.event.requestContext.authorizer.jwt.claims = claims;
+    } else {
+      this.event.requestContext.authorizer.jwt.claims = {
+        ...this.event.requestContext.authorizer.jwt.claims,
+        ...claims,
+      };
+    }
     return this;
   }
 }

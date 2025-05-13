@@ -1,11 +1,9 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { validateAndParseBody, validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { type PutUserRequestPayload, type PutUserResponsePayload, putUserRequestSchema } from '../../../models/api/payloads/user.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
+import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import { UserEntry } from '../../../models/database/userEntry.js';
 import { selectUserByExternalUuid, selectUserById, updateUser } from '../../../repositories/userRepository.js';
 
@@ -20,21 +18,18 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<PutUserRequestPayload>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<PutUserRequestPayload>> {
   logger.info('Start - validateRequest');
 
-  const parsedPathParameter = validateAndParsePathParams<{ [param: string]: string }>(request, ['uuid']);
-  const parsedRequestBody = validateAndParseBody<PutUserRequestPayload>(request, putUserRequestSchema);
-
-  // TODO: Pull tenantId and userId from the token
-  const eventQueryParams = validateAndParseQueryParams<{ tenantId: number }>(request, [
-    { name: 'tenantId', dataType: QueryParamDataType.number, required: true },
-  ]);
-
-  return { tenantId: eventQueryParams.tenantId, userId: null, payload: parsedRequestBody, pathParameter: parsedPathParameter.uuid };
+  return new ValidatedApiRequest<PutUserRequestPayload>({
+    request,
+    expectedAuthenticated: true,
+    expectedBodySchema: putUserRequestSchema,
+    expectedPathParameter: 'uuid',
+  });
 }
 
-export async function persistRecords(validatedRequest: ValidatedAPIRequest<PutUserRequestPayload>): Promise<number> {
+export async function persistRecords(validatedRequest: ValidatedApiRequest<PutUserRequestPayload>): Promise<number> {
   logger.info('Start - persistRecords');
 
   // Validate the user exists
@@ -45,7 +40,7 @@ export async function persistRecords(validatedRequest: ValidatedAPIRequest<PutUs
   }
 
   // Update the user
-  const mappedUser: Partial<UserEntry> = UserEntry.fromPutRequestPayload(validatedRequest.payload);
+  const mappedUser: Partial<UserEntry> = UserEntry.fromPutRequestPayload(validatedRequest.body!);
   await updateUser(user.Id, mappedUser);
 
   return user.Id;

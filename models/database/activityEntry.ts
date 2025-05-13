@@ -40,8 +40,9 @@ export class ActivityEntry implements IActivityEntry {
   }
 
   /** Convert the PostActivityRequestPayload to a Partial<ActivityEntry> */
-  public static fromPostRequestPayload(payload: PostActivityRequestPayload, dealId: number): Partial<ActivityEntry> {
+  public static fromPostRequestPayload(tenantId: number, dealId: number, payload: PostActivityRequestPayload): Partial<ActivityEntry> {
     return {
+      TenantId: tenantId,
       DealId: dealId,
       Description: payload.description,
       Date: payload.date,

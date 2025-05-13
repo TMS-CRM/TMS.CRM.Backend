@@ -12,3 +12,11 @@ export async function insertUserTenant(userTenant: Partial<UserTenantEntry>): Pr
   logger.info(`Successfully inserted UserTenant. Id: ${records[0].Id}`);
   return records[0].Id;
 }
+
+/** Get the UserTenant by UserId */
+export async function selectUserTenantsByUserId(userId: number): Promise<UserTenantEntry[]> {
+  const query = knexClient(userTenantTableName).select('*').where('UserId', userId);
+  const records = (await query) as UserTenantEntry[];
+
+  return records;
+}

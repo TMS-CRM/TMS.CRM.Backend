@@ -1,10 +1,9 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { validateAndParsePathParams, validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
 import type { GetCustomerResponsePayload } from '../../../models/api/payloads/customer.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
-import { QueryParamDataType, type ValidatedAPIRequest } from '../../../models/api/validations.js';
+import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import type { CustomerEntry } from '../../../models/database/customerEntry.js';
 import { selectCustomerByExternalUuid } from '../../../repositories/customerRepository.js';
 
@@ -19,20 +18,17 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<null>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<null>> {
   logger.info('Start - validateRequest');
 
-  const parsedPathParameter = validateAndParsePathParams<{ [param: string]: string }>(request, ['uuid']);
-
-  // TODO: Pull tenantId and userId from the token
-  const eventQueryParams = validateAndParseQueryParams<{ tenantId: number }>(request, [
-    { name: 'tenantId', dataType: QueryParamDataType.number, required: true },
-  ]);
-
-  return { tenantId: eventQueryParams.tenantId, userId: null, payload: null, pathParameter: parsedPathParameter.uuid };
+  return new ValidatedApiRequest({
+    request,
+    expectedAuthenticated: true,
+    expectedPathParameter: 'uuid',
+  });
 }
 
-export async function queryRecords(validatedRequest: ValidatedAPIRequest<null>): Promise<CustomerEntry> {
+export async function queryRecords(validatedRequest: ValidatedApiRequest<null>): Promise<CustomerEntry> {
   logger.info('Start - queryRecords');
 
   // Validate the customer if exists

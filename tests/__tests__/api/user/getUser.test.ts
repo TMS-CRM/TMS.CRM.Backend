@@ -20,8 +20,8 @@ describe('API - User - GET', () => {
 
     const user = await knexClient(userTableName)
       .insert([
-        UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Jane').withLastName('Paul').withEmail('jane.paul@example.com').build(),
+        UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe2@example.com').build(),
+        UserEntryBuilder.make().withFirstName('Jane').withLastName('Paul').withEmail('jane.paul1@example.com').build(),
       ])
       .returning('*');
 
@@ -33,8 +33,8 @@ describe('API - User - GET', () => {
       .withPathParameters({
         uuid: usersGlobal[0].ExternalUuid,
       })
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -58,8 +58,8 @@ describe('API - User - GET', () => {
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -79,8 +79,8 @@ describe('API - User - GET', () => {
     // Event with a random uuid on the path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 

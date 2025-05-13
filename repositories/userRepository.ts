@@ -23,6 +23,14 @@ export async function selectUserById(id: number): Promise<UserEntry | null> {
   return records.length > 0 ? new UserEntry(records[0]) : null;
 }
 
+/** Get the User by Id */
+export async function selectUserByCognitoUuid(cognitoUuid: string): Promise<UserEntry | null> {
+  const query = knexClient(userTableName).select('*').where('CognitoUuid', cognitoUuid);
+  const records = (await query) as IUserEntry[];
+
+  return records.length > 0 ? new UserEntry(records[0]) : null;
+}
+
 /** Get the User by ExternalUuid */
 export async function selectUserByExternalUuid(externalUuid: string): Promise<UserEntry | null> {
   const query = knexClient(userTableName).select('*').where('ExternalUuid', externalUuid).whereNull(`${userTableName}.DeletedOn`);

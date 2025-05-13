@@ -23,8 +23,8 @@ describe('API - Task - POST', () => {
 
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 
@@ -56,8 +56,8 @@ describe('API - Task - POST', () => {
         dueDate: new Date().toISOString(),
         completed: false,
       })
-      .withQueryStringParameters({
-        tenantId: tenantsGlobal[0].Id.toString(),
+      .withAuthorizerClaims({
+        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .build();
 

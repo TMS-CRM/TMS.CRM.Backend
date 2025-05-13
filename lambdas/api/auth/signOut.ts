@@ -1,17 +1,16 @@
+import { GlobalSignOutCommand } from '@aws-sdk/client-cognito-identity-provider';
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
+import { getCognitoClient } from '../../../lib/aws/cognito.js';
 import { logger } from '../../../lib/utils/logger.js';
-import type { GetTaskResponsePayload } from '../../../models/api/payloads/task.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { TaskEntry } from '../../../models/database/taskEntry.js';
-import { selectTaskByExternalUuid } from '../../../repositories/taskRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
 
   return validateRequest(request)
-    .then(queryRecords)
+    .then(signOutUser)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
     .catch((error: Error) => new HttpErrorResponse(error));
@@ -24,25 +23,26 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   return new ValidatedApiRequest({
     request,
     expectedAuthenticated: true,
-    expectedPathParameter: 'uuid',
   });
 }
 
-export async function queryRecords(validatedRequest: ValidatedApiRequest<null>): Promise<TaskEntry> {
-  logger.info('Start - queryRecords');
+async function signOutUser(validatedRequest: ValidatedApiRequest<null>): Promise<void> {
+  logger.info('Start - signOutUser');
 
-  // Validate the task if exists
-  const task = await selectTaskByExternalUuid(validatedRequest.pathParameter!);
-
-  if (!task) {
-    throw new BadRequestError('Task not found');
+  if (!validatedRequest.accessToken) {
+    throw new BadRequestError('Access token not found');
   }
 
-  return task;
+  // Sign out the current access token
+  const signOutCommand = new GlobalSignOutCommand({
+    AccessToken: validatedRequest.accessToken,
+  });
+
+  await getCognitoClient().send(signOutCommand);
 }
 
-export function formatResponseData(task: TaskEntry): FetchSuccess<GetTaskResponsePayload> {
+function formatResponseData(): FetchSuccess<null> {
   logger.info('Start - formatResponse');
 
-  return new FetchSuccess<GetTaskResponsePayload>('Successfully fetched task', task.toPublic());
+  return new FetchSuccess<null>('User has been signed out successfully', null);
 }

@@ -1,14 +1,13 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { validateAndParseQueryParams } from '../../../lib/utils/apiValidations.js';
 import { logger } from '../../../lib/utils/logger.js';
 import type { GetActivityListFilter, GetActivityListResponsePayload, PublicActivity } from '../../../models/api/payloads/activity.js';
-import { HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
-import type { ValidatedAPIRequest } from '../../../models/api/validations.js';
-import { QueryParamDataType } from '../../../models/api/validations.js';
+import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
 import type { ExtendedActivityEntry } from '../../../models/database/activityEntry.js';
 import { selectActivities } from '../../../repositories/activityRepository.js';
+import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   logger.info('Request received: ', request);
@@ -21,27 +20,32 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedAPIRequest<null, GetActivityListFilter>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<null, GetActivityListFilter>> {
   logger.info('Start - validateRequest');
 
-  const eventQueryParams = validateAndParseQueryParams<GetActivityListFilter>(request, [
-    { name: 'limit', dataType: QueryParamDataType.number, required: true },
-    { name: 'offset', dataType: QueryParamDataType.number, required: true },
-    { name: 'tenantId', dataType: QueryParamDataType.number, required: true },
-  ]);
-
-  // TODO: Pull tenantId and userId from the token
-  return { tenantId: eventQueryParams.tenantId, userId: null, payload: null, queryParameters: eventQueryParams };
+  return new ValidatedApiRequest<null, GetActivityListFilter>({
+    request,
+    expectedAuthenticated: true,
+    expectedQueryParameters: [
+      { name: 'limit', dataType: QueryParamDataType.number, required: true },
+      { name: 'offset', dataType: QueryParamDataType.number, required: true },
+    ],
+  });
 }
 
 export async function queryRecords(
-  validatedRequest: ValidatedAPIRequest<null, GetActivityListFilter>,
+  validatedRequest: ValidatedApiRequest<null, GetActivityListFilter>,
 ): Promise<PaginatedResponse<ExtendedActivityEntry>> {
   logger.info('Start - queryRecords');
 
+  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  if (!tenant) {
+    throw new BadRequestError('Tenant does not exist');
+  }
+
   const { limit, offset } = validatedRequest.queryParameters!;
 
-  const queryResult: PaginatedResponse<ExtendedActivityEntry> = await selectActivities(limit, offset, validatedRequest.tenantId);
+  const queryResult: PaginatedResponse<ExtendedActivityEntry> = await selectActivities(limit, offset, tenant.Id);
 
   return queryResult;
 }
