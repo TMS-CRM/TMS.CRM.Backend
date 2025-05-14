@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { type ActivityDatabase } from '../../models/entities/activity.js';
+
 export class ActivityDatabaseBuilder {
   private activityDatabase: Partial<ActivityDatabase>;
 
