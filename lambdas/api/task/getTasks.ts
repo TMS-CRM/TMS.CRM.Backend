@@ -5,7 +5,7 @@ import { BadRequestError, HttpErrorResponse } from '../../../models/api/response
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { TaskEntry } from '../../../models/database/taskEntry.js';
+import type { TaskEntry } from '../../../models/entities/taskEntry.js';
 import { selectTasks } from '../../../repositories/taskRepository.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 

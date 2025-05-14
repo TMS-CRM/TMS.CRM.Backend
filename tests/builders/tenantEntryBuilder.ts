@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import type { TenantEntry } from '../../models/database/tenantEntry.js';
+import type { TenantEntry } from '../../models/entities/tenantEntry.js';
 
 export class TenantEntryBuilder {
   private tenantEntry: TenantEntry;

@@ -36,8 +36,8 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<null>
     throw new BadRequestError('Activity not found');
   }
 
-  // Soft delete the customer
-  await softDeleteActivityById(activity.Id);
+  // Soft delete the activity
+  await softDeleteActivityById(activity.id);
 }
 
 export function formatResponseData(): DeleteSuccess<null> {

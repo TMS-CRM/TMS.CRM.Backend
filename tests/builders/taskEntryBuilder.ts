@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import type { ITaskEntry } from '../../models/database/taskEntry.js';
+import type { ITaskEntry } from '../../models/entities/taskEntry.js';
 
 export class TaskEntryBuilder {
   private taskEntry: Partial<ITaskEntry>;

@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto';
 import { handler } from '../../../../lambdas/api/customer/getCustomer.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';

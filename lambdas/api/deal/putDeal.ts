@@ -4,7 +4,7 @@ import { type PutDealRequestPayload, type PutDealResponsePayload, putDealRequest
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { DealEntry } from '../../../models/database/dealEntry.js';
+import { DealEntry } from '../../../models/entities/dealEntry.js';
 import { selectDealByExternalUuid, selectDealById, updateDeal } from '../../../repositories/dealRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {

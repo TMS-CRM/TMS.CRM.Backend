@@ -5,7 +5,7 @@ import { postCustomerRequestSchema } from '../../../models/api/payloads/customer
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { CustomerEntry } from '../../../models/database/customerEntry.js';
+import { CustomerEntry } from '../../../models/entities/customerEntry.js';
 import { insertCustomer, selectCustomerById } from '../../../repositories/customerRepository.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 

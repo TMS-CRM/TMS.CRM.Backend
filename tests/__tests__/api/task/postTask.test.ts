@@ -1,6 +1,6 @@
 import { handler } from '../../../../lambdas/api/task/postTask.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { selectTaskByExternalUuid } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';

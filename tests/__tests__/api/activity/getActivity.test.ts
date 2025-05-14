@@ -1,15 +1,15 @@
 import { randomUUID } from 'crypto';
 import { handler } from '../../../../lambdas/api/activity/getActivity.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { ActivityEntry } from '../../../../models/database/activityEntry.js';
-import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
-import { type DealEntry, DealProgress, RoomAccess } from '../../../../models/database/dealEntry.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import type { ActivityDatabase } from '../../../../models/entities/activity.js';
+import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import { type DealEntry, DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { activityTableName } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { ActivityEntryBuilder } from '../../../builders/activityEntryBuilder.js';
+import { ActivityDatabaseBuilder } from '../../../builders/activityEntryBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
 import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
@@ -19,7 +19,7 @@ describe('API - Activity - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
   const customersGlobal: CustomerEntry[] = [];
   const dealsGlobal: DealEntry[] = [];
-  const activitiesGlobal: ActivityEntry[] = [];
+  const activitiesGlobal: ActivityDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
@@ -68,7 +68,7 @@ describe('API - Activity - GET', () => {
 
     const activity = await knexClient(activityTableName)
       .insert([
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Initial consultation with the client')
@@ -76,7 +76,7 @@ describe('API - Activity - GET', () => {
           .withImageUrl('https://example.com/activity.jpg')
           .build(),
 
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Follow-up meeting scheduled')
@@ -92,7 +92,7 @@ describe('API - Activity - GET', () => {
   it('Success - Should get a activity', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: activitiesGlobal[0].ExternalUuid,
+        uuid: activitiesGlobal[0].external_uuid,
       })
       .withAuthorizerClaims({
         'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
@@ -108,10 +108,10 @@ describe('API - Activity - GET', () => {
 
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('FetchSuccess');
-    expect(parsedBody.data.uuid).toBe(activitiesGlobal[0].ExternalUuid);
-    expect(parsedBody.data.description).toBe(activitiesGlobal[0].Description);
-    expect(new Date(parsedBody.data.date).getTime()).toBeCloseTo(new Date(activitiesGlobal[0].Date).getTime());
-    expect(parsedBody.data.imageUrl).toBe(activitiesGlobal[0].ImageUrl);
+    expect(parsedBody.data.uuid).toBe(activitiesGlobal[0].external_uuid);
+    expect(parsedBody.data.description).toBe(activitiesGlobal[0].description);
+    expect(new Date(parsedBody.data.date).getTime()).toBeCloseTo(new Date(activitiesGlobal[0].date).getTime());
+    expect(parsedBody.data.imageUrl).toBe(activitiesGlobal[0].image_url);
     expect(parsedBody.data.uuid).toBeDefined();
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeDefined();

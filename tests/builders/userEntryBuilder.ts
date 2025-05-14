@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import type { IUserEntry } from '../../models/database/userEntry.js';
+import type { IUserEntry } from '../../models/entities/userEntry.js';
 
 export class UserEntryBuilder {
   private userEntry: Partial<IUserEntry>;

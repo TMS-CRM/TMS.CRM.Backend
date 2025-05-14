@@ -1,7 +1,7 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/user/getUsers.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { userTableName } from '../../../../repositories/userRepository.js';
 import { userTenantTableName } from '../../../../repositories/userTenantRepository.js';

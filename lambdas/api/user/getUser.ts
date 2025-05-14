@@ -4,7 +4,7 @@ import type { GetUserResponsePayload } from '../../../models/api/payloads/user.j
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { UserEntry } from '../../../models/database/userEntry.js';
+import type { UserEntry } from '../../../models/entities/userEntry.js';
 import { selectUserByExternalUuid } from '../../../repositories/userRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {

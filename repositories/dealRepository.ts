@@ -2,8 +2,8 @@ import { customerTableName } from './customerRepository.js';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
-import type { DealEntry, IDealEntry } from '../models/database/dealEntry.js';
-import { ExtendedDealEntry } from '../models/database/dealEntry.js';
+import type { DealEntry, IDealEntry } from '../models/entities/dealEntry.js';
+import { ExtendedDealEntry } from '../models/entities/dealEntry.js';
 
 export const dealTableName = 'Deal';
 

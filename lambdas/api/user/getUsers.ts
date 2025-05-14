@@ -5,7 +5,7 @@ import { BadRequestError, HttpErrorResponse } from '../../../models/api/response
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { UserEntry } from '../../../models/database/userEntry.js';
+import type { UserEntry } from '../../../models/entities/userEntry.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 import { selectUsers } from '../../../repositories/userRepository.js';
 

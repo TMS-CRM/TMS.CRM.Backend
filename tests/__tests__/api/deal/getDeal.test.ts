@@ -1,10 +1,10 @@
 import { randomUUID } from 'crypto';
 import { handler } from '../../../../lambdas/api/deal/getDeal.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
-import type { DealEntry } from '../../../../models/database/dealEntry.js';
-import { DealProgress, RoomAccess } from '../../../../models/database/dealEntry.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { DealEntry } from '../../../../models/entities/dealEntry.js';
+import { DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';

@@ -1,6 +1,6 @@
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
-import type { UserTenantEntry } from '../models/database/userTenantEntry.js';
+import type { UserTenantEntry } from '../models/entities/userTenantEntry.js';
 
 export const userTenantTableName = 'UserTenant';
 

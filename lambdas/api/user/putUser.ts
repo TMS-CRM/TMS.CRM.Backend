@@ -4,7 +4,7 @@ import { type PutUserRequestPayload, type PutUserResponsePayload, putUserRequest
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { UserEntry } from '../../../models/database/userEntry.js';
+import { UserEntry } from '../../../models/entities/userEntry.js';
 import { selectUserByExternalUuid, selectUserById, updateUser } from '../../../repositories/userRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {

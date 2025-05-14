@@ -1,46 +1,45 @@
 import { randomUUID } from 'crypto';
-import type { IActivityEntry } from '../../models/database/activityEntry.js';
-
-export class ActivityEntryBuilder {
-  private activityEntry: Partial<IActivityEntry>;
+import { type ActivityDatabase } from '../../models/entities/activity.js';
+export class ActivityDatabaseBuilder {
+  private activityDatabase: Partial<ActivityDatabase>;
 
   private constructor() {
-    this.activityEntry = {
-      ExternalUuid: randomUUID(),
-      CreatedOn: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
+    this.activityDatabase = {
+      external_uuid: randomUUID(),
+      created_on: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
     };
   }
 
   withTenantId(value: number): this {
-    this.activityEntry.TenantId = value;
+    this.activityDatabase.tenant_id = value;
     return this;
   }
 
   withDealId(value: number): this {
-    this.activityEntry.DealId = value;
+    this.activityDatabase.deal_id = value;
     return this;
   }
 
   withDescription(value: string): this {
-    this.activityEntry.Description = value;
+    this.activityDatabase.description = value;
     return this;
   }
 
   withDate(value: string): this {
-    this.activityEntry.Date = value;
+    this.activityDatabase.date = value;
     return this;
   }
 
   withImageUrl(value: string): this {
-    this.activityEntry.ImageUrl = value;
+    this.activityDatabase.image_url = value;
     return this;
   }
 
-  build(): Partial<IActivityEntry> {
-    return this.activityEntry;
+  build(): Partial<ActivityDatabase> {
+    return this.activityDatabase;
   }
 
-  static make(): ActivityEntryBuilder {
-    return new ActivityEntryBuilder();
+  static make(): ActivityDatabaseBuilder {
+    return new ActivityDatabaseBuilder();
   }
 }
