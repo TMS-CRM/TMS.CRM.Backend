@@ -123,7 +123,7 @@ export class DealEntry implements IDealEntry {
   }
 }
 
-/** Extended DealEntry with Customer information */
+/** DealEntry with Customer information */
 export interface IExtendedDealEntry extends IDealEntry {
   Customer: Pick<CustomerEntry, 'ExternalUuid' | 'FirstName' | 'LastName' | 'Email' | 'Phone' | 'ImageUrl'>;
 }

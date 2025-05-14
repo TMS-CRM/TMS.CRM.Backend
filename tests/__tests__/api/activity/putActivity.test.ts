@@ -3,15 +3,15 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/activity/putActivity.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { PutActivityRequestPayload } from '../../../../models/api/payloads/activity.js';
-import type { ActivityEntry } from '../../../../models/database/activityEntry.js';
-import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
-import { type DealEntry, DealProgress, RoomAccess } from '../../../../models/database/dealEntry.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import type { ActivityDatabase } from '../../../../models/entities/activity.js';
+import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import { type DealEntry, DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { activityTableName, selectActivityByExternalUuid } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { ActivityEntryBuilder } from '../../../builders/activityEntryBuilder.js';
+import { ActivityDatabaseBuilder } from '../../../builders/activityEntryBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
 import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
@@ -21,7 +21,7 @@ describe('API - Activity - PUT', () => {
   const tenantsGlobal: TenantEntry[] = [];
   const customersGlobal: CustomerEntry[] = [];
   const dealsGlobal: DealEntry[] = [];
-  const activitiesGlobal: ActivityEntry[] = [];
+  const activitiesGlobal: ActivityDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
@@ -69,7 +69,7 @@ describe('API - Activity - PUT', () => {
 
     const activity = await knexClient(activityTableName)
       .insert(
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('This is a test activity')
@@ -85,13 +85,13 @@ describe('API - Activity - PUT', () => {
   it('Success - Should update a activity', async () => {
     const payload: PutActivityRequestPayload = {
       description: 'This is a test activity',
-      imageUrl: activitiesGlobal[0].ImageUrl,
-      date: activitiesGlobal[0].Date,
+      imageUrl: activitiesGlobal[0].image_url,
+      date: activitiesGlobal[0].date,
     };
 
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: activitiesGlobal[0].ExternalUuid,
+        uuid: activitiesGlobal[0].external_uuid,
       })
       .withBody(payload)
       .withAuthorizerClaims({
@@ -111,7 +111,7 @@ describe('API - Activity - PUT', () => {
     expect(parsedBody.data.dealUuid).toBe(dealsGlobal[0].ExternalUuid);
     expect(parsedBody.data.description).toBe(payload.description);
     expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
-    expect(new Date(parsedBody.data.date).getTime()).toBeCloseTo(new Date(activitiesGlobal[0].Date).getTime());
+    expect(new Date(parsedBody.data.date).getTime()).toBeCloseTo(new Date(activitiesGlobal[0].date).getTime());
     expect(parsedBody.data.uuid).toBeDefined();
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeDefined();
@@ -119,14 +119,14 @@ describe('API - Activity - PUT', () => {
     // Validate the database record
     const activity = await selectActivityByExternalUuid(parsedBody.data.uuid);
     expect(activity).toBeDefined();
-    expect(activity!.Description).toBe(payload.description);
+    expect(activity!.description).toBe(payload.description);
   });
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const payload: PutActivityRequestPayload = {
       description: 'This is a test activity',
-      imageUrl: activitiesGlobal[0].ImageUrl,
-      date: activitiesGlobal[0].Date,
+      imageUrl: activitiesGlobal[0].image_url,
+      date: activitiesGlobal[0].date,
     };
 
     // Event missing the uuid path parameter
@@ -152,8 +152,8 @@ describe('API - Activity - PUT', () => {
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
     // Payload missing the description
     const payload: Partial<PutActivityRequestPayload> = {
-      imageUrl: activitiesGlobal[0].ImageUrl,
-      date: activitiesGlobal[0].Date,
+      imageUrl: activitiesGlobal[0].image_url,
+      date: activitiesGlobal[0].date,
     };
 
     // Event missing the uuid path parameter

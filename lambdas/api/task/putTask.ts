@@ -4,7 +4,7 @@ import { type PutTaskRequestPayload, type PutTaskResponsePayload, putTaskRequest
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { TaskEntry } from '../../../models/database/taskEntry.js';
+import { TaskEntry } from '../../../models/entities/taskEntry.js';
 import { selectTaskByExternalUuid, selectTaskById, updateTask } from '../../../repositories/taskRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {

@@ -1,4 +1,4 @@
-import type { UserTenantEntry } from '../../models/database/userTenantEntry.js';
+import type { UserTenantEntry } from '../../models/entities/userTenantEntry.js';
 
 export class UserTenantEntryBuilder {
   private userTenantEntry: UserTenantEntry;

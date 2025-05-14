@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto';
 import { handler } from '../../../../lambdas/api/task/getTask.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TaskEntry } from '../../../../models/database/taskEntry.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import type { TaskEntry } from '../../../../models/entities/taskEntry.js';
+import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { taskTableName } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';

@@ -8,7 +8,7 @@ import {
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { ActivityEntry } from '../../../models/database/activityEntry.js';
+import { Activity, type ActivityDatabase } from '../../../models/entities/activity.js';
 import { insertActivity, selectActivityById } from '../../../repositories/activityRepository.js';
 import { selectDealByExternalUuid } from '../../../repositories/dealRepository.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
@@ -47,7 +47,7 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<PostA
     throw new BadRequestError('Deal does not exist');
   }
 
-  const mappedActivity: Partial<ActivityEntry> = ActivityEntry.fromPostRequestPayload(tenant.Id, deal.Id, validatedRequest.body!);
+  const mappedActivity: Partial<ActivityDatabase> = Activity.create(tenant.Id, deal.Id, validatedRequest.body!);
   const activityId = await insertActivity(mappedActivity);
 
   return activityId;

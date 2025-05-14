@@ -4,7 +4,7 @@ import type { GetActivityResponsePayload } from '../../../models/api/payloads/ac
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { ExtendedActivityEntry } from '../../../models/database/activityEntry.js';
+import type { Activity } from '../../../models/entities/activity.js';
 import { selectActivityByExternalUuid } from '../../../repositories/activityRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
@@ -28,7 +28,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 }
 
-export async function queryRecords(validatedRequest: ValidatedApiRequest<null>): Promise<ExtendedActivityEntry> {
+export async function queryRecords(validatedRequest: ValidatedApiRequest<null>): Promise<Activity> {
   logger.info('Start - queryRecords');
 
   // Validate the activity if exists
@@ -41,7 +41,7 @@ export async function queryRecords(validatedRequest: ValidatedApiRequest<null>):
   return activity;
 }
 
-export function formatResponseData(activity: ExtendedActivityEntry): FetchSuccess<GetActivityResponsePayload> {
+export function formatResponseData(activity: Activity): FetchSuccess<GetActivityResponsePayload> {
   logger.info('Start - formatResponse');
 
   return new FetchSuccess<GetActivityResponsePayload>('Successfully fetched activity', activity.toPublic());

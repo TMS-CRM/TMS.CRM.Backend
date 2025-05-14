@@ -1,9 +1,9 @@
 import { handler } from '../../../../lambdas/api/activity/postActivity.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/database/customerEntry.js';
-import type { DealEntry } from '../../../../models/database/dealEntry.js';
-import { DealProgress, RoomAccess } from '../../../../models/database/dealEntry.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { DealEntry } from '../../../../models/entities/dealEntry.js';
+import { DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { selectActivityByExternalUuid } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
@@ -97,13 +97,13 @@ describe('API - Activity - POST', () => {
     // Validate the database record
     const activity = await selectActivityByExternalUuid(parsedBody.data.uuid);
     expect(activity).toBeDefined();
-    expect(activity?.TenantId).toBe(tenantsGlobal[0].Id);
-    expect(activity?.DealId).toBe(dealsGlobal[0].Id);
-    expect(activity?.Description).toBe(payload.description);
-    expect(activity?.ImageUrl).toBe(payload.imageUrl);
-    expect(new Date(activity!.Date).getTime()).toBeCloseTo(new Date(payload.date).getTime());
-    expect(activity?.CreatedOn).toBeDefined();
-    expect(activity?.ModifiedOn).toBeNull();
+    expect(activity?.tenantId).toBe(tenantsGlobal[0].Id);
+    expect(activity?.deal.Id).toBe(dealsGlobal[0].Id);
+    expect(activity?.description).toBe(payload.description);
+    expect(activity?.imageUrl).toBe(payload.imageUrl);
+    expect(new Date(activity!.date).getTime()).toBeCloseTo(new Date(payload.date).getTime());
+    expect(activity?.createdOn).toBeDefined();
+    expect(activity?.modifiedOn).toBeNull();
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {

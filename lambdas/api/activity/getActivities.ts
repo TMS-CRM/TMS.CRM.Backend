@@ -5,7 +5,7 @@ import { BadRequestError, HttpErrorResponse } from '../../../models/api/response
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { ExtendedActivityEntry } from '../../../models/database/activityEntry.js';
+import type { Activity } from '../../../models/entities/activity.js';
 import { selectActivities } from '../../../repositories/activityRepository.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 
@@ -33,9 +33,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 }
 
-export async function queryRecords(
-  validatedRequest: ValidatedApiRequest<null, GetActivityListFilter>,
-): Promise<PaginatedResponse<ExtendedActivityEntry>> {
+export async function queryRecords(validatedRequest: ValidatedApiRequest<null, GetActivityListFilter>): Promise<PaginatedResponse<Activity>> {
   logger.info('Start - queryRecords');
 
   const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
@@ -45,12 +43,12 @@ export async function queryRecords(
 
   const { limit, offset } = validatedRequest.queryParameters!;
 
-  const queryResult: PaginatedResponse<ExtendedActivityEntry> = await selectActivities(limit, offset, tenant.Id);
+  const queryResult: PaginatedResponse<Activity> = await selectActivities(limit, offset, tenant.Id);
 
   return queryResult;
 }
 
-export function formatResponseData(queryResult: PaginatedResponse<ExtendedActivityEntry>): FetchSuccess<GetActivityListResponsePayload> {
+export function formatResponseData(queryResult: PaginatedResponse<Activity>): FetchSuccess<GetActivityListResponsePayload> {
   logger.info('Start - formatResponse');
 
   const paginatedResponse: PaginatedResponse<PublicActivity> = {

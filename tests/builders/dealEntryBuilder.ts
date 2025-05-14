@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import type { integer } from 'aws-sdk/clients/cloudfront.js';
 import type { text } from 'aws-sdk/clients/customerprofiles.js';
-import type { DealProgress, IDealEntry, RoomAccess } from '../../models/database/dealEntry.js';
+import type { DealProgress, IDealEntry, RoomAccess } from '../../models/entities/dealEntry.js';
 
 export class DealEntryBuilder {
   private dealEntry: Partial<IDealEntry>;

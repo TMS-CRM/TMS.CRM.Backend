@@ -5,7 +5,7 @@ import { BadRequestError, HttpErrorResponse } from '../../../models/api/response
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { ExtendedDealEntry } from '../../../models/database/dealEntry.js';
+import type { ExtendedDealEntry } from '../../../models/entities/dealEntry.js';
 import { selectDeals } from '../../../repositories/dealRepository.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 

@@ -1,7 +1,7 @@
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
-import { type ITaskEntry, TaskEntry } from '../models/database/taskEntry.js';
+import { type ITaskEntry, TaskEntry } from '../models/entities/taskEntry.js';
 
 export const taskTableName = 'Task';
 

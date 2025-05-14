@@ -1,14 +1,14 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/activity/getActivities.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { ICustomerEntry } from '../../../../models/database/customerEntry.js';
-import { DealProgress, type IDealEntry, RoomAccess } from '../../../../models/database/dealEntry.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
+import type { ICustomerEntry } from '../../../../models/entities/customerEntry.js';
+import { DealProgress, type IDealEntry, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { activityTableName } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { ActivityEntryBuilder } from '../../../builders/activityEntryBuilder.js';
+import { ActivityDatabaseBuilder } from '../../../builders/activityEntryBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
 import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
@@ -122,7 +122,7 @@ describe('API - Activities - GET', () => {
     // Insert 9 activities for the first tenant
     await knexClient(activityTableName)
       .insert([
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Scheduled initial consultation')
@@ -130,7 +130,7 @@ describe('API - Activities - GET', () => {
           .withImageUrl('http://example.com/image1.jpg')
           .build(),
 
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Sent follow-up email')
@@ -138,7 +138,7 @@ describe('API - Activities - GET', () => {
           .withImageUrl('http://example.com/image2.jpg')
           .build(),
 
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Completed site visit')
@@ -146,7 +146,7 @@ describe('API - Activities - GET', () => {
           .withImageUrl('http://example.com/image3.jpg')
           .build(),
 
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Reviewed contract with client')
@@ -154,7 +154,7 @@ describe('API - Activities - GET', () => {
           .withImageUrl('http://example.com/image4.jpg')
           .build(),
 
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Negotiation phase started')
@@ -162,7 +162,7 @@ describe('API - Activities - GET', () => {
           .withImageUrl('http://example.com/image5.jpg')
           .build(),
 
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Finalized agreement terms')
@@ -170,7 +170,7 @@ describe('API - Activities - GET', () => {
           .withImageUrl('http://example.com/image6.jpg')
           .build(),
 
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Client confirmed contract')
@@ -178,7 +178,7 @@ describe('API - Activities - GET', () => {
           .withImageUrl('http://example.com/image7.jpg')
           .build(),
 
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Deposit payment received')
@@ -186,7 +186,7 @@ describe('API - Activities - GET', () => {
           .withImageUrl('http://example.com/image8.jpg')
           .build(),
 
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDealId(dealsGlobal[0].Id)
           .withDescription('Project completed successfully')
@@ -199,7 +199,7 @@ describe('API - Activities - GET', () => {
     // Insert 1 activity for the second tenant
     await knexClient(activityTableName)
       .insert([
-        ActivityEntryBuilder.make()
+        ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[1].Id)
           .withDealId(dealsGlobal[1].Id)
           .withDescription('Develop completed successfully')

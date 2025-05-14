@@ -5,7 +5,7 @@ import { putActivityRequestSchema } from '../../../models/api/payloads/activity.
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { ActivityEntry } from '../../../models/database/activityEntry.js';
+import { Activity, type ActivityDatabase } from '../../../models/entities/activity.js';
 import { selectActivityByExternalUuid, selectActivityById, updateActivity } from '../../../repositories/activityRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
@@ -41,10 +41,10 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<PutAc
   }
 
   // Update the activity
-  const mappedActivity: Partial<ActivityEntry> = ActivityEntry.fromPutRequestPayload(validatedRequest.body!);
-  await updateActivity(activity.Id, mappedActivity);
+  const mappedActivity: Partial<ActivityDatabase> = Activity.update(validatedRequest.body!);
+  await updateActivity(activity.id, mappedActivity);
 
-  return activity.Id;
+  return activity.id;
 }
 
 export async function formatResponseData(activityId: number): Promise<PersistSuccess<PutActivityResponsePayload>> {

@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import type { ICustomerEntry } from '../../models/database/customerEntry.js';
+import type { ICustomerEntry } from '../../models/entities/customerEntry.js';
 
 export class CustomerEntryBuilder {
   private customerEntry: Partial<ICustomerEntry>;

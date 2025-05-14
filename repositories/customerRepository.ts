@@ -1,7 +1,7 @@
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
-import { CustomerEntry, type ICustomerEntry } from '../models/database/customerEntry.js';
+import { CustomerEntry, type ICustomerEntry } from '../models/entities/customerEntry.js';
 
 export const customerTableName = 'Customer';
 

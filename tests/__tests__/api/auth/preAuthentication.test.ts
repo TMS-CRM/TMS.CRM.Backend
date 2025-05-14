@@ -1,8 +1,8 @@
 import type { PreAuthenticationTriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/pre-authentication.js';
 import { handler } from '../../../../lambdas/api/auth/preAuthentication.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/database/tenantEntry.js';
-import type { UserEntry } from '../../../../models/database/userEntry.js';
+import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { UserEntry } from '../../../../models/entities/userEntry.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { userTableName } from '../../../../repositories/userRepository.js';
 import { userTenantTableName } from '../../../../repositories/userTenantRepository.js';

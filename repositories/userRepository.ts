@@ -2,7 +2,7 @@ import { userTenantTableName } from './userTenantRepository.js';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
-import { type IUserEntry, UserEntry } from '../models/database/userEntry.js';
+import { type IUserEntry, UserEntry } from '../models/entities/userEntry.js';
 
 export const userTableName = 'User';
 
@@ -34,6 +34,14 @@ export async function selectUserByCognitoUuid(cognitoUuid: string): Promise<User
 /** Get the User by ExternalUuid */
 export async function selectUserByExternalUuid(externalUuid: string): Promise<UserEntry | null> {
   const query = knexClient(userTableName).select('*').where('ExternalUuid', externalUuid).whereNull(`${userTableName}.DeletedOn`);
+  const records = (await query) as IUserEntry[];
+
+  return records.length > 0 ? new UserEntry(records[0]) : null;
+}
+
+/** Get the User by Email */
+export async function selectUserByEmail(email: string): Promise<UserEntry | null> {
+  const query = knexClient(userTableName).select('*').where('Email', email).whereNull(`${userTableName}.DeletedOn`);
   const records = (await query) as IUserEntry[];
 
   return records.length > 0 ? new UserEntry(records[0]) : null;

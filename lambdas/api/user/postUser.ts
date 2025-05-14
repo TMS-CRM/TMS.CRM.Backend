@@ -1,15 +1,14 @@
-import { AdminCreateUserCommand } from '@aws-sdk/client-cognito-identity-provider';
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { getCognitoClient } from '../../../lib/aws/cognito.js';
+import { setupCognitoUser } from '../../../lib/aws/cognito.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { type PostUserRequestPayload, type PostUserResponsePayload, postUserRequestSchema } from '../../../models/api/payloads/user.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { UserEntry } from '../../../models/database/userEntry.js';
-import { UserTenantEntry } from '../../../models/database/userTenantEntry.js';
+import { UserEntry } from '../../../models/entities/userEntry.js';
+import { UserTenantEntry } from '../../../models/entities/userTenantEntry.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
-import { insertUser, selectUserById, updateUser } from '../../../repositories/userRepository.js';
+import { insertUser, selectUserById } from '../../../repositories/userRepository.js';
 import { insertUserTenant } from '../../../repositories/userTenantRepository.js';
 
 const USER_POOL_ID = process.env.USER_POOL_ID;
@@ -54,34 +53,15 @@ async function persistRecords(validatedRequest: ValidatedApiRequest<PostUserRequ
 }
 
 async function createCognitoUser(userId: number): Promise<number> {
+  logger.info('Start - createCognitoUser');
+
   const user = await selectUserById(userId);
 
   if (!user) {
     throw new BadRequestError('User not found');
   }
 
-  const createUserResponse = await getCognitoClient().send(
-    new AdminCreateUserCommand({
-      UserPoolId: USER_POOL_ID,
-      Username: user.Email,
-      UserAttributes: [
-        {
-          Name: 'email',
-          Value: user.Email,
-        },
-      ],
-    }),
-  );
-
-  // Get the Cognito user ID (sub)
-  const cognitoUserUuid = createUserResponse.User?.Attributes?.find((attr) => attr.Name === 'sub')?.Value;
-
-  if (!cognitoUserUuid) {
-    throw new Error('Failed to retrieve Cognito user uuid');
-  }
-
-  // Update the user with the Cognito user uuid
-  await updateUser(userId, { CognitoUuid: cognitoUserUuid });
+  await setupCognitoUser(user, USER_POOL_ID!);
 
   return user.Id;
 }

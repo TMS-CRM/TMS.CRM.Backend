@@ -4,7 +4,7 @@ import { type PostDealRequestPayload, type PostDealResponsePayload, postDealRequ
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { DealEntry } from '../../../models/database/dealEntry.js';
+import { DealEntry } from '../../../models/entities/dealEntry.js';
 import { selectCustomerByExternalUuid } from '../../../repositories/customerRepository.js';
 import { insertDeal, selectDealById } from '../../../repositories/dealRepository.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
