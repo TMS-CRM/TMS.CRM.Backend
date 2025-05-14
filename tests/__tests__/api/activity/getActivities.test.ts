@@ -8,7 +8,7 @@ import { activityTableName } from '../../../../repositories/activityRepository.j
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { ActivityDatabaseBuilder } from '../../../builders/activityEntryBuilder.js';
+import { ActivityDatabaseBuilder } from '../../../builders/activityDatabaseBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
 import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
