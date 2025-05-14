@@ -1,5 +1,5 @@
+import type { PublicTenant } from '../api/payloads/tenant.js';
 import type { PublicUser } from '../api/payloads/user.js';
-import type { PublicTenant } from '../entities/tenantEntry.js';
 
 export interface CreateTenantRequestPayload {
   name: string;
