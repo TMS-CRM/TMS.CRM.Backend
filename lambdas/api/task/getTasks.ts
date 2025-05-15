@@ -5,7 +5,7 @@ import { BadRequestError, HttpErrorResponse } from '../../../models/api/response
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { TaskEntry } from '../../../models/entities/taskEntry.js';
+import type { Task } from '../../../models/entities/task.js';
 import { selectTasks } from '../../../repositories/taskRepository.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 
@@ -33,7 +33,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 }
 
-export async function queryRecords(validatedRequest: ValidatedApiRequest<null, GetTaskListFilter>): Promise<PaginatedResponse<TaskEntry>> {
+export async function queryRecords(validatedRequest: ValidatedApiRequest<null, GetTaskListFilter>): Promise<PaginatedResponse<Task>> {
   logger.info('Start - queryRecords');
 
   const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
@@ -42,12 +42,12 @@ export async function queryRecords(validatedRequest: ValidatedApiRequest<null, G
   }
 
   const { limit, offset } = validatedRequest.queryParameters!;
-  const queryResult: PaginatedResponse<TaskEntry> = await selectTasks(limit, offset, tenant.Id);
+  const queryResult: PaginatedResponse<Task> = await selectTasks(limit, offset, tenant.Id);
 
   return queryResult;
 }
 
-export function formatResponseData(queryResult: PaginatedResponse<TaskEntry>): FetchSuccess<GetTaskListResponsePayload> {
+export function formatResponseData(queryResult: PaginatedResponse<Task>): FetchSuccess<GetTaskListResponsePayload> {
   logger.info('Start - formatResponse');
 
   const paginatedResponse: PaginatedResponse<PublicTask> = {

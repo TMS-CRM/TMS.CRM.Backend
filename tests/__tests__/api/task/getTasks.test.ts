@@ -5,7 +5,7 @@ import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { taskTableName } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TaskEntryBuilder } from '../../../builders/taskEntryBuilder.js';
+import { TaskDatabaseBuilder } from '../../../builders/taskDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Tasks - GET', () => {
@@ -24,63 +24,63 @@ describe('API - Tasks - GET', () => {
     // Insert 9 tasks
     await knexClient(taskTableName)
       .insert([
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDescription('Test are now implemented')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
           .build(),
 
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(false)
           .build(),
 
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
           .build(),
 
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(false)
           .build(),
 
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
           .build(),
 
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(false)
           .build(),
 
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
           .build(),
 
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(false)
           .build(),
 
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
@@ -91,7 +91,7 @@ describe('API - Tasks - GET', () => {
 
     await knexClient(taskTableName)
       .insert([
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[1].Id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())

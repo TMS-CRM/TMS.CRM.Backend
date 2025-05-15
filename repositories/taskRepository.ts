@@ -1,58 +1,54 @@
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
-import { type ITaskEntry, TaskEntry } from '../models/entities/taskEntry.js';
+import { Task, type TaskDatabase } from '../models/entities/task.js';
 
-export const taskTableName = 'Task';
+export const taskTableName = 'task';
 
 /** Insert the task */
-export async function insertTask(task: Partial<ITaskEntry>): Promise<number> {
-  const query = knexClient(taskTableName).insert(task).returning('Id');
-  const records = (await query) as ITaskEntry[];
+export async function insertTask(task: Partial<TaskDatabase>): Promise<number> {
+  const query = knexClient(taskTableName).insert(task).returning('id');
+  const records = (await query) as TaskDatabase[];
 
-  logger.info(`Successfully inserted task. Id: ${records[0].Id}`);
-  return records[0].Id;
+  logger.info(`Successfully inserted task. Id: ${records[0].id}`);
+  return records[0].id;
 }
 
 /** Get the task by Id */
-export async function selectTaskById(id: number): Promise<TaskEntry | null> {
-  const query = knexClient(taskTableName).select('*').where('Id', id).whereNull(`${taskTableName}.DeletedOn`);
-  const records = (await query) as ITaskEntry[];
+export async function selectTaskById(id: number): Promise<Task | null> {
+  const query = knexClient(taskTableName).select('*').where('id', id).whereNull(`${taskTableName}.deleted_on`);
+  const records = (await query) as TaskDatabase[];
 
-  return records.length > 0 ? new TaskEntry(records[0]) : null;
+  return records.length > 0 ? new Task(records[0]) : null;
 }
 
-/** Get the Task by ExternalUuid */
-export async function selectTaskByExternalUuid(externalUuid: string): Promise<TaskEntry | null> {
-  const query = knexClient(taskTableName).select('*').where('ExternalUuid', externalUuid).whereNull(`${taskTableName}.DeletedOn`);
-  const records = (await query) as ITaskEntry[];
+/** Get the Task by external_uuid */
+export async function selectTaskByExternalUuid(externalUuid: string): Promise<Task | null> {
+  const query = knexClient(taskTableName).select('*').where('external_uuid', externalUuid).whereNull(`${taskTableName}.deleted_on`);
+  const records = (await query) as TaskDatabase[];
 
-  return records.length > 0 ? new TaskEntry(records[0]) : null;
+  return records.length > 0 ? new Task(records[0]) : null;
 }
 
-export async function selectTasks(limit: number, offset: number, tenantId: number | null): Promise<PaginatedResponse<TaskEntry>> {
+export async function selectTasks(limit: number, offset: number, tenantId: number | null): Promise<PaginatedResponse<Task>> {
   // Base query without deleted task
-  const baseQuery = knexClient(taskTableName).whereNull(`${taskTableName}.DeletedOn`);
-
-  if (tenantId) {
-    baseQuery.where(`${taskTableName}.TenantId`, tenantId);
-  }
+  const baseQuery = knexClient(taskTableName).where(`${taskTableName}.tenant_id`, tenantId).whereNull(`${taskTableName}.deleted_on`);
 
   // Get the tasks
-  const tasks = (await baseQuery.clone().limit(limit).offset(offset).select('*')) as ITaskEntry[];
+  const tasks = (await baseQuery.clone().limit(limit).offset(offset).select('*')) as TaskDatabase[];
 
   // Get the total number of tasks
   const total = (await baseQuery.clone().count('*'))[0]['count'];
 
   return {
-    items: tasks.map((task) => new TaskEntry(task)),
+    items: tasks.map((task) => new Task(task)),
     total: Number(total),
   };
 }
 
 /** Update the task */
-export async function updateTask(taskId: number, task: Partial<ITaskEntry>): Promise<void> {
-  await knexClient(taskTableName).update(task).where('Id', taskId);
+export async function updateTask(taskId: number, task: Partial<TaskDatabase>): Promise<void> {
+  await knexClient(taskTableName).update(task).where('id', taskId);
 
   logger.info(`Successfully updated Task. Id: ${taskId}`);
 }
@@ -60,7 +56,7 @@ export async function updateTask(taskId: number, task: Partial<ITaskEntry>): Pro
 /** Delete the Task */
 export async function softDeleteTaskById(taskId: number): Promise<void> {
   const query = knexClient(taskTableName).update({ DeletedOn: new Date().toISOString() }).where('Id', taskId).returning('Id');
-  const records = (await query) as ITaskEntry[];
+  const records = (await query) as TaskDatabase[];
 
-  logger.info(`Successfully soft deleted Task. Id: ${records[0].Id}`);
+  logger.info(`Successfully soft deleted Task. Id: ${records[0].id}`);
 }

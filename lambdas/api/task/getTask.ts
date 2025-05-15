@@ -4,7 +4,7 @@ import type { GetTaskResponsePayload } from '../../../models/api/payloads/task.j
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { TaskEntry } from '../../../models/entities/taskEntry.js';
+import type { Task } from '../../../models/entities/task.js';
 import { selectTaskByExternalUuid } from '../../../repositories/taskRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
@@ -28,7 +28,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 }
 
-export async function queryRecords(validatedRequest: ValidatedApiRequest<null>): Promise<TaskEntry> {
+export async function queryRecords(validatedRequest: ValidatedApiRequest<null>): Promise<Task> {
   logger.info('Start - queryRecords');
 
   // Validate the task if exists
@@ -41,7 +41,7 @@ export async function queryRecords(validatedRequest: ValidatedApiRequest<null>):
   return task;
 }
 
-export function formatResponseData(task: TaskEntry): FetchSuccess<GetTaskResponsePayload> {
+export function formatResponseData(task: Task): FetchSuccess<GetTaskResponsePayload> {
   logger.info('Start - formatResponse');
 
   return new FetchSuccess<GetTaskResponsePayload>('Successfully fetched task', task.toPublic());

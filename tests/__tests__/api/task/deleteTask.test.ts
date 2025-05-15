@@ -2,17 +2,17 @@ import { randomUUID } from 'crypto';
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/task/deleteTask.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TaskEntry } from '../../../../models/entities/taskEntry.js';
+import type { TaskDatabase } from '../../../../models/entities/task.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { selectTaskByExternalUuid, taskTableName } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TaskEntryBuilder } from '../../../builders/taskEntryBuilder.js';
+import { TaskDatabaseBuilder } from '../../../builders/taskDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Task - DELETE', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const tasksGlobal: TaskEntry[] = [];
+  const tasksGlobal: TaskDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
@@ -21,7 +21,7 @@ describe('API - Task - DELETE', () => {
 
     const task = await knexClient(taskTableName)
       .insert(
-        TaskEntryBuilder.make()
+        TaskDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withDescription('Test are now implemented')
           .withDueDate(new Date().toISOString())
@@ -36,7 +36,7 @@ describe('API - Task - DELETE', () => {
   it('Success - Should soft delete a task', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: tasksGlobal[0].ExternalUuid,
+        uuid: tasksGlobal[0].external_uuid,
       })
       .withAuthorizerClaims({
         'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
@@ -54,7 +54,7 @@ describe('API - Task - DELETE', () => {
     expect(parsedBody.type).toBe('DeleteSuccess');
 
     // Validate the database record
-    const task = await selectTaskByExternalUuid(tasksGlobal[0].ExternalUuid);
+    const task = await selectTaskByExternalUuid(tasksGlobal[0].external_uuid);
     expect(task).toBeNull();
   });
 

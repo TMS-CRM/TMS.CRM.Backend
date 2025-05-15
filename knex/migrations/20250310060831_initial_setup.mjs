@@ -69,16 +69,16 @@ export async function up(knex) {
       table.timestamp('ModifiedOn');
       table.timestamp('DeletedOn');
     })
-    .createTable('Task', (table) => {
-      table.increments('Id').primary();
-      table.uuid('ExternalUuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
-      table.integer('TenantId').references('Id').inTable('Tenant').notNullable().onDelete('CASCADE');
-      table.string('Description').notNullable();
-      table.timestamp('DueDate').notNullable();
-      table.boolean('Completed').defaultTo(false);
-      table.timestamp('CreatedOn').defaultTo(knex.fn.now()).notNullable();
-      table.timestamp('ModifiedOn');
-      table.timestamp('DeletedOn');
+    .createTable('task', (table) => {
+      table.increments('id').primary();
+      table.uuid('external_uuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
+      table.integer('tenant_id').references('Id').inTable('Tenant').notNullable().onDelete('CASCADE');
+      table.string('description').notNullable();
+      table.timestamp('due_date').notNullable();
+      table.boolean('completed').defaultTo(false);
+      table.timestamp('created_on').defaultTo(knex.fn.now()).notNullable();
+      table.timestamp('modified_on');
+      table.timestamp('deleted_on');
     })
     .createTable('activity', (table) => {
       table.increments('id').primary();
@@ -100,7 +100,7 @@ export async function up(knex) {
  */
 export async function down(knex) {
   await knex.schema
-    .dropTableIfExists('Task')
+    .dropTableIfExists('task')
     .dropTableIfExists('activity')
     .dropTableIfExists('Deal')
     .dropTableIfExists('Customer')

@@ -47,7 +47,13 @@ describe('API - Task - POST', () => {
     // Validate the database record
     const task = await selectTaskByExternalUuid(parsedBody.data.uuid);
     expect(task).toBeDefined();
-    expect(task?.TenantId).toBe(tenantsGlobal[0].Id);
+    expect(task?.tenantId).toBe(tenantsGlobal[0].Id);
+    expect(task?.description).toBe(payload.description);
+    expect(task?.dueDate).toBeDefined();
+    expect(new Date(task!.dueDate).getTime()).toBeCloseTo(new Date(payload.dueDate).getTime());
+    expect(task?.completed).toBe(payload.completed);
+    expect(task?.createdOn).toBeDefined();
+    expect(task?.modifiedOn).toBeNull();
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
