@@ -1,20 +1,20 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/deal/getDeals.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { ICustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Deals - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: ICustomerEntry[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName)
@@ -24,7 +24,7 @@ describe('API - Deals - GET', () => {
 
     const customer = await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('John')
           .withLastName('Doe')
@@ -37,7 +37,7 @@ describe('API - Deals - GET', () => {
           .withCustomerImageUrl('http/5678')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Jane')
           .withLastName('Smith')
@@ -50,7 +50,7 @@ describe('API - Deals - GET', () => {
           .withCustomerImageUrl('http/6789')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Sofi')
           .withLastName('Smith')
@@ -70,7 +70,7 @@ describe('API - Deals - GET', () => {
       .insert([
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(150)
           .withStreet('202 Pine Street')
           .withCity('Auckland')
@@ -86,7 +86,7 @@ describe('API - Deals - GET', () => {
 
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(200)
           .withStreet('303 Oak Street')
           .withCity('Christchurch')
@@ -102,7 +102,7 @@ describe('API - Deals - GET', () => {
 
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(250)
           .withStreet('404 Maple Street')
           .withCity('Hamilton')
@@ -118,7 +118,7 @@ describe('API - Deals - GET', () => {
 
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(300)
           .withStreet('505 Birch Street')
           .withCity('Dunedin')
@@ -134,7 +134,7 @@ describe('API - Deals - GET', () => {
 
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(350)
           .withStreet('606 Cedar Street')
           .withCity('Tauranga')
@@ -150,7 +150,7 @@ describe('API - Deals - GET', () => {
 
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(400)
           .withStreet('707 Walnut Street')
           .withCity('Napier')
@@ -171,7 +171,7 @@ describe('API - Deals - GET', () => {
       .insert([
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[1].Id)
+          .withCustomerId(customersGlobal[1].id)
           .withPrice(500)
           .withStreet('808 Spruce Street')
           .withCity('Queenstown')

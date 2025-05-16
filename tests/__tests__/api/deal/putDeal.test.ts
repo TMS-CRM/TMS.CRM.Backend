@@ -3,20 +3,20 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/deal/putDeal.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { PutDealRequestPayload } from '../../../../models/api/payloads/deal.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName, selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Deal - PUT', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
   const dealsGlobal: DealDatabase[] = [];
 
   beforeEach(async () => {
@@ -25,7 +25,7 @@ describe('API - Deal - PUT', () => {
 
     const customer = await knexClient(customerTableName)
       .insert(
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenant[0].Id)
           .withFirstName('John')
           .withLastName('Doe')
@@ -46,7 +46,7 @@ describe('API - Deal - PUT', () => {
       .insert(
         DealDatabaseBuilder.make()
           .withTenantId(tenant[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+          .withCustomerId(customersGlobal[0].id)
           .withStreet('123 Main St')
           .withCity('Springfield')
           .withState('IL')
@@ -68,7 +68,7 @@ describe('API - Deal - PUT', () => {
 
   it('Success - Should update a deal', async () => {
     const payload: PutDealRequestPayload = {
-      customerUuid: customersGlobal[0].ExternalUuid,
+      customerUuid: customersGlobal[0].external_uuid,
       street: 'New Street Name',
       city: dealsGlobal[0].city,
       state: dealsGlobal[0].state,
@@ -102,12 +102,12 @@ describe('API - Deal - PUT', () => {
 
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('PersistSuccess');
-    expect(parsedBody.data.customer.uuid).toBe(customersGlobal[0].ExternalUuid);
-    expect(parsedBody.data.customer.imageUrl).toBe(customersGlobal[0].ImageUrl);
-    expect(parsedBody.data.customer.firstName).toBe(customersGlobal[0].FirstName);
-    expect(parsedBody.data.customer.lastName).toBe(customersGlobal[0].LastName);
-    expect(parsedBody.data.customer.email).toBe(customersGlobal[0].Email);
-    expect(parsedBody.data.customer.phone).toBe(customersGlobal[0].Phone);
+    expect(parsedBody.data.customer.uuid).toBe(customersGlobal[0].external_uuid);
+    expect(parsedBody.data.customer.imageUrl).toBe(customersGlobal[0].image_url);
+    expect(parsedBody.data.customer.firstName).toBe(customersGlobal[0].first_name);
+    expect(parsedBody.data.customer.lastName).toBe(customersGlobal[0].last_name);
+    expect(parsedBody.data.customer.email).toBe(customersGlobal[0].email);
+    expect(parsedBody.data.customer.phone).toBe(customersGlobal[0].phone);
     expect(parsedBody.data.street).toBe('New Street Name');
     expect(parsedBody.data.city).toBe(payload.city);
     expect(parsedBody.data.state).toBe(payload.state);
@@ -132,7 +132,7 @@ describe('API - Deal - PUT', () => {
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const payload: Partial<PutDealRequestPayload> = {
-      customerUuid: customersGlobal[0].ExternalUuid,
+      customerUuid: customersGlobal[0].external_uuid,
       street: 'New Street Name',
       city: dealsGlobal[0].city,
       state: dealsGlobal[0].state,
@@ -170,7 +170,7 @@ describe('API - Deal - PUT', () => {
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
     // Payload missing the street and city
     const payload: Partial<PutDealRequestPayload> = {
-      customerUuid: customersGlobal[0].ExternalUuid,
+      customerUuid: customersGlobal[0].external_uuid,
       city: dealsGlobal[0].city,
       state: dealsGlobal[0].state,
       zipCode: dealsGlobal[0].zip_code,
@@ -206,7 +206,7 @@ describe('API - Deal - PUT', () => {
 
   it('Error - Should return a 400 error if the deal does not exist', async () => {
     const payload: PutDealRequestPayload = {
-      customerUuid: customersGlobal[0].ExternalUuid,
+      customerUuid: customersGlobal[0].external_uuid,
       street: '456 Elm St',
       city: 'Springfield',
       state: 'IL',

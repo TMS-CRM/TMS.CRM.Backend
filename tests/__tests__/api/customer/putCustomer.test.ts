@@ -3,17 +3,17 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/customer/putCustomer.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { PutCustomerRequestPayload } from '../../../../models/api/payloads/customer.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName, selectCustomerByExternalUuid } from '../../../../repositories/customerRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Customer - PUT', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
@@ -21,7 +21,7 @@ describe('API - Customer - PUT', () => {
 
     const customer = await knexClient(customerTableName)
       .insert(
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('John')
           .withLastName('Doe')
@@ -41,15 +41,15 @@ describe('API - Customer - PUT', () => {
 
   it('Success - Should update a customer', async () => {
     const payload: PutCustomerRequestPayload = {
-      firstName: customersGlobal[0].FirstName,
-      lastName: customersGlobal[0].LastName,
+      firstName: customersGlobal[0].first_name,
+      lastName: customersGlobal[0].last_name,
       email: 'new.john.doe@example.com',
-      phone: customersGlobal[0].Phone,
-      street: customersGlobal[0].Street,
-      city: customersGlobal[0].City,
-      state: customersGlobal[0].State,
-      zipCode: customersGlobal[0].ZipCode,
-      imageUrl: String(customersGlobal[0].ImageUrl),
+      phone: customersGlobal[0].phone,
+      street: customersGlobal[0].street,
+      city: customersGlobal[0].city,
+      state: customersGlobal[0].state,
+      zipCode: customersGlobal[0].zip_code,
+      imageUrl: String(customersGlobal[0].image_url),
     };
 
     const event = APIGatewayProxyEventBuilder.make()
@@ -57,7 +57,7 @@ describe('API - Customer - PUT', () => {
         'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
       })
       .withPathParameters({
-        uuid: customersGlobal[0].ExternalUuid,
+        uuid: customersGlobal[0].external_uuid,
       })
       .withBody(payload)
       .build();
@@ -88,20 +88,20 @@ describe('API - Customer - PUT', () => {
     // Validate the database record
     const customer = await selectCustomerByExternalUuid(parsedBody.data.uuid);
     expect(customer).toBeDefined();
-    expect(customer!.Email).toBe(payload.email);
+    expect(customer!.email).toBe(payload.email);
   });
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const payload: PutCustomerRequestPayload = {
-      firstName: customersGlobal[0].FirstName,
-      lastName: customersGlobal[0].LastName,
+      firstName: customersGlobal[0].first_name,
+      lastName: customersGlobal[0].last_name,
       email: 'new.john.doe@example.com',
-      phone: customersGlobal[0].Phone,
-      street: customersGlobal[0].Street,
-      city: customersGlobal[0].City,
-      state: customersGlobal[0].State,
-      zipCode: customersGlobal[0].ZipCode,
-      imageUrl: String(customersGlobal[0].ImageUrl),
+      phone: customersGlobal[0].phone,
+      street: customersGlobal[0].street,
+      city: customersGlobal[0].city,
+      state: customersGlobal[0].state,
+      zipCode: customersGlobal[0].zip_code,
+      imageUrl: String(customersGlobal[0].image_url),
     };
 
     // Event missing the uuid path parameter
@@ -127,14 +127,14 @@ describe('API - Customer - PUT', () => {
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
     // Payload missing the email, phone, street, city, state, zipCode
     const payload: Partial<PutCustomerRequestPayload> = {
-      firstName: customersGlobal[0].FirstName,
-      lastName: customersGlobal[0].LastName,
-      imageUrl: String(customersGlobal[0].ImageUrl),
+      firstName: customersGlobal[0].first_name,
+      lastName: customersGlobal[0].last_name,
+      imageUrl: String(customersGlobal[0].image_url),
     };
 
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withPathParameters({ uuid: customersGlobal[0].ExternalUuid })
+      .withPathParameters({ uuid: customersGlobal[0].external_uuid })
       .withBody(payload)
       .withAuthorizerClaims({
         'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,

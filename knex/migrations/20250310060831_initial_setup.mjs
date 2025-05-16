@@ -52,7 +52,7 @@ export async function up(knex) {
       table.increments('id').primary();
       table.uuid('external_uuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
       table.integer('tenant_id').references('Id').inTable('Tenant').notNullable().onDelete('CASCADE');
-      table.integer('customer_id').references('Id').inTable('Customer').notNullable().onDelete('CASCADE');
+      table.integer('customer_id').references('id').inTable('customer').notNullable().onDelete('CASCADE');
       table.string('image_url', 255);
       table.string('street', 255);
       table.string('city', 100);
@@ -103,7 +103,7 @@ export async function down(knex) {
     .dropTableIfExists('task')
     .dropTableIfExists('activity')
     .dropTableIfExists('deal')
-    .dropTableIfExists('Customer')
+    .dropTableIfExists('customer')
     .dropTableIfExists('UserTenant')
     .dropTableIfExists('User')
     .dropTableIfExists('Tenant');

@@ -43,7 +43,7 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<PostD
     throw new BadRequestError('Customer does not exist');
   }
 
-  const mappedDeal: Partial<DealDatabase> = Deal.create(tenant.Id, customer.Id, validatedRequest.body!);
+  const mappedDeal: Partial<DealDatabase> = Deal.create(tenant.Id, customer.id, validatedRequest.body!);
   const dealId = await insertDeal(mappedDeal);
 
   return dealId;

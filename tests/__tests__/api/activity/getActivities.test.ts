@@ -1,7 +1,7 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/activity/getActivities.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { ICustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { activityTableName } from '../../../../repositories/activityRepository.js';
@@ -10,14 +10,14 @@ import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { ActivityDatabaseBuilder } from '../../../builders/activityDatabaseBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Activities - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
   const dealsGlobal: DealDatabase[] = [];
-  const customersGlobal: ICustomerEntry[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
     const tenants = await knexClient(tenantTableName)
@@ -32,7 +32,7 @@ describe('API - Activities - GET', () => {
     // Insert customers
     const customer = await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('John')
           .withLastName('Doe')
@@ -45,7 +45,7 @@ describe('API - Activities - GET', () => {
           .withCustomerImageUrl('http/5678')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Jane')
           .withLastName('Smith')
@@ -66,7 +66,7 @@ describe('API - Activities - GET', () => {
       .insert([
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+          .withCustomerId(customersGlobal[0].id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')
@@ -83,7 +83,7 @@ describe('API - Activities - GET', () => {
 
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[1].Id)
+          .withCustomerId(customersGlobal[1].id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')
@@ -100,7 +100,7 @@ describe('API - Activities - GET', () => {
 
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[1].Id)
+          .withCustomerId(customersGlobal[1].id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')

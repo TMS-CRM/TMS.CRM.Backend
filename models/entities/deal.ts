@@ -1,6 +1,6 @@
 import type { integer } from 'aws-sdk/clients/cloudfront.js';
 import type { text } from 'aws-sdk/clients/customerprofiles.js';
-import type { CustomerEntry } from './customerEntry.js';
+import type { Customer } from './customer.js';
 import type { PostDealRequestPayload, PublicDeal, PutDealRequestPayload } from '../api/payloads/deal.js';
 
 export enum DealProgress {
@@ -54,7 +54,7 @@ export class Deal {
   public id: number;
   public externalUuid: string;
   public tenantId: number;
-  public customer: Pick<CustomerEntry, 'ExternalUuid' | 'Id' | 'FirstName' | 'LastName' | 'Email' | 'Phone' | 'ImageUrl'>;
+  public customer: Pick<Customer, 'externalUuid' | 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'imageUrl'>;
   public imageUrl: string;
   public street: string;
   public city: string;
@@ -76,13 +76,13 @@ export class Deal {
     this.externalUuid = data.external_uuid;
     this.tenantId = data.tenant_id;
     this.customer = {
-      Id: data.customer_id,
-      ExternalUuid: data.customer_external_uuid,
-      FirstName: data.customer_first_name,
-      ImageUrl: data.customer_image_url,
-      LastName: data.customer_last_name,
-      Email: data.customer_email,
-      Phone: data.customer_phone,
+      id: data.customer_id,
+      externalUuid: data.customer_external_uuid,
+      firstName: data.customer_first_name,
+      imageUrl: data.customer_image_url,
+      lastName: data.customer_last_name,
+      email: data.customer_email,
+      phone: data.customer_phone,
     };
     this.imageUrl = data.image_url;
     this.street = data.street;
@@ -145,12 +145,12 @@ export class Deal {
     return {
       uuid: this.externalUuid,
       customer: {
-        uuid: this.customer.ExternalUuid,
-        imageUrl: this.customer.ImageUrl ?? null,
-        firstName: this.customer.FirstName,
-        lastName: this.customer.LastName,
-        email: this.customer.Email,
-        phone: this.customer.Phone,
+        uuid: this.customer.externalUuid,
+        imageUrl: this.customer.imageUrl ?? null,
+        firstName: this.customer.firstName,
+        lastName: this.customer.lastName,
+        email: this.customer.email,
+        phone: this.customer.phone,
       },
       price: this.price,
       street: this.street,

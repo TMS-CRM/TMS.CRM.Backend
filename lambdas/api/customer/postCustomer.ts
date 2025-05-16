@@ -5,7 +5,7 @@ import { postCustomerRequestSchema } from '../../../models/api/payloads/customer
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { CustomerEntry } from '../../../models/entities/customerEntry.js';
+import { Customer } from '../../../models/entities/customer.js';
 import { insertCustomer, selectCustomerById } from '../../../repositories/customerRepository.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 
@@ -38,7 +38,7 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<PostC
     throw new BadRequestError('Tenant does not exist');
   }
 
-  const mappedCustomer: Partial<CustomerEntry> = CustomerEntry.fromPostRequestPayload(tenant.Id, validatedRequest.body!);
+  const mappedCustomer: Partial<Customer> = Customer.create(tenant.Id, validatedRequest.body!);
   const customerId = await insertCustomer(mappedCustomer);
 
   return customerId;

@@ -1,6 +1,6 @@
 import { handler } from '../../../../lambdas/api/activity/postActivity.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { selectActivityByExternalUuid } from '../../../../repositories/activityRepository.js';
@@ -8,14 +8,14 @@ import { customerTableName } from '../../../../repositories/customerRepository.j
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Activity - POST', () => {
   const tenantsGlobal: TenantEntry[] = [];
   const dealsGlobal: DealDatabase[] = [];
-  const customersGlobal: CustomerEntry[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
@@ -23,7 +23,7 @@ describe('API - Activity - POST', () => {
 
     const customer = await knexClient(customerTableName)
       .insert(
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenant[0].Id)
           .withFirstName('John')
           .withLastName('Doe')
@@ -43,7 +43,7 @@ describe('API - Activity - POST', () => {
       .insert(
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+          .withCustomerId(customersGlobal[0].id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')

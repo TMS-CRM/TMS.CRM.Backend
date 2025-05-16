@@ -59,6 +59,18 @@ describe('API - Customer - POST', () => {
     // Validate the database record
     const customer = await selectCustomerByExternalUuid(parsedBody.data.uuid);
     expect(customer).toBeDefined();
+    expect(customer?.tenantId).toBe(tenantsGlobal[0].Id);
+    expect(customer?.firstName).toBe(payload.firstName);
+    expect(customer?.lastName).toBe(payload.lastName);
+    expect(customer?.email).toBe(payload.email);
+    expect(customer?.phone).toBe(payload.phone);
+    expect(customer?.street).toBe(payload.street);
+    expect(customer?.city).toBe(payload.city);
+    expect(customer?.state).toBe(payload.state);
+    expect(customer?.zipCode).toBe(payload.zipCode);
+    expect(customer?.imageUrl).toBe(payload.imageUrl);
+    expect(customer?.createdOn).toBeDefined();
+    expect(customer?.modifiedOn).toBeNull();
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {

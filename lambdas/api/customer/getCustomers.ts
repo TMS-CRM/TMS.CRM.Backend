@@ -5,7 +5,7 @@ import { BadRequestError, HttpErrorResponse } from '../../../models/api/response
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { CustomerEntry } from '../../../models/entities/customerEntry.js';
+import type { Customer } from '../../../models/entities/customer.js';
 import { selectCustomers } from '../../../repositories/customerRepository.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
 
@@ -33,7 +33,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 }
 
-export async function queryRecords(validatedRequest: ValidatedApiRequest<null, GetCustomerListFilter>): Promise<PaginatedResponse<CustomerEntry>> {
+export async function queryRecords(validatedRequest: ValidatedApiRequest<null, GetCustomerListFilter>): Promise<PaginatedResponse<Customer>> {
   logger.info('Start - queryRecords');
 
   const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
@@ -42,12 +42,12 @@ export async function queryRecords(validatedRequest: ValidatedApiRequest<null, G
   }
 
   const { limit, offset } = validatedRequest.queryParameters!;
-  const queryResult: PaginatedResponse<CustomerEntry> = await selectCustomers(limit, offset, tenant.Id);
+  const queryResult: PaginatedResponse<Customer> = await selectCustomers(limit, offset, tenant.Id);
 
   return queryResult;
 }
 
-export function formatResponseData(queryResult: PaginatedResponse<CustomerEntry>): FetchSuccess<GetCustomerListResponsePayload> {
+export function formatResponseData(queryResult: PaginatedResponse<Customer>): FetchSuccess<GetCustomerListResponsePayload> {
   logger.info('Start - formatResponse');
 
   const paginatedResponse: PaginatedResponse<PublicCustomer> = {

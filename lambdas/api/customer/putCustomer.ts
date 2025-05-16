@@ -5,7 +5,7 @@ import { putCustomerRequestSchema } from '../../../models/api/payloads/customer.
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { CustomerEntry } from '../../../models/entities/customerEntry.js';
+import { Customer, type CustomerDatabase } from '../../../models/entities/customer.js';
 import { selectCustomerByExternalUuid, selectCustomerById, updateCustomer } from '../../../repositories/customerRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
@@ -40,10 +40,10 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<PutCu
   }
 
   // Update the customer
-  const mappedCustomer: Partial<CustomerEntry> = CustomerEntry.fromPutRequestPayload(validatedRequest.body!);
-  await updateCustomer(customer.Id, mappedCustomer);
+  const mappedCustomer: Partial<CustomerDatabase> = Customer.update(validatedRequest.body!);
+  await updateCustomer(customer.id, mappedCustomer);
 
-  return customer.Id;
+  return customer.id;
 }
 
 export async function formatResponseData(customerId: number): Promise<PersistSuccess<PutCustomerResponsePayload>> {

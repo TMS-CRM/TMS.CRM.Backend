@@ -5,7 +5,7 @@ import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Customers - GET', () => {
@@ -24,7 +24,7 @@ describe('API - Customers - GET', () => {
     // Insert 9 customers
     await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('John')
           .withLastName('Doe')
@@ -37,7 +37,7 @@ describe('API - Customers - GET', () => {
           .withCustomerImageUrl('http/5678')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Alice')
           .withLastName('Smith')
@@ -50,7 +50,7 @@ describe('API - Customers - GET', () => {
           .withCustomerImageUrl('http/9101')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Bob')
           .withLastName('Johnson')
@@ -63,7 +63,7 @@ describe('API - Customers - GET', () => {
           .withCustomerImageUrl('http/1121')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Emma')
           .withLastName('Brown')
@@ -76,7 +76,7 @@ describe('API - Customers - GET', () => {
           .withCustomerImageUrl('http/3141')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Liam')
           .withLastName('Wilson')
@@ -89,7 +89,7 @@ describe('API - Customers - GET', () => {
           .withCustomerImageUrl('http/5161')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Sophia')
           .withLastName('Taylor')
@@ -102,7 +102,7 @@ describe('API - Customers - GET', () => {
           .withCustomerImageUrl('http/7181')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Noah')
           .withLastName('Anderson')
@@ -115,7 +115,7 @@ describe('API - Customers - GET', () => {
           .withCustomerImageUrl('http/9202')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Olivia')
           .withLastName('Martinez')
@@ -128,7 +128,7 @@ describe('API - Customers - GET', () => {
           .withCustomerImageUrl('http/1223')
           .build(),
 
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('Ethan')
           .withLastName('Clark')
@@ -141,11 +141,11 @@ describe('API - Customers - GET', () => {
           .withCustomerImageUrl('http/3245')
           .build(),
       ])
-      .returning('Id');
+      .returning('id');
 
     await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[1].Id)
           .withFirstName('Jane')
           .withLastName('Pan')
@@ -158,7 +158,7 @@ describe('API - Customers - GET', () => {
           .withCustomerImageUrl('http/1234')
           .build(),
       ])
-      .returning('Id');
+      .returning('id');
   });
 
   it('Success - Should get customers with pagination', async () => {

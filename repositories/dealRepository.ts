@@ -20,14 +20,14 @@ export async function selectDealById(id: number): Promise<Deal | null> {
   const query = knexClient(dealTableName)
     .select(
       `${dealTableName}.*`,
-      `${customerTableName}.ExternalUuid as customer_external_uuid`,
-      `${customerTableName}.ImageUrl as customer_image_url`,
-      `${customerTableName}.FirstName as customer_first_name`,
-      `${customerTableName}.LastName as customer_last_name`,
-      `${customerTableName}.Email as customer_email`,
-      `${customerTableName}.Phone as customer_phone`,
+      `${customerTableName}.external_uuid as customer_external_uuid`,
+      `${customerTableName}.image_url as customer_image_url`,
+      `${customerTableName}.first_name as customer_first_name`,
+      `${customerTableName}.last_name as customer_last_name`,
+      `${customerTableName}.email as customer_email`,
+      `${customerTableName}.phone as customer_phone`,
     )
-    .innerJoin(customerTableName, `${dealTableName}.customer_id`, '=', `${customerTableName}.Id`)
+    .innerJoin(customerTableName, `${dealTableName}.customer_id`, '=', `${customerTableName}.id`)
     .where(`${dealTableName}.id`, id)
     .whereNull(`${dealTableName}.deleted_on`);
   // .whereNull(`${customerTableName}.DeletedOn`);
@@ -41,14 +41,14 @@ export async function selectDealByExternalUuid(externalUuid: string): Promise<De
   const query = knexClient(dealTableName)
     .select(
       `${dealTableName}.*`,
-      `${customerTableName}.ExternalUuid as customer_external_uuid`,
-      `${customerTableName}.ImageUrl as customer_image_url`,
-      `${customerTableName}.FirstName as customer_first_name`,
-      `${customerTableName}.LastName as customer_last_name`,
-      `${customerTableName}.Email as customer_email`,
-      `${customerTableName}.Phone as customer_phone`,
+      `${customerTableName}.external_uuid as customer_external_uuid`,
+      `${customerTableName}.image_url as customer_image_url`,
+      `${customerTableName}.first_name as customer_first_name`,
+      `${customerTableName}.last_name as customer_last_name`,
+      `${customerTableName}.email as customer_email`,
+      `${customerTableName}.phone as customer_phone`,
     )
-    .innerJoin(customerTableName, `${dealTableName}.customer_id`, '=', `${customerTableName}.Id`)
+    .innerJoin(customerTableName, `${dealTableName}.customer_id`, '=', `${customerTableName}.id`)
     .where(`${dealTableName}.external_uuid`, externalUuid)
     .whereNull(`${dealTableName}.deleted_on`);
 
@@ -60,7 +60,7 @@ export async function selectDeals(limit: number, offset: number, tenantId: numbe
   // Base query without deleted deals
   const baseQuery = knexClient(dealTableName)
     .whereNull(`${dealTableName}.deleted_on`)
-    .innerJoin(customerTableName, `${dealTableName}.customer_id`, '=', `${customerTableName}.Id`)
+    .innerJoin(customerTableName, `${dealTableName}.customer_id`, '=', `${customerTableName}.id`)
     .where(`${dealTableName}.tenant_id`, tenantId)
     .whereNull(`${dealTableName}.deleted_on`);
 
@@ -71,12 +71,12 @@ export async function selectDeals(limit: number, offset: number, tenantId: numbe
     .offset(offset)
     .select(
       `${dealTableName}.*`,
-      `${customerTableName}.ExternalUuid as customer_external_uuid`,
-      `${customerTableName}.ImageUrl as customer_image_url`,
-      `${customerTableName}.FirstName as customer_first_name`,
-      `${customerTableName}.LastName as customer_last_name`,
-      `${customerTableName}.Email as customer_email`,
-      `${customerTableName}.Phone as customer_phone`,
+      `${customerTableName}.external_uuid as customer_external_uuid`,
+      `${customerTableName}.image_url as customer_image_url`,
+      `${customerTableName}.first_name as customer_first_name`,
+      `${customerTableName}.last_name as customer_last_name`,
+      `${customerTableName}.email as customer_email`,
+      `${customerTableName}.phone as customer_phone`,
     )) as ExtendedDealDatabase[];
 
   // Get the total number of deals

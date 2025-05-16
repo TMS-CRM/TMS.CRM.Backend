@@ -2,17 +2,17 @@ import { randomUUID } from 'crypto';
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/customer/deleteCustomer.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName, selectCustomerByExternalUuid } from '../../../../repositories/customerRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Customer - DELETE', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
@@ -20,7 +20,7 @@ describe('API - Customer - DELETE', () => {
 
     const customer = await knexClient(customerTableName)
       .insert(
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('John')
           .withLastName('Doe')
@@ -41,7 +41,7 @@ describe('API - Customer - DELETE', () => {
   it('Success - Should delete a customer', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: customersGlobal[0].ExternalUuid,
+        uuid: customersGlobal[0].external_uuid,
       })
       .withAuthorizerClaims({
         'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
@@ -59,7 +59,7 @@ describe('API - Customer - DELETE', () => {
     expect(parsedBody.type).toBe('DeleteSuccess');
 
     // Validate the database record
-    const customer = await selectCustomerByExternalUuid(customersGlobal[0].ExternalUuid);
+    const customer = await selectCustomerByExternalUuid(customersGlobal[0].external_uuid);
     expect(customer).toBeNull();
   });
 

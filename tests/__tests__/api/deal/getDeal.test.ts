@@ -1,20 +1,20 @@
 import { randomUUID } from 'crypto';
 import { handler } from '../../../../lambdas/api/deal/getDeal.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Deal - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
   const dealsGlobal: DealDatabase[] = [];
 
   beforeAll(async () => {
@@ -24,7 +24,7 @@ describe('API - Deal - GET', () => {
 
     const customer = await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('John')
           .withLastName('Doe')
@@ -44,7 +44,7 @@ describe('API - Deal - GET', () => {
       .insert([
         DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(100)
           .withStreet('202/3 Rose Garden Lane')
           .withCity('Auckland')
@@ -84,12 +84,12 @@ describe('API - Deal - GET', () => {
     expect(parsedBody.type).toBe('FetchSuccess');
 
     const responseData = parsedBody.data;
-    expect(responseData.customer.uuid).toBe(customersGlobal[0].ExternalUuid);
-    expect(responseData.customer.imageUrl).toBe(customersGlobal[0].ImageUrl);
-    expect(responseData.customer.firstName).toBe(customersGlobal[0].FirstName);
-    expect(responseData.customer.lastName).toBe(customersGlobal[0].LastName);
-    expect(responseData.customer.email).toBe(customersGlobal[0].Email);
-    expect(responseData.customer.phone).toBe(customersGlobal[0].Phone);
+    expect(responseData.customer.uuid).toBe(customersGlobal[0].external_uuid);
+    expect(responseData.customer.imageUrl).toBe(customersGlobal[0].image_url);
+    expect(responseData.customer.firstName).toBe(customersGlobal[0].first_name);
+    expect(responseData.customer.lastName).toBe(customersGlobal[0].last_name);
+    expect(responseData.customer.email).toBe(customersGlobal[0].email);
+    expect(responseData.customer.phone).toBe(customersGlobal[0].phone);
     expect(responseData.street).toBe(dealsGlobal[0].street);
     expect(responseData.city).toBe(dealsGlobal[0].city);
     expect(responseData.state).toBe(dealsGlobal[0].state);

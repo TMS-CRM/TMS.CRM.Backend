@@ -1,18 +1,18 @@
 import { handler } from '../../../../lambdas/api/deal/postDeal.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Deal - POST', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
@@ -20,7 +20,7 @@ describe('API - Deal - POST', () => {
 
     const customer = await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
+        CustomerDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withFirstName('John')
           .withLastName('Doe')
@@ -39,7 +39,7 @@ describe('API - Deal - POST', () => {
 
   it('Success - Should create a deal', async () => {
     const payload = {
-      customerUuid: customersGlobal[0].ExternalUuid,
+      customerUuid: customersGlobal[0].external_uuid,
       price: 100,
       street: '123 Main St',
       city: 'Anytown',
@@ -70,12 +70,12 @@ describe('API - Deal - POST', () => {
 
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('PersistSuccess');
-    expect(parsedBody.data.customer.uuid).toBe(customersGlobal[0].ExternalUuid);
-    expect(parsedBody.data.customer.imageUrl).toBe(customersGlobal[0].ImageUrl);
-    expect(parsedBody.data.customer.firstName).toBe(customersGlobal[0].FirstName);
-    expect(parsedBody.data.customer.lastName).toBe(customersGlobal[0].LastName);
-    expect(parsedBody.data.customer.email).toBe(customersGlobal[0].Email);
-    expect(parsedBody.data.customer.phone).toBe(customersGlobal[0].Phone); // Ensure phone matches the updated format
+    expect(parsedBody.data.customer.uuid).toBe(customersGlobal[0].external_uuid);
+    expect(parsedBody.data.customer.imageUrl).toBe(customersGlobal[0].image_url);
+    expect(parsedBody.data.customer.firstName).toBe(customersGlobal[0].first_name);
+    expect(parsedBody.data.customer.lastName).toBe(customersGlobal[0].last_name);
+    expect(parsedBody.data.customer.email).toBe(customersGlobal[0].email);
+    expect(parsedBody.data.customer.phone).toBe(customersGlobal[0].phone); // Ensure phone matches the updated format
     expect(parsedBody.data.street).toBe('123 Main St');
     expect(parsedBody.data.city).toBe('Anytown');
     expect(parsedBody.data.state).toBe('CA');
