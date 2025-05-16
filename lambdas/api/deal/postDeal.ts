@@ -4,7 +4,7 @@ import { type PostDealRequestPayload, type PostDealResponsePayload, postDealRequ
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { DealEntry } from '../../../models/entities/dealEntry.js';
+import { Deal, type DealDatabase } from '../../../models/entities/deal.js';
 import { selectCustomerByExternalUuid } from '../../../repositories/customerRepository.js';
 import { insertDeal, selectDealById } from '../../../repositories/dealRepository.js';
 import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
@@ -43,7 +43,7 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<PostD
     throw new BadRequestError('Customer does not exist');
   }
 
-  const mappedDeal: Partial<DealEntry> = DealEntry.fromPostRequestPayload(tenant.Id, customer.Id, validatedRequest.body!);
+  const mappedDeal: Partial<DealDatabase> = Deal.create(tenant.Id, customer.Id, validatedRequest.body!);
   const dealId = await insertDeal(mappedDeal);
 
   return dealId;

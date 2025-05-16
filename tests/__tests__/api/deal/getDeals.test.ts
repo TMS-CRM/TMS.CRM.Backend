@@ -1,20 +1,20 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/deal/getDeals.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
-import { DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import type { ICustomerEntry } from '../../../../models/entities/customerEntry.js';
+import { DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
+import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Deals - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
+  const customersGlobal: ICustomerEntry[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName)
@@ -68,7 +68,7 @@ describe('API - Deals - GET', () => {
 
     await knexClient(dealTableName)
       .insert([
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[0].Id)
           .withPrice(150)
@@ -84,7 +84,7 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
 
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[0].Id)
           .withPrice(200)
@@ -100,7 +100,7 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
 
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[0].Id)
           .withPrice(250)
@@ -116,7 +116,7 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
 
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[0].Id)
           .withPrice(300)
@@ -132,7 +132,7 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
 
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[0].Id)
           .withPrice(350)
@@ -148,7 +148,7 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
 
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[0].Id)
           .withPrice(400)
@@ -164,12 +164,12 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
       ])
-      .returning('Id');
+      .returning('*');
 
     // Insert a second deal
     await knexClient(dealTableName)
       .insert([
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[1].Id)
           .withPrice(500)
@@ -185,7 +185,7 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
       ])
-      .returning('Id');
+      .returning('*');
   });
 
   it('Success - Should get deals with pagination', async () => {

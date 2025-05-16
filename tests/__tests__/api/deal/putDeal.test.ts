@@ -4,20 +4,20 @@ import { handler } from '../../../../lambdas/api/deal/putDeal.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { PutDealRequestPayload } from '../../../../models/api/payloads/deal.js';
 import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
-import { type DealEntry, DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName, selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
+import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Deal - PUT', () => {
   const tenantsGlobal: TenantEntry[] = [];
   const customersGlobal: CustomerEntry[] = [];
-  const dealsGlobal: DealEntry[] = [];
+  const dealsGlobal: DealDatabase[] = [];
 
   beforeEach(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
@@ -44,7 +44,7 @@ describe('API - Deal - PUT', () => {
 
     const deal = await knexClient(dealTableName)
       .insert(
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenant[0].Id)
           .withCustomerId(customersGlobal[0].Id)
           .withStreet('123 Main St')
@@ -70,22 +70,22 @@ describe('API - Deal - PUT', () => {
     const payload: PutDealRequestPayload = {
       customerUuid: customersGlobal[0].ExternalUuid,
       street: 'New Street Name',
-      city: dealsGlobal[0].City,
-      state: dealsGlobal[0].State,
-      zipCode: dealsGlobal[0].ZipCode,
-      roomArea: dealsGlobal[0].RoomArea,
-      price: dealsGlobal[0].Price,
-      numberOfPeople: dealsGlobal[0].NumberOfPeople,
-      appointmentDate: dealsGlobal[0].AppointmentDate,
-      progress: dealsGlobal[0].Progress,
-      specialInstructions: dealsGlobal[0].SpecialInstructions,
-      roomAccess: dealsGlobal[0].RoomAccess,
-      imageUrl: dealsGlobal[0].ImageUrl,
+      city: dealsGlobal[0].city,
+      state: dealsGlobal[0].state,
+      zipCode: dealsGlobal[0].zip_code,
+      roomArea: dealsGlobal[0].room_area,
+      price: dealsGlobal[0].price,
+      numberOfPeople: dealsGlobal[0].number_of_people,
+      appointmentDate: dealsGlobal[0].appointment_date,
+      progress: dealsGlobal[0].progress,
+      specialInstructions: dealsGlobal[0].special_instructions,
+      roomAccess: dealsGlobal[0].room_access,
+      imageUrl: dealsGlobal[0].image_url,
     };
 
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: dealsGlobal[0].ExternalUuid,
+        uuid: dealsGlobal[0].external_uuid,
       })
       .withBody(payload)
       .withAuthorizerClaims({
@@ -115,7 +115,7 @@ describe('API - Deal - PUT', () => {
     expect(parsedBody.data.roomArea).toBe(payload.roomArea);
     expect(parsedBody.data.price).toBe(payload.price);
     expect(parsedBody.data.numberOfPeople).toBe(payload.numberOfPeople);
-    expect(new Date(parsedBody.data.appointmentDate).getTime()).toBeCloseTo(new Date(dealsGlobal[0].AppointmentDate).getTime());
+    expect(new Date(parsedBody.data.appointmentDate).getTime()).toBeCloseTo(new Date(dealsGlobal[0].appointment_date).getTime());
     expect(parsedBody.data.progress).toBe(payload.progress);
     expect(parsedBody.data.specialInstructions).toBe(payload.specialInstructions);
     expect(parsedBody.data.roomAccess).toBe(payload.roomAccess);
@@ -127,24 +127,24 @@ describe('API - Deal - PUT', () => {
     // Validate the database record (filds was changed)
     const deal = await selectDealByExternalUuid(parsedBody.data.uuid);
     expect(deal).toBeDefined();
-    expect(deal!.Street).toBe(payload.street);
+    expect(deal!.street).toBe(payload.street);
   });
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const payload: Partial<PutDealRequestPayload> = {
       customerUuid: customersGlobal[0].ExternalUuid,
       street: 'New Street Name',
-      city: dealsGlobal[0].City,
-      state: dealsGlobal[0].State,
-      zipCode: dealsGlobal[0].ZipCode,
-      roomArea: dealsGlobal[0].RoomArea,
-      price: dealsGlobal[0].Price,
-      numberOfPeople: dealsGlobal[0].NumberOfPeople,
-      appointmentDate: dealsGlobal[0].AppointmentDate,
+      city: dealsGlobal[0].city,
+      state: dealsGlobal[0].state,
+      zipCode: dealsGlobal[0].zip_code,
+      roomArea: dealsGlobal[0].room_area,
+      price: dealsGlobal[0].price,
+      numberOfPeople: dealsGlobal[0].number_of_people,
+      appointmentDate: dealsGlobal[0].appointment_date,
       progress: DealProgress.InProgress,
-      specialInstructions: dealsGlobal[0].SpecialInstructions,
+      specialInstructions: dealsGlobal[0].special_instructions,
       roomAccess: RoomAccess.KeysWithDoorman,
-      imageUrl: dealsGlobal[0].ImageUrl,
+      imageUrl: dealsGlobal[0].image_url,
     };
 
     // Event missing the uuid path parameter
@@ -171,20 +171,20 @@ describe('API - Deal - PUT', () => {
     // Payload missing the street and city
     const payload: Partial<PutDealRequestPayload> = {
       customerUuid: customersGlobal[0].ExternalUuid,
-      city: dealsGlobal[0].City,
-      state: dealsGlobal[0].State,
-      zipCode: dealsGlobal[0].ZipCode,
-      price: dealsGlobal[0].Price,
-      appointmentDate: dealsGlobal[0].AppointmentDate,
+      city: dealsGlobal[0].city,
+      state: dealsGlobal[0].state,
+      zipCode: dealsGlobal[0].zip_code,
+      price: dealsGlobal[0].price,
+      appointmentDate: dealsGlobal[0].appointment_date,
       progress: DealProgress.InProgress,
       roomAccess: RoomAccess.KeysWithDoorman,
-      imageUrl: dealsGlobal[0].ImageUrl,
+      imageUrl: dealsGlobal[0].image_url,
     };
 
-    // Event missing the uuid path parameter
+    // Event missing the uuid path parameters
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: dealsGlobal[0].ExternalUuid,
+        uuid: dealsGlobal[0].external_uuid,
       })
       .withBody(payload)
       .withAuthorizerClaims({

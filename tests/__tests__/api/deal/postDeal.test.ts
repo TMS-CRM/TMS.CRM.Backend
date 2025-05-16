@@ -1,7 +1,7 @@
 import { handler } from '../../../../lambdas/api/deal/postDeal.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
-import { DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import { DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
@@ -25,7 +25,7 @@ describe('API - Deal - POST', () => {
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
-          .withPhone('642103273576')
+          .withPhone('+642103273576')
           .withStreet('202/3 Rose Garden Lane')
           .withCity('Auckland')
           .withState('Auckland Region')
@@ -75,7 +75,7 @@ describe('API - Deal - POST', () => {
     expect(parsedBody.data.customer.firstName).toBe(customersGlobal[0].FirstName);
     expect(parsedBody.data.customer.lastName).toBe(customersGlobal[0].LastName);
     expect(parsedBody.data.customer.email).toBe(customersGlobal[0].Email);
-    expect(parsedBody.data.customer.phone).toBe(customersGlobal[0].Phone);
+    expect(parsedBody.data.customer.phone).toBe(customersGlobal[0].Phone); // Ensure phone matches the updated format
     expect(parsedBody.data.street).toBe('123 Main St');
     expect(parsedBody.data.city).toBe('Anytown');
     expect(parsedBody.data.state).toBe('CA');
@@ -95,7 +95,7 @@ describe('API - Deal - POST', () => {
     // Validate the database record
     const deal = await selectDealByExternalUuid(parsedBody.data.uuid);
     expect(deal).toBeDefined();
-    expect(deal?.TenantId).toBe(tenantsGlobal[0].Id);
+    expect(deal?.tenantId).toBe(tenantsGlobal[0].Id);
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {

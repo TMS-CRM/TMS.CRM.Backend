@@ -24,7 +24,7 @@ export async function selectTaskById(id: number): Promise<Task | null> {
 
 /** Get the Task by external_uuid */
 export async function selectTaskByExternalUuid(externalUuid: string): Promise<Task | null> {
-  const query = knexClient(taskTableName).select('*').where('external_uuid', externalUuid).whereNull(`${taskTableName}.deleted_on`);
+  const query = knexClient(taskTableName).select('*').where(`${taskTableName}.external_uuid`, externalUuid).whereNull(`${taskTableName}.deleted_on`);
   const records = (await query) as TaskDatabase[];
 
   return records.length > 0 ? new Task(records[0]) : null;
@@ -55,7 +55,7 @@ export async function updateTask(taskId: number, task: Partial<TaskDatabase>): P
 
 /** Delete the Task */
 export async function softDeleteTaskById(taskId: number): Promise<void> {
-  const query = knexClient(taskTableName).update({ DeletedOn: new Date().toISOString() }).where('Id', taskId).returning('Id');
+  const query = knexClient(taskTableName).update({ deleted_on: new Date().toISOString() }).where('id', taskId).returning('id');
   const records = (await query) as TaskDatabase[];
 
   logger.info(`Successfully soft deleted Task. Id: ${records[0].id}`);

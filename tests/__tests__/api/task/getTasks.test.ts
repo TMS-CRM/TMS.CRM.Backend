@@ -12,14 +12,14 @@ describe('API - Tasks - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName)
+    const tenants = await knexClient(tenantTableName)
       .insert([
         TenantEntryBuilder.make().withName('Tenant 1').build(),
         TenantEntryBuilder.make().withName('Tenant 2').build(),
         TenantEntryBuilder.make().withName('Tenant 3').build(),
       ])
       .returning('*');
-    tenantsGlobal.push(...tenant);
+    tenantsGlobal.push(...tenants);
 
     // Insert 9 tasks
     await knexClient(taskTableName)
@@ -87,7 +87,7 @@ describe('API - Tasks - GET', () => {
           .withCompleted(true)
           .build(),
       ])
-      .returning('Id');
+      .returning('*');
 
     await knexClient(taskTableName)
       .insert([
@@ -98,7 +98,7 @@ describe('API - Tasks - GET', () => {
           .withCompleted(true)
           .build(),
       ])
-      .returning('Id');
+      .returning('*');
   });
 
   it('Success - Should get tasks with pagination', async () => {

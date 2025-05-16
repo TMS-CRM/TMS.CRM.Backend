@@ -47,7 +47,7 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<PostA
     throw new BadRequestError('Deal does not exist');
   }
 
-  const mappedActivity: Partial<ActivityDatabase> = Activity.create(tenant.Id, deal.Id, validatedRequest.body!);
+  const mappedActivity: Partial<ActivityDatabase> = Activity.create(tenant.Id, deal.id, validatedRequest.body!);
   const activityId = await insertActivity(mappedActivity);
 
   return activityId;

@@ -4,7 +4,7 @@ import { type PutDealRequestPayload, type PutDealResponsePayload, putDealRequest
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { DealEntry } from '../../../models/entities/dealEntry.js';
+import { Deal, type DealDatabase } from '../../../models/entities/deal.js';
 import { selectDealByExternalUuid, selectDealById, updateDeal } from '../../../repositories/dealRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
@@ -39,10 +39,10 @@ async function persistRecords(validatedRequest: ValidatedApiRequest<PutDealReque
   }
 
   // Update the deal
-  const mappedDeal: Partial<DealEntry> = DealEntry.fromPutRequestPayload(validatedRequest.body!);
-  await updateDeal(deal.Id, mappedDeal);
+  const mappedDeal: Partial<DealDatabase> = Deal.update(validatedRequest.body!);
+  await updateDeal(deal.id, mappedDeal);
 
-  return deal.Id;
+  return deal.id;
 }
 
 async function formatResponseData(dealId: number): Promise<PersistSuccess<PutDealResponsePayload>> {

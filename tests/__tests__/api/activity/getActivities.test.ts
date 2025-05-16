@@ -2,7 +2,7 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/activity/getActivities.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { ICustomerEntry } from '../../../../models/entities/customerEntry.js';
-import { DealProgress, type IDealEntry, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { activityTableName } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
@@ -11,12 +11,12 @@ import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { ActivityDatabaseBuilder } from '../../../builders/activityDatabaseBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
+import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Activities - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
-  const dealsGlobal: IDealEntry[] = [];
+  const dealsGlobal: DealDatabase[] = [];
   const customersGlobal: ICustomerEntry[] = [];
 
   beforeAll(async () => {
@@ -64,7 +64,7 @@ describe('API - Activities - GET', () => {
     // Insert deals
     const deals = await knexClient(dealTableName)
       .insert([
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[0].Id)
           .withStreet('123 Main St')
@@ -81,7 +81,7 @@ describe('API - Activities - GET', () => {
           .withDealImageUrl('https://example.com/image.jpg')
           .build(),
 
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[1].Id)
           .withStreet('123 Main St')
@@ -98,7 +98,7 @@ describe('API - Activities - GET', () => {
           .withDealImageUrl('https://example.com/image.jpg')
           .build(),
 
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[1].Id)
           .withStreet('123 Main St')
@@ -124,7 +124,7 @@ describe('API - Activities - GET', () => {
       .insert([
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Scheduled initial consultation')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image1.jpg')
@@ -132,7 +132,7 @@ describe('API - Activities - GET', () => {
 
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Sent follow-up email')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image2.jpg')
@@ -140,7 +140,7 @@ describe('API - Activities - GET', () => {
 
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Completed site visit')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image3.jpg')
@@ -148,7 +148,7 @@ describe('API - Activities - GET', () => {
 
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Reviewed contract with client')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image4.jpg')
@@ -156,7 +156,7 @@ describe('API - Activities - GET', () => {
 
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Negotiation phase started')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image5.jpg')
@@ -164,7 +164,7 @@ describe('API - Activities - GET', () => {
 
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Finalized agreement terms')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image6.jpg')
@@ -172,7 +172,7 @@ describe('API - Activities - GET', () => {
 
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Client confirmed contract')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image7.jpg')
@@ -180,7 +180,7 @@ describe('API - Activities - GET', () => {
 
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Deposit payment received')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image8.jpg')
@@ -188,7 +188,7 @@ describe('API - Activities - GET', () => {
 
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Project completed successfully')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image9.jpg')
@@ -201,7 +201,7 @@ describe('API - Activities - GET', () => {
       .insert([
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[1].Id)
-          .withDealId(dealsGlobal[1].Id)
+          .withDealId(dealsGlobal[1].id)
           .withDescription('Develop completed successfully')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image9.jpg')

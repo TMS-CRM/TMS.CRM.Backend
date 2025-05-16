@@ -3,7 +3,7 @@ import { handler } from '../../../../lambdas/api/activity/getActivity.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { ActivityDatabase } from '../../../../models/entities/activity.js';
 import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
-import { type DealEntry, DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { activityTableName } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
@@ -12,13 +12,13 @@ import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { ActivityDatabaseBuilder } from '../../../builders/activityDatabaseBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
+import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Activity - GET', () => {
   const tenantsGlobal: TenantEntry[] = [];
   const customersGlobal: CustomerEntry[] = [];
-  const dealsGlobal: DealEntry[] = [];
+  const dealsGlobal: DealDatabase[] = [];
   const activitiesGlobal: ActivityDatabase[] = [];
 
   beforeAll(async () => {
@@ -46,7 +46,7 @@ describe('API - Activity - GET', () => {
 
     const deal = await knexClient(dealTableName)
       .insert(
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[0].Id)
           .withStreet('123 Main St')
@@ -70,7 +70,7 @@ describe('API - Activity - GET', () => {
       .insert([
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Initial consultation with the client')
           .withDate(new Date().toISOString())
           .withImageUrl('https://example.com/activity.jpg')
@@ -78,7 +78,7 @@ describe('API - Activity - GET', () => {
 
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Follow-up meeting scheduled')
           .withDate(new Date().toISOString())
           .withImageUrl('https://example.com/follow-up.jpg')

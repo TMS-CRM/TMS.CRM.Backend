@@ -3,20 +3,20 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/deal/deleteDeal.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
-import { type DealEntry, DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
+import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName, selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
+import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
 
 describe('API - Deal - DELETE', () => {
   const tenantsGlobal: TenantEntry[] = [];
   const customersGlobal: CustomerEntry[] = [];
-  const dealsGlobal: DealEntry[] = [];
+  const dealsGlobal: DealDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
@@ -44,7 +44,7 @@ describe('API - Deal - DELETE', () => {
 
     const deal = await knexClient(dealTableName)
       .insert(
-        DealEntryBuilder.make()
+        DealDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].Id)
           .withCustomerId(customersGlobal[0].Id)
           .withPrice(100)
@@ -69,7 +69,7 @@ describe('API - Deal - DELETE', () => {
   it('Success - Should delete a deal', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: dealsGlobal[0].ExternalUuid,
+        uuid: dealsGlobal[0].external_uuid,
       })
       .withAuthorizerClaims({
         'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
@@ -87,7 +87,7 @@ describe('API - Deal - DELETE', () => {
     expect(parsedBody.type).toBe('DeleteSuccess');
 
     // Validate the deal is not returned from the repo anymore
-    const deal = await selectDealByExternalUuid(dealsGlobal[0].ExternalUuid);
+    const deal = await selectDealByExternalUuid(dealsGlobal[0].external_uuid);
     expect(deal).toBeNull();
   });
 

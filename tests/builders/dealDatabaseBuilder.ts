@@ -1,94 +1,94 @@
 import { randomUUID } from 'crypto';
 import type { integer } from 'aws-sdk/clients/cloudfront.js';
 import type { text } from 'aws-sdk/clients/customerprofiles.js';
-import type { DealProgress, IDealEntry, RoomAccess } from '../../models/entities/dealEntry.js';
+import type { DealDatabase, DealProgress, RoomAccess } from '../../models/entities/deal.js';
 
-export class DealEntryBuilder {
-  private dealEntry: Partial<IDealEntry>;
+export class DealDatabaseBuilder {
+  private dealDatabase: Partial<DealDatabase>;
 
   private constructor() {
-    this.dealEntry = {
-      ExternalUuid: randomUUID(),
-      CreatedOn: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
+    this.dealDatabase = {
+      external_uuid: randomUUID(),
+      created_on: new Date(Date.now() - 86400000).toISOString(), // 24 hrs
     };
   }
 
   withTenantId(value: number): this {
-    this.dealEntry.TenantId = value;
+    this.dealDatabase.tenant_id = value;
     return this;
   }
 
   withCustomerId(value: number): this {
-    this.dealEntry.CustomerId = value;
+    this.dealDatabase.customer_id = value;
     return this;
   }
 
   withStreet(value: text): this {
-    this.dealEntry.Street = value;
+    this.dealDatabase.street = value;
     return this;
   }
 
   withCity(value: text): this {
-    this.dealEntry.City = value;
+    this.dealDatabase.city = value;
     return this;
   }
 
   withState(value: text): this {
-    this.dealEntry.State = value;
+    this.dealDatabase.state = value;
     return this;
   }
 
   withZipCode(value: text): this {
-    this.dealEntry.ZipCode = value;
+    this.dealDatabase.zip_code = value;
     return this;
   }
 
   withRoomArea(value: number): this {
-    this.dealEntry.RoomArea = value;
+    this.dealDatabase.room_area = value;
     return this;
   }
 
   withPrice(value: number): this {
-    this.dealEntry.Price = value;
+    this.dealDatabase.price = value;
     return this;
   }
 
   withNumberOfPeople(value: integer): this {
-    this.dealEntry.NumberOfPeople = value;
+    this.dealDatabase.number_of_people = value;
     return this;
   }
 
   withAppointmentDate(value: string): this {
-    this.dealEntry.AppointmentDate = value;
+    this.dealDatabase.appointment_date = value;
     return this;
   }
 
   withProgress(value: DealProgress): this {
-    this.dealEntry.Progress = value;
+    this.dealDatabase.progress = value;
     return this;
   }
 
   withSpecialInstructions(value: string): this {
-    this.dealEntry.SpecialInstructions = value;
+    this.dealDatabase.special_instructions = value;
     return this;
   }
 
   withRoomAccess(value: RoomAccess): this {
-    this.dealEntry.RoomAccess = value;
+    this.dealDatabase.room_access = value;
     return this;
   }
 
   withDealImageUrl(value: string): this {
-    this.dealEntry.ImageUrl = value;
+    this.dealDatabase.image_url = value;
     return this;
   }
 
-  build(): Partial<IDealEntry> {
-    return this.dealEntry;
+  build(): Partial<DealDatabase> {
+    return this.dealDatabase;
   }
 
-  static make(): DealEntryBuilder {
-    return new DealEntryBuilder();
+  static make(): DealDatabaseBuilder {
+    return new DealDatabaseBuilder();
   }
 }
 
