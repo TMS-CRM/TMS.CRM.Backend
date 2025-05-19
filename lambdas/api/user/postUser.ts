@@ -5,9 +5,9 @@ import { type PostUserRequestPayload, type PostUserResponsePayload, postUserRequ
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { UserEntry } from '../../../models/entities/userEntry.js';
-import { UserTenantEntry } from '../../../models/entities/userTenantEntry.js';
-import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
+import { User, type UserDatabase } from '../../../models/entities/user.js';
+import { UserTenant } from '../../../models/entities/userTenant.js';
+import { selectTenantByExternalUuid } from '../../../repositories/tenantRepository.js';
 import { insertUser, selectUserById } from '../../../repositories/userRepository.js';
 import { insertUserTenant } from '../../../repositories/userTenantRepository.js';
 
@@ -38,16 +38,16 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 async function persistRecords(validatedRequest: ValidatedApiRequest<PostUserRequestPayload>): Promise<number> {
   logger.info('Start - persistRecords');
 
-  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  const tenant = await selectTenantByExternalUuid(validatedRequest.tenantUuid!);
   if (!tenant) {
     throw new BadRequestError('Tenant not found');
   }
 
-  const mappedUser: Partial<UserEntry> = UserEntry.fromPostRequestPayload(validatedRequest.body!);
+  const mappedUser: Partial<UserDatabase> = User.create(validatedRequest.body!);
   const userId = await insertUser(mappedUser);
 
   // Create a link between the user and the tenant
-  await insertUserTenant(UserTenantEntry.create(userId, tenant.Id));
+  await insertUserTenant(UserTenant.create(userId, tenant.id));
 
   return userId;
 }
@@ -63,7 +63,7 @@ async function createCognitoUser(userId: number): Promise<number> {
 
   await setupCognitoUser(user, USER_POOL_ID!);
 
-  return user.Id;
+  return user.id;
 }
 
 async function formatResponseData(userId: number): Promise<PersistSuccess<PostUserResponsePayload>> {

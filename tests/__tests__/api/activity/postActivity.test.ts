@@ -2,7 +2,7 @@ import { handler } from '../../../../lambdas/api/activity/postActivity.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { selectActivityByExternalUuid } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
@@ -10,21 +10,21 @@ import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Activity - POST', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
   const dealsGlobal: DealDatabase[] = [];
   const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
       .insert(
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenant[0].Id)
+          .withTenantId(tenant[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -42,7 +42,7 @@ describe('API - Activity - POST', () => {
     const deal = await knexClient(dealTableName)
       .insert(
         DealDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withCustomerId(customersGlobal[0].id)
           .withStreet('123 Main St')
           .withCity('New York')
@@ -73,7 +73,7 @@ describe('API - Activity - POST', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -96,7 +96,7 @@ describe('API - Activity - POST', () => {
     // Validate the database record
     const activity = await selectActivityByExternalUuid(parsedBody.data.uuid);
     expect(activity).toBeDefined();
-    expect(activity?.tenantId).toBe(tenantsGlobal[0].Id);
+    expect(activity?.tenantId).toBe(tenantsGlobal[0].id);
     expect(activity?.deal.id).toBe(dealsGlobal[0].id);
     expect(activity?.description).toBe(payload.description);
     expect(activity?.imageUrl).toBe(payload.imageUrl);
@@ -113,7 +113,7 @@ describe('API - Activity - POST', () => {
         dealUuid: dealsGlobal[0].external_uuid,
       })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

@@ -2,24 +2,24 @@ import { randomUUID } from 'crypto';
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/user/deleteUser.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
-import type { UserEntry } from '../../../../models/entities/userEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { selectUserByExternalUuid, userTableName } from '../../../../repositories/userRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
-import { UserEntryBuilder } from '../../../builders/userEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
 describe('API - User - DELETE', () => {
-  const tenantsGlobal: TenantEntry[] = [];
-  const usersGlobal: UserEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
+  const usersGlobal: UserDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
     const user = await knexClient(userTableName)
-      .insert(UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe1@example.com').build())
+      .insert(UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe1@example.com').build())
       .returning('*');
 
     usersGlobal.push(...user);
@@ -28,10 +28,10 @@ describe('API - User - DELETE', () => {
   it('Success - Should delete a user', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: usersGlobal[0].ExternalUuid,
+        uuid: usersGlobal[0].external_uuid,
       })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -46,14 +46,14 @@ describe('API - User - DELETE', () => {
     expect(parsedBody.type).toBe('DeleteSuccess');
 
     // Validate the database record
-    const user = await selectUserByExternalUuid(usersGlobal[0].ExternalUuid);
+    const user = await selectUserByExternalUuid(usersGlobal[0].external_uuid);
     expect(user).toBeNull();
   });
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -74,7 +74,7 @@ describe('API - User - DELETE', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

@@ -8,6 +8,7 @@ export interface PublicUser {
   email: string;
   createdOn: string;
   modifiedOn: string | null;
+  deletedOn: string | null;
 }
 
 // POST user payload schema

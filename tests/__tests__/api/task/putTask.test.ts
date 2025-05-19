@@ -4,25 +4,25 @@ import { handler } from '../../../../lambdas/api/task/putTask.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { PutTaskRequestPayload } from '../../../../models/api/payloads/task.js';
 import type { TaskDatabase } from '../../../../models/entities/task.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { selectTaskByExternalUuid, taskTableName } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TaskDatabaseBuilder } from '../../../builders/taskDatabaseBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Task - PUT', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
   const tasksGlobal: TaskDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
     const task = await knexClient(taskTableName)
       .insert([
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Test are now implemented')
           .withDueDate(new Date().toISOString())
           .withCompleted(false)
@@ -46,7 +46,7 @@ describe('API - Task - PUT', () => {
       })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -86,7 +86,7 @@ describe('API - Task - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -113,7 +113,7 @@ describe('API - Task - PUT', () => {
       .withPathParameters({ uuid: tasksGlobal[0].external_uuid })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -141,7 +141,7 @@ describe('API - Task - PUT', () => {
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

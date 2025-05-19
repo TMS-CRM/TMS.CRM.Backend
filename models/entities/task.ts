@@ -35,7 +35,7 @@ export class Task {
     this.deletedOn = data.deleted_on;
   }
 
-  /** Convert the PostTaskRequestPayload to a Partial<TaskEntry> */
+  /** Convert the PostTaskRequestPayload to a Partial<Task> */
   public static create(tenantId: number, payload: PostTaskRequestPayload): Partial<TaskDatabase> {
     return {
       tenant_id: tenantId,
@@ -45,7 +45,7 @@ export class Task {
     };
   }
 
-  /** Convert the PutTaskRequestPayload to a Partial<TaskEntry> */
+  /** Convert the PutTaskRequestPayload to a Partial<Task> */
   public static update(payload: PutTaskRequestPayload): Partial<TaskDatabase> {
     return {
       description: payload.description,

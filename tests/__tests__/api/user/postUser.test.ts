@@ -1,12 +1,12 @@
 import { handler } from '../../../../lambdas/api/user/postUser.js';
 import { setupCognitoUser } from '../../../../lib/aws/cognito.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { selectUserByExternalUuid } from '../../../../repositories/userRepository.js';
 import { selectUserTenantsByUserId } from '../../../../repositories/userTenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 // Mock the setupCognitoUser function
 vi.mock('../../../../lib/aws/cognito.js', () => ({
@@ -17,10 +17,10 @@ vi.mock('../../../../lib/aws/cognito.js', () => ({
 const mockSetupCognitoUser = setupCognitoUser as ReturnType<typeof vi.fn>;
 
 describe('API - User - POST', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
   });
 
@@ -34,7 +34,7 @@ describe('API - User - POST', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -58,10 +58,10 @@ describe('API - User - POST', () => {
     const user = await selectUserByExternalUuid(parsedBody.data.uuid);
     expect(user).toBeDefined();
 
-    const userTenants = await selectUserTenantsByUserId(user!.Id);
+    const userTenants = await selectUserTenantsByUserId(user!.id);
     expect(userTenants).toBeDefined();
     expect(userTenants.length).toBe(1);
-    expect(userTenants[0].TenantId).toBe(tenantsGlobal[0].Id);
+    expect(userTenants[0].tenant_id).toBe(tenantsGlobal[0].id);
 
     // Verify that setupCognitoUser was called
     expect(mockSetupCognitoUser).toHaveBeenCalled();
@@ -73,7 +73,7 @@ describe('API - User - POST', () => {
         firstName: 'John',
       })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

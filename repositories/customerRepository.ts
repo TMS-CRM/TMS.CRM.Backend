@@ -14,7 +14,7 @@ export async function insertCustomer(customer: Partial<CustomerDatabase>): Promi
   return records[0].id;
 }
 
-/** Get the customer by Id */
+/** Get the customer by id */
 export async function selectCustomerById(id: number): Promise<Customer | null> {
   const query = knexClient(customerTableName).select('*').where('id', id).whereNull('deleted_on');
   const records = (await query) as CustomerDatabase[];

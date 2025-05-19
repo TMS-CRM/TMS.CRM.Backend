@@ -4,37 +4,37 @@
  */
 export async function up(knex) {
   await knex.schema
-    .createTable('Tenant', (table) => {
-      table.increments('Id').primary();
-      table.uuid('ExternalUuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
-      table.string('Name', 50).notNullable();
-      table.timestamp('CreatedOn').defaultTo(knex.fn.now()).notNullable();
-      table.timestamp('ModifiedOn');
-      table.timestamp('DeletedOn');
+    .createTable('tenant', (table) => {
+      table.increments('id').primary();
+      table.uuid('external_uuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
+      table.string('name', 50).notNullable();
+      table.timestamp('created_on').defaultTo(knex.fn.now()).notNullable();
+      table.timestamp('modified_on');
+      table.timestamp('deleted_on');
     })
-    .createTable('User', (table) => {
-      table.increments('Id').primary();
-      table.uuid('ExternalUuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
-      table.string('CognitoUuid', 50).unique();
-      table.string('FirstName', 50).notNullable();
-      table.string('LastName', 50).notNullable();
-      table.string('Email', 100).unique().notNullable();
-      table.timestamp('CreatedOn').defaultTo(knex.fn.now()).notNullable();
-      table.timestamp('ModifiedOn');
-      table.timestamp('DeletedOn');
+    .createTable('user', (table) => {
+      table.increments('id').primary();
+      table.uuid('external_uuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
+      table.string('cognito_uuid', 50).unique();
+      table.string('first_name', 50).notNullable();
+      table.string('last_name', 50).notNullable();
+      table.string('email', 100).unique().notNullable();
+      table.timestamp('created_on').defaultTo(knex.fn.now()).notNullable();
+      table.timestamp('modified_on');
+      table.timestamp('deleted_on');
     })
-    .createTable('UserTenant', (table) => {
-      table.increments('Id').primary();
-      table.integer('UserId').references('Id').inTable('User').onDelete('CASCADE');
-      table.integer('TenantId').references('Id').inTable('Tenant').onDelete('CASCADE');
-      table.timestamp('CreatedOn').defaultTo(knex.fn.now()).notNullable();
-      table.timestamp('ModifiedOn');
-      table.timestamp('DeletedOn');
+    .createTable('user_tenant', (table) => {
+      table.increments('id').primary();
+      table.integer('user_id').references('id').inTable('user').onDelete('CASCADE');
+      table.integer('tenant_id').references('id').inTable('tenant').onDelete('CASCADE');
+      table.timestamp('created_on').defaultTo(knex.fn.now()).notNullable();
+      table.timestamp('modified_on');
+      table.timestamp('deleted_on');
     })
     .createTable('customer', (table) => {
       table.increments('id').primary();
       table.uuid('external_uuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
-      table.integer('tenant_id').references('Id').inTable('Tenant').notNullable().onDelete('CASCADE');
+      table.integer('tenant_id').references('id').inTable('tenant').notNullable().onDelete('CASCADE');
       table.string('first_name', 50).notNullable();
       table.string('last_name', 50).notNullable();
       table.string('email', 100);
@@ -51,7 +51,7 @@ export async function up(knex) {
     .createTable('deal', (table) => {
       table.increments('id').primary();
       table.uuid('external_uuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
-      table.integer('tenant_id').references('Id').inTable('Tenant').notNullable().onDelete('CASCADE');
+      table.integer('tenant_id').references('id').inTable('tenant').notNullable().onDelete('CASCADE');
       table.integer('customer_id').references('id').inTable('customer').notNullable().onDelete('CASCADE');
       table.string('image_url', 255);
       table.string('street', 255);
@@ -72,7 +72,7 @@ export async function up(knex) {
     .createTable('task', (table) => {
       table.increments('id').primary();
       table.uuid('external_uuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
-      table.integer('tenant_id').references('Id').inTable('Tenant').notNullable().onDelete('CASCADE');
+      table.integer('tenant_id').references('id').inTable('tenant').notNullable().onDelete('CASCADE');
       table.string('description').notNullable();
       table.timestamp('due_date').notNullable();
       table.boolean('completed').defaultTo(false);
@@ -83,7 +83,7 @@ export async function up(knex) {
     .createTable('activity', (table) => {
       table.increments('id').primary();
       table.uuid('external_uuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
-      table.integer('tenant_id').references('Id').inTable('Tenant').notNullable().onDelete('CASCADE');
+      table.integer('tenant_id').references('id').inTable('tenant').notNullable().onDelete('CASCADE');
       table.integer('deal_id').references('id').inTable('deal').notNullable().onDelete('CASCADE');
       table.string('description');
       table.timestamp('date').notNullable();
@@ -104,7 +104,7 @@ export async function down(knex) {
     .dropTableIfExists('activity')
     .dropTableIfExists('deal')
     .dropTableIfExists('customer')
-    .dropTableIfExists('UserTenant')
-    .dropTableIfExists('User')
-    .dropTableIfExists('Tenant');
+    .dropTableIfExists('user_tenant')
+    .dropTableIfExists('user')
+    .dropTableIfExists('tenant');
 }

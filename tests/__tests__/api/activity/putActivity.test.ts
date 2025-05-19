@@ -6,7 +6,7 @@ import type { PutActivityRequestPayload } from '../../../../models/api/payloads/
 import type { ActivityDatabase } from '../../../../models/entities/activity.js';
 import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { activityTableName, selectActivityByExternalUuid } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
@@ -15,22 +15,22 @@ import { ActivityDatabaseBuilder } from '../../../builders/activityDatabaseBuild
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Activity - PUT', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
   const customersGlobal: CustomerDatabase[] = [];
   const dealsGlobal: DealDatabase[] = [];
   const activitiesGlobal: ActivityDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
       .insert(
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenant[0].Id)
+          .withTenantId(tenant[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -48,7 +48,7 @@ describe('API - Activity - PUT', () => {
     const deal = await knexClient(dealTableName)
       .insert(
         DealDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withCustomerId(customersGlobal[0].id)
           .withStreet('123 Main St')
           .withCity('New York')
@@ -70,7 +70,7 @@ describe('API - Activity - PUT', () => {
     const activity = await knexClient(activityTableName)
       .insert(
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDealId(dealsGlobal[0].id)
           .withDescription('This is a test activity')
           .withImageUrl('https://www.google.com')
@@ -95,7 +95,7 @@ describe('API - Activity - PUT', () => {
       })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -133,7 +133,7 @@ describe('API - Activity - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -163,7 +163,7 @@ describe('API - Activity - PUT', () => {
       })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -191,7 +191,7 @@ describe('API - Activity - PUT', () => {
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

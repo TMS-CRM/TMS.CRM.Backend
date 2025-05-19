@@ -3,43 +3,43 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/user/putUser.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { PutUserRequestPayload } from '../../../../models/api/payloads/user.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
-import type { UserEntry } from '../../../../models/entities/userEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { selectUserByExternalUuid, userTableName } from '../../../../repositories/userRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
-import { UserEntryBuilder } from '../../../builders/userEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
 describe('API - User - PUT', () => {
-  const usersGlobal: UserEntry[] = [];
-  const tenantsGlobal: TenantEntry[] = [];
+  const usersGlobal: UserDatabase[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
 
   beforeAll(async () => {
     const user = await knexClient(userTableName)
-      .insert(UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe4@example.com').build())
-      .returning(['Id', 'ExternalUuid', 'FirstName', 'LastName']);
+      .insert(UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe4@example.com').build())
+      .returning(['id', 'external_uuid', 'first_name', 'last_name']);
 
     usersGlobal.push(...user);
 
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
   });
 
   it('Success - Should update a user', async () => {
     const payload: PutUserRequestPayload = {
-      firstName: usersGlobal[0].FirstName,
-      lastName: usersGlobal[0].LastName,
+      firstName: usersGlobal[0].first_name,
+      lastName: usersGlobal[0].last_name,
       email: 'new.john.doe@example.com',
     };
 
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: usersGlobal[0].ExternalUuid,
+        uuid: usersGlobal[0].external_uuid,
       })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -62,13 +62,13 @@ describe('API - User - PUT', () => {
     // Validate the database record
     const user = await selectUserByExternalUuid(parsedBody.data.uuid);
     expect(user).toBeDefined();
-    expect(user!.Email).toBe(payload.email);
+    expect(user!.email).toBe(payload.email);
   });
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const payload: PutUserRequestPayload = {
-      firstName: usersGlobal[0].FirstName,
-      lastName: usersGlobal[0].LastName,
+      firstName: usersGlobal[0].first_name,
+      lastName: usersGlobal[0].last_name,
       email: 'new.john.doe@example.com',
     };
 
@@ -76,7 +76,7 @@ describe('API - User - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -95,18 +95,18 @@ describe('API - User - PUT', () => {
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
     // Payload missing the email
     const payload: Partial<PutUserRequestPayload> = {
-      firstName: usersGlobal[0].FirstName,
-      lastName: usersGlobal[0].LastName,
+      firstName: usersGlobal[0].first_name,
+      lastName: usersGlobal[0].last_name,
     };
 
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withBody(payload)
       .withPathParameters({
-        uuid: usersGlobal[0].ExternalUuid,
+        uuid: usersGlobal[0].external_uuid,
       })
       .build();
 
@@ -134,7 +134,7 @@ describe('API - User - PUT', () => {
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

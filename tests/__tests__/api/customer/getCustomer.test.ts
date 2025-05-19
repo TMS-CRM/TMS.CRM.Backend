@@ -2,26 +2,26 @@ import { randomUUID } from 'crypto';
 import { handler } from '../../../../lambdas/api/customer/getCustomer.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { CustomerDatabase } from '../../../../models/entities/customer.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Customer - GET', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
   const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
 
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
       .insert([
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -33,7 +33,7 @@ describe('API - Customer - GET', () => {
           .withCustomerImageUrl('http/1234')
           .build(),
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Jane')
           .withLastName('Pan')
           .withEmail('jane.pan@example.com')
@@ -53,7 +53,7 @@ describe('API - Customer - GET', () => {
   it('Success - Should get a customer', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withPathParameters({
         uuid: customersGlobal[0].external_uuid,
@@ -87,7 +87,7 @@ describe('API - Customer - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -107,7 +107,7 @@ describe('API - Customer - GET', () => {
     // Event with a random uuid on the path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withPathParameters({ uuid: randomUUID() })
       .build();

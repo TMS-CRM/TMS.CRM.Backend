@@ -6,7 +6,7 @@ import type { SwitchTenantResponsePayload } from '../../../models/api/payloads/s
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
+import { selectTenantByExternalUuid } from '../../../repositories/tenantRepository.js';
 import { selectUserByCognitoUuid } from '../../../repositories/userRepository.js';
 import { selectUserTenantsByUserId } from '../../../repositories/userTenantRepository.js';
 
@@ -39,7 +39,7 @@ async function validatePreferredTenant(validatedRequest: ValidatedApiRequest<nul
   logger.info('Start - validatePreferredTenant');
 
   const preferredTenantUuid = validatedRequest.pathParameter!;
-  const tenant = await selectTenantByUuid(preferredTenantUuid);
+  const tenant = await selectTenantByExternalUuid(preferredTenantUuid);
   if (!tenant) {
     throw new BadRequestError('Tenant not found');
   }
@@ -49,12 +49,12 @@ async function validatePreferredTenant(validatedRequest: ValidatedApiRequest<nul
     throw new BadRequestError('User not found');
   }
 
-  const userTenants = await selectUserTenantsByUserId(user.Id);
+  const userTenants = await selectUserTenantsByUserId(user.id);
   if (!userTenants.length) {
     throw new BadRequestError('User has no tenants');
   }
 
-  const userPreferredTenant = userTenants.find((userTenant) => userTenant.TenantId === tenant.Id);
+  const userPreferredTenant = userTenants.find((userTenant) => userTenant.tenant_id === tenant.id);
   if (!userPreferredTenant) {
     throw new BadRequestError('User does not have access to this tenant');
   }

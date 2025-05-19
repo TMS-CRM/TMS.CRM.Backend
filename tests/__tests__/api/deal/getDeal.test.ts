@@ -3,29 +3,29 @@ import { handler } from '../../../../lambdas/api/deal/getDeal.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Deal - GET', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
   const customersGlobal: CustomerDatabase[] = [];
   const dealsGlobal: DealDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
 
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
       .insert([
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -43,7 +43,7 @@ describe('API - Deal - GET', () => {
     const deal = await knexClient(dealTableName)
       .insert([
         DealDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withCustomerId(customersGlobal[0].id)
           .withPrice(100)
           .withStreet('202/3 Rose Garden Lane')
@@ -69,7 +69,7 @@ describe('API - Deal - GET', () => {
         uuid: dealsGlobal[0].external_uuid,
       })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -111,7 +111,7 @@ describe('API - Deal - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -132,7 +132,7 @@ describe('API - Deal - GET', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

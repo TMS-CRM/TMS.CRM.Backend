@@ -5,28 +5,28 @@ import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { PutDealRequestPayload } from '../../../../models/api/payloads/deal.js';
 import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName, selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Deal - PUT', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
   const customersGlobal: CustomerDatabase[] = [];
   const dealsGlobal: DealDatabase[] = [];
 
   beforeEach(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
       .insert(
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenant[0].Id)
+          .withTenantId(tenant[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -45,7 +45,7 @@ describe('API - Deal - PUT', () => {
     const deal = await knexClient(dealTableName)
       .insert(
         DealDatabaseBuilder.make()
-          .withTenantId(tenant[0].Id)
+          .withTenantId(tenant[0].id)
           .withCustomerId(customersGlobal[0].id)
           .withStreet('123 Main St')
           .withCity('Springfield')
@@ -89,7 +89,7 @@ describe('API - Deal - PUT', () => {
       })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -151,7 +151,7 @@ describe('API - Deal - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -188,7 +188,7 @@ describe('API - Deal - PUT', () => {
       })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -226,7 +226,7 @@ describe('API - Deal - PUT', () => {
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

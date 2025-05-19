@@ -1,22 +1,22 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/customer/getCustomers.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Customers - GET', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName)
       .insert([
-        TenantEntryBuilder.make().withName('Tenant 1').build(),
-        TenantEntryBuilder.make().withName('Tenant 2').build(),
-        TenantEntryBuilder.make().withName('Tenant 3').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 1').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 2').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 3').build(),
       ])
       .returning('*');
     tenantsGlobal.push(...tenant);
@@ -25,7 +25,7 @@ describe('API - Customers - GET', () => {
     await knexClient(customerTableName)
       .insert([
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -38,7 +38,7 @@ describe('API - Customers - GET', () => {
           .build(),
 
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Alice')
           .withLastName('Smith')
           .withEmail('alice.smith@example.com')
@@ -51,7 +51,7 @@ describe('API - Customers - GET', () => {
           .build(),
 
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Bob')
           .withLastName('Johnson')
           .withEmail('bob.johnson@example.com')
@@ -64,7 +64,7 @@ describe('API - Customers - GET', () => {
           .build(),
 
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Emma')
           .withLastName('Brown')
           .withEmail('emma.brown@example.com')
@@ -77,7 +77,7 @@ describe('API - Customers - GET', () => {
           .build(),
 
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Liam')
           .withLastName('Wilson')
           .withEmail('liam.wilson@example.com')
@@ -90,7 +90,7 @@ describe('API - Customers - GET', () => {
           .build(),
 
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Sophia')
           .withLastName('Taylor')
           .withEmail('sophia.taylor@example.com')
@@ -103,7 +103,7 @@ describe('API - Customers - GET', () => {
           .build(),
 
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Noah')
           .withLastName('Anderson')
           .withEmail('noah.anderson@example.com')
@@ -116,7 +116,7 @@ describe('API - Customers - GET', () => {
           .build(),
 
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Olivia')
           .withLastName('Martinez')
           .withEmail('olivia.martinez@example.com')
@@ -129,7 +129,7 @@ describe('API - Customers - GET', () => {
           .build(),
 
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Ethan')
           .withLastName('Clark')
           .withEmail('ethan.clark@example.com')
@@ -146,7 +146,7 @@ describe('API - Customers - GET', () => {
     await knexClient(customerTableName)
       .insert([
         CustomerDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[1].Id)
+          .withTenantId(tenantsGlobal[1].id)
           .withFirstName('Jane')
           .withLastName('Pan')
           .withEmail('jane.pan@example.com')
@@ -164,7 +164,7 @@ describe('API - Customers - GET', () => {
   it('Success - Should get customers with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -189,7 +189,7 @@ describe('API - Customers - GET', () => {
   it('Success - Should get customers with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -214,7 +214,7 @@ describe('API - Customers - GET', () => {
   it('Success - Should return 0 customers if the tenant has no customers', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[2].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[2].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -240,7 +240,7 @@ describe('API - Customers - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

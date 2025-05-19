@@ -6,7 +6,7 @@ import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/su
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import { Task, type TaskDatabase } from '../../../models/entities/task.js';
 import { insertTask, selectTaskById } from '../../../repositories/taskRepository.js';
-import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
+import { selectTenantByExternalUuid } from '../../../repositories/tenantRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -32,12 +32,12 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 export async function persistRecords(validatedRequest: ValidatedApiRequest<PostTaskRequestPayload>): Promise<number> {
   logger.info('Start - persistRecords');
 
-  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  const tenant = await selectTenantByExternalUuid(validatedRequest.tenantUuid!);
   if (!tenant) {
     throw new BadRequestError('Tenant does not exist');
   }
 
-  const mappedTask: Partial<TaskDatabase> = Task.create(tenant.Id, validatedRequest.body!);
+  const mappedTask: Partial<TaskDatabase> = Task.create(tenant.id, validatedRequest.body!);
   const taskId = await insertTask(mappedTask);
 
   return taskId;

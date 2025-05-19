@@ -1,5 +1,5 @@
 import { AdminCreateUserCommand, CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
-import type { UserEntry } from '../../models/entities/userEntry.js';
+import type { User } from '../../models/entities/user.js';
 import { updateUser } from '../../repositories/userRepository.js';
 
 let _cognitoIdentityProviderClient: CognitoIdentityProviderClient;
@@ -19,15 +19,15 @@ export function getCognitoClient(): CognitoIdentityProviderClient {
   return _cognitoIdentityProviderClient;
 }
 
-export async function setupCognitoUser(user: UserEntry, userPoolId: string): Promise<void> {
+export async function setupCognitoUser(user: User, userPoolId: string): Promise<void> {
   const createUserResponse = await getCognitoClient().send(
     new AdminCreateUserCommand({
       UserPoolId: userPoolId,
-      Username: user.Email,
+      Username: user.email,
       UserAttributes: [
         {
           Name: 'email',
-          Value: user.Email,
+          Value: user.email,
         },
       ],
     }),
@@ -41,7 +41,7 @@ export async function setupCognitoUser(user: UserEntry, userPoolId: string): Pro
   }
 
   // Update the user with the Cognito user uuid
-  await updateUser(user.Id, { CognitoUuid: cognitoUserUuid });
+  await updateUser(user.id, { cognito_uuid: cognitoUserUuid });
 }
 
 // export async function createUserPool(poolName: string): Promise<UserPoolType> {

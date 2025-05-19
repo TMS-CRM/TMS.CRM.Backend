@@ -1,22 +1,22 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/task/getTasks.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { taskTableName } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TaskDatabaseBuilder } from '../../../builders/taskDatabaseBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Tasks - GET', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
 
   beforeAll(async () => {
     const tenants = await knexClient(tenantTableName)
       .insert([
-        TenantEntryBuilder.make().withName('Tenant 1').build(),
-        TenantEntryBuilder.make().withName('Tenant 2').build(),
-        TenantEntryBuilder.make().withName('Tenant 3').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 1').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 2').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 3').build(),
       ])
       .returning('*');
     tenantsGlobal.push(...tenants);
@@ -25,63 +25,63 @@ describe('API - Tasks - GET', () => {
     await knexClient(taskTableName)
       .insert([
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Test are now implemented')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
           .build(),
 
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(false)
           .build(),
 
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
           .build(),
 
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(false)
           .build(),
 
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
           .build(),
 
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(false)
           .build(),
 
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
           .build(),
 
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(false)
           .build(),
 
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
@@ -92,7 +92,7 @@ describe('API - Tasks - GET', () => {
     await knexClient(taskTableName)
       .insert([
         TaskDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[1].Id)
+          .withTenantId(tenantsGlobal[1].id)
           .withDescription('Is it here test?')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
@@ -104,7 +104,7 @@ describe('API - Tasks - GET', () => {
   it('Success - Should get tasks with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -129,7 +129,7 @@ describe('API - Tasks - GET', () => {
   it('Success - Should get tasks with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -154,7 +154,7 @@ describe('API - Tasks - GET', () => {
   it('Success - Should return 0 tasks if the tenant has no tasks', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[2].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[2].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -180,7 +180,7 @@ describe('API - Tasks - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

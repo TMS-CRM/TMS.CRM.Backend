@@ -53,7 +53,7 @@ export class Customer {
     this.deletedOn = data.deleted_on;
   }
 
-  /** Convert the PostCustomerRequestPayload to a Partial<CustomerDatabase> */
+  /** Convert the PostCustomerRequestPayload to a Partial<Customer> */
   public static create(tenantId: number, payload: PostCustomerRequestPayload): Partial<CustomerDatabase> {
     return {
       tenant_id: tenantId,
@@ -69,7 +69,7 @@ export class Customer {
     };
   }
 
-  /** Convert the PutCustomerRequestPayload to a Partial<CustomerDatabase> */
+  /** Convert the PutCustomerRequestPayload to a Partial<Customer> */
   public static update(payload: PutCustomerRequestPayload): Partial<CustomerDatabase> {
     return {
       first_name: payload.firstName,

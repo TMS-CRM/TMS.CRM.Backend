@@ -7,7 +7,7 @@ import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/succ
 import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
 import type { Customer } from '../../../models/entities/customer.js';
 import { selectCustomers } from '../../../repositories/customerRepository.js';
-import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
+import { selectTenantByExternalUuid } from '../../../repositories/tenantRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   logger.info('Request received: ', request);
@@ -36,13 +36,13 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 export async function queryRecords(validatedRequest: ValidatedApiRequest<null, GetCustomerListFilter>): Promise<PaginatedResponse<Customer>> {
   logger.info('Start - queryRecords');
 
-  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  const tenant = await selectTenantByExternalUuid(validatedRequest.tenantUuid!);
   if (!tenant) {
     throw new BadRequestError('Tenant does not exist');
   }
 
   const { limit, offset } = validatedRequest.queryParameters!;
-  const queryResult: PaginatedResponse<Customer> = await selectCustomers(limit, offset, tenant.Id);
+  const queryResult: PaginatedResponse<Customer> = await selectCustomers(limit, offset, tenant.id);
 
   return queryResult;
 }
