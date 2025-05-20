@@ -30,7 +30,6 @@ export async function selectDealById(id: number): Promise<Deal | null> {
     .innerJoin(customerTableName, `${dealTableName}.customer_id`, '=', `${customerTableName}.id`)
     .where(`${dealTableName}.id`, id)
     .whereNull(`${dealTableName}.deleted_on`);
-  // .whereNull(`${customerTableName}.DeletedOn`);
 
   const records = (await query) as ExtendedDealDatabase[];
   return records.length > 0 ? new Deal(records[0]) : null;

@@ -51,10 +51,10 @@ async function validatePreferredTenant(validatedRequest: ValidatedApiRequest<nul
 
   const userTenants = await selectUserTenantsByUserId(user.id);
   if (!userTenants.length) {
-    throw new BadRequestError('User has no tenants');
+    throw new BadRequestError('User does not have access to this tenant');
   }
 
-  const userPreferredTenant = userTenants.find((userTenant) => userTenant.tenant_id === tenant.id);
+  const userPreferredTenant = userTenants.find((userTenant) => userTenant.tenantId === tenant.id);
   if (!userPreferredTenant) {
     throw new BadRequestError('User does not have access to this tenant');
   }

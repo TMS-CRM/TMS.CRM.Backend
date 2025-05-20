@@ -15,6 +15,9 @@ export async function insertTenant(tenant: Partial<TenantDatabase>): Promise<num
 
 /** Get the User by Id */
 export async function selectTenantById(id: number): Promise<Tenant | null> {
+  if (id === undefined || id === null) {
+    return null;
+  }
   const query = knexClient(tenantTableName).select('*').where('id', id);
   const records = (await query) as TenantDatabase[];
 
