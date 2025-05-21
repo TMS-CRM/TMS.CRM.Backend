@@ -44,7 +44,7 @@ async function determineTenantUuid(event: PreAuthenticationTriggerEvent): Promis
   }
 
   const userTenants = await selectUserTenantsByUserId(user.id);
-  if (!userTenants.length) {
+  if (!userTenants?.length) {
     throw new BadRequestError('User has no tenants');
   }
 

@@ -60,8 +60,8 @@ describe('API - User - POST', () => {
 
     const userTenants = await selectUserTenantsByUserId(user!.id);
     expect(userTenants).toBeDefined();
-    expect(userTenants.length).toBe(1);
-    expect(userTenants[0].tenantId).toBe(tenantsGlobal[0].id);
+    expect(userTenants!.length).toBe(1);
+    expect(userTenants![0].tenantId).toBe(tenantsGlobal[0].id);
 
     // Verify that setupCognitoUser was called
     expect(mockSetupCognitoUser).toHaveBeenCalled();
