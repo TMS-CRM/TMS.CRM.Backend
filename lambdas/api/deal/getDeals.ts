@@ -5,9 +5,9 @@ import { BadRequestError, HttpErrorResponse } from '../../../models/api/response
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { ExtendedDealEntry } from '../../../models/entities/dealEntry.js';
+import type { Deal } from '../../../models/entities/deal.js';
 import { selectDeals } from '../../../repositories/dealRepository.js';
-import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
+import { selectTenantByExternalUuid } from '../../../repositories/tenantRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   logger.info('Request received: ', request);
@@ -33,21 +33,21 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 }
 
-export async function queryRecords(validatedRequest: ValidatedApiRequest<null, GetDealListFilter>): Promise<PaginatedResponse<ExtendedDealEntry>> {
+export async function queryRecords(validatedRequest: ValidatedApiRequest<null, GetDealListFilter>): Promise<PaginatedResponse<Deal>> {
   logger.info('Start - queryRecords');
 
-  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  const tenant = await selectTenantByExternalUuid(validatedRequest.tenantUuid!);
   if (!tenant) {
     throw new BadRequestError('Tenant does not exist');
   }
 
   const { limit, offset } = validatedRequest.queryParameters!;
-  const queryResult: PaginatedResponse<ExtendedDealEntry> = await selectDeals(limit, offset, tenant.Id);
+  const queryResult: PaginatedResponse<Deal> = await selectDeals(limit, offset, tenant.id);
 
   return queryResult;
 }
 
-export async function formatResponseData(queryResult: PaginatedResponse<ExtendedDealEntry>): Promise<FetchSuccess<GetDealListResponsePayload>> {
+export async function formatResponseData(queryResult: PaginatedResponse<Deal>): Promise<FetchSuccess<GetDealListResponsePayload>> {
   logger.info('Start - formatResponse');
 
   const paginatedResponse: PaginatedResponse<PublicDeal> = {

@@ -1,16 +1,16 @@
 import { handler } from '../../../../lambdas/api/task/postTask.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { selectTaskByExternalUuid } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Task - POST', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
   });
 
@@ -24,7 +24,7 @@ describe('API - Task - POST', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -47,7 +47,13 @@ describe('API - Task - POST', () => {
     // Validate the database record
     const task = await selectTaskByExternalUuid(parsedBody.data.uuid);
     expect(task).toBeDefined();
-    expect(task?.TenantId).toBe(tenantsGlobal[0].Id);
+    expect(task?.tenantId).toBe(tenantsGlobal[0].id);
+    expect(task?.description).toBe(payload.description);
+    expect(task?.dueDate).toBeDefined();
+    expect(new Date(task!.dueDate).getTime()).toBeCloseTo(new Date(payload.dueDate).getTime());
+    expect(task?.completed).toBe(payload.completed);
+    expect(task?.createdOn).toBeDefined();
+    expect(task?.modifiedOn).toBeNull();
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
@@ -57,7 +63,7 @@ describe('API - Task - POST', () => {
         completed: false,
       })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

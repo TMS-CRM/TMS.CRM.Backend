@@ -4,7 +4,7 @@ import { type PutTaskRequestPayload, type PutTaskResponsePayload, putTaskRequest
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { TaskEntry } from '../../../models/entities/taskEntry.js';
+import { Task, type TaskDatabase } from '../../../models/entities/task.js';
 import { selectTaskByExternalUuid, selectTaskById, updateTask } from '../../../repositories/taskRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
@@ -40,10 +40,10 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<PutTa
   }
 
   // Update the task
-  const mappedTask: Partial<TaskEntry> = TaskEntry.fromPutRequestPayload(validatedRequest.body!);
-  await updateTask(task.Id, mappedTask);
+  const mappedTask: Partial<TaskDatabase> = Task.update(validatedRequest.body!);
+  await updateTask(task.id, mappedTask);
 
-  return task.Id;
+  return task.id;
 }
 
 export async function formatResponseData(taskId: number): Promise<PersistSuccess<PutTaskResponsePayload>> {

@@ -4,7 +4,7 @@ import { type PutUserRequestPayload, type PutUserResponsePayload, putUserRequest
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { UserEntry } from '../../../models/entities/userEntry.js';
+import { User, type UserDatabase } from '../../../models/entities/user.js';
 import { selectUserByExternalUuid, selectUserById, updateUser } from '../../../repositories/userRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
@@ -40,10 +40,10 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<PutUs
   }
 
   // Update the user
-  const mappedUser: Partial<UserEntry> = UserEntry.fromPutRequestPayload(validatedRequest.body!);
-  await updateUser(user.Id, mappedUser);
+  const mappedUser: Partial<UserDatabase> = User.update(validatedRequest.body!);
+  await updateUser(user.id, mappedUser);
 
-  return user.Id;
+  return user.id;
 }
 
 export async function formatResponseData(userId: number): Promise<PersistSuccess<PutUserResponsePayload>> {

@@ -37,7 +37,7 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<null>
   }
 
   // Soft delete the task
-  await softDeleteTaskById(task.Id);
+  await softDeleteTaskById(task.id);
 }
 
 export function formatResponseData(): DeleteSuccess<null> {

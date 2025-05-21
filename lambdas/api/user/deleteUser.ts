@@ -37,7 +37,7 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<null>
   }
 
   // Soft delete the user
-  await softDeleteUserById(user.Id);
+  await softDeleteUserById(user.id);
 
   // TODO: deactivate user in cognito
 }

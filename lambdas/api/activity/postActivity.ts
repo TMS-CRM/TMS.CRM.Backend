@@ -11,7 +11,7 @@ import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import { Activity, type ActivityDatabase } from '../../../models/entities/activity.js';
 import { insertActivity, selectActivityById } from '../../../repositories/activityRepository.js';
 import { selectDealByExternalUuid } from '../../../repositories/dealRepository.js';
-import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
+import { selectTenantByExternalUuid } from '../../../repositories/tenantRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -37,7 +37,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 export async function persistRecords(validatedRequest: ValidatedApiRequest<PostActivityRequestPayload>): Promise<number> {
   logger.info('Start - persistRecords');
 
-  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  const tenant = await selectTenantByExternalUuid(validatedRequest.tenantUuid!);
   if (!tenant) {
     throw new BadRequestError('Tenant does not exist');
   }
@@ -47,7 +47,7 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<PostA
     throw new BadRequestError('Deal does not exist');
   }
 
-  const mappedActivity: Partial<ActivityDatabase> = Activity.create(tenant.Id, deal.Id, validatedRequest.body!);
+  const mappedActivity: Partial<ActivityDatabase> = Activity.create(tenant.id, deal.id, validatedRequest.body!);
   const activityId = await insertActivity(mappedActivity);
 
   return activityId;

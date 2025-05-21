@@ -1,31 +1,31 @@
 import { handler } from '../../../../lambdas/api/deal/postDeal.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
-import { DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
+import { DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Deal - POST', () => {
-  const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+        CustomerDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
-          .withPhone('642103273576')
+          .withPhone('+642103273576')
           .withStreet('202/3 Rose Garden Lane')
           .withCity('Auckland')
           .withState('Auckland Region')
@@ -39,7 +39,7 @@ describe('API - Deal - POST', () => {
 
   it('Success - Should create a deal', async () => {
     const payload = {
-      customerUuid: customersGlobal[0].ExternalUuid,
+      customerUuid: customersGlobal[0].external_uuid,
       price: 100,
       street: '123 Main St',
       city: 'Anytown',
@@ -57,7 +57,7 @@ describe('API - Deal - POST', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -70,12 +70,12 @@ describe('API - Deal - POST', () => {
 
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('PersistSuccess');
-    expect(parsedBody.data.customer.uuid).toBe(customersGlobal[0].ExternalUuid);
-    expect(parsedBody.data.customer.imageUrl).toBe(customersGlobal[0].ImageUrl);
-    expect(parsedBody.data.customer.firstName).toBe(customersGlobal[0].FirstName);
-    expect(parsedBody.data.customer.lastName).toBe(customersGlobal[0].LastName);
-    expect(parsedBody.data.customer.email).toBe(customersGlobal[0].Email);
-    expect(parsedBody.data.customer.phone).toBe(customersGlobal[0].Phone);
+    expect(parsedBody.data.customer.uuid).toBe(customersGlobal[0].external_uuid);
+    expect(parsedBody.data.customer.imageUrl).toBe(customersGlobal[0].image_url);
+    expect(parsedBody.data.customer.firstName).toBe(customersGlobal[0].first_name);
+    expect(parsedBody.data.customer.lastName).toBe(customersGlobal[0].last_name);
+    expect(parsedBody.data.customer.email).toBe(customersGlobal[0].email);
+    expect(parsedBody.data.customer.phone).toBe(customersGlobal[0].phone); // Ensure phone matches the updated format
     expect(parsedBody.data.street).toBe('123 Main St');
     expect(parsedBody.data.city).toBe('Anytown');
     expect(parsedBody.data.state).toBe('CA');
@@ -95,7 +95,7 @@ describe('API - Deal - POST', () => {
     // Validate the database record
     const deal = await selectDealByExternalUuid(parsedBody.data.uuid);
     expect(deal).toBeDefined();
-    expect(deal?.TenantId).toBe(tenantsGlobal[0].Id);
+    expect(deal?.tenantId).toBe(tenantsGlobal[0].id);
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
@@ -108,7 +108,7 @@ describe('API - Deal - POST', () => {
         customerUuid: '12345678-1234-1234-1234-123456789012',
       })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

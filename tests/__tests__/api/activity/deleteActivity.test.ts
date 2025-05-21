@@ -3,35 +3,34 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/activity/deleteActivity.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { ActivityDatabase } from '../../../../models/entities/activity.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
-import type { DealEntry } from '../../../../models/entities/dealEntry.js';
-import { DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
+import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { activityTableName, selectActivityByExternalUuid } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { ActivityDatabaseBuilder } from '../../../builders/activityDatabaseBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
+import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Activity - DELETE', () => {
-  const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
-  const dealsGlobal: DealEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
+  const dealsGlobal: DealDatabase[] = [];
   const activitiesGlobal: ActivityDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
 
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+        CustomerDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -49,9 +48,9 @@ describe('API - Activity - DELETE', () => {
 
     const deal = await knexClient(dealTableName)
       .insert(
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(100)
           .withStreet('202/3 Rose Garden Lane')
           .withCity('Auckland')
@@ -73,8 +72,8 @@ describe('API - Activity - DELETE', () => {
     const activity = await knexClient(activityTableName)
       .insert(
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Sample activity description')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/profile.jpg')
@@ -91,7 +90,7 @@ describe('API - Activity - DELETE', () => {
         uuid: activitiesGlobal[0].external_uuid,
       })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -113,7 +112,7 @@ describe('API - Activity - DELETE', () => {
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -134,7 +133,7 @@ describe('API - Activity - DELETE', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

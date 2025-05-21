@@ -1,15 +1,15 @@
 import { handler } from '../../../../lambdas/api/auth/switchTenant.js';
 import { getCognitoClient } from '../../../../lib/aws/cognito.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
-import type { UserEntry } from '../../../../models/entities/userEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { userTableName } from '../../../../repositories/userRepository.js';
 import { userTenantTableName } from '../../../../repositories/userTenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
-import { UserEntryBuilder } from '../../../builders/userEntryBuilder.js';
-import { UserTenantEntryBuilder } from '../../../builders/userTenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
+import { UserTenantDatabaseBuilder } from '../../../builders/userTenantDatabaseBuilder.js';
 
 // Mock the getCognitoClient function
 vi.mock('../../../../lib/aws/cognito.js', () => ({
@@ -31,29 +31,29 @@ const mockSend = vi.fn().mockResolvedValue({
 });
 
 describe('API - Auth - Switch Tenant', () => {
-  const tenantsGlobal: TenantEntry[] = [];
-  const usersGlobal: UserEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
+  const usersGlobal: UserDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName)
       .insert([
-        TenantEntryBuilder.make().withName('Tenant 1').build(),
-        TenantEntryBuilder.make().withName('Tenant 2').build(),
-        TenantEntryBuilder.make().withName('Tenant 3').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 1').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 2').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 3').build(),
       ])
       .returning('*');
 
     tenantsGlobal.push(...tenant);
 
     const user = await knexClient(userTableName)
-      .insert([UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe7@example.com').build()])
+      .insert([UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe7@example.com').build()])
       .returning('*');
 
     usersGlobal.push(...user);
 
     await knexClient(userTenantTableName).insert([
-      UserTenantEntryBuilder.make().withUserId(usersGlobal[0].Id).withTenantId(tenantsGlobal[0].Id).build(),
-      UserTenantEntryBuilder.make().withUserId(usersGlobal[0].Id).withTenantId(tenantsGlobal[1].Id).build(),
+      UserTenantDatabaseBuilder.make().withUserId(usersGlobal[0].id).withTenantId(tenantsGlobal[0].id).build(),
+      UserTenantDatabaseBuilder.make().withUserId(usersGlobal[0].id).withTenantId(tenantsGlobal[1].id).build(),
     ]);
   });
 
@@ -61,13 +61,13 @@ describe('API - Auth - Switch Tenant', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims(
         {
-          'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
-          sub: usersGlobal[0].CognitoUuid,
+          'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+          sub: usersGlobal[0].cognito_uuid,
         },
         true,
       )
       .withPathParameters({
-        tenantUuid: tenantsGlobal[1].ExternalUuid,
+        tenantUuid: tenantsGlobal[1].external_uuid,
       })
       .build();
 
@@ -89,8 +89,8 @@ describe('API - Auth - Switch Tenant', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims(
         {
-          'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
-          sub: usersGlobal[0].CognitoUuid,
+          'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+          sub: usersGlobal[0].cognito_uuid,
         },
         true,
       )
@@ -112,13 +112,13 @@ describe('API - Auth - Switch Tenant', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims(
         {
-          'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
-          sub: usersGlobal[0].CognitoUuid,
+          'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+          sub: usersGlobal[0].cognito_uuid,
         },
         true,
       )
       .withPathParameters({
-        tenantUuid: tenantsGlobal[2].ExternalUuid,
+        tenantUuid: tenantsGlobal[2].external_uuid,
       })
       .build();
 

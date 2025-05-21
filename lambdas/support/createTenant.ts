@@ -2,9 +2,9 @@ import { setupCognitoUser } from '../../lib/aws/cognito.js';
 import { logger } from '../../lib/utils/logger.js';
 import { BadRequestError } from '../../models/api/responses/errors.js';
 import { PersistSuccess } from '../../models/api/responses/success.js';
-import { Tenant } from '../../models/entities/tenantEntry.js';
-import { UserEntry } from '../../models/entities/userEntry.js';
-import { UserTenantEntry } from '../../models/entities/userTenantEntry.js';
+import { Tenant } from '../../models/entities/tenant.js';
+import { User, type UserDatabase } from '../../models/entities/user.js';
+import { UserTenant } from '../../models/entities/userTenant.js';
 import type { CreateTenantRequestPayload, CreateTenantResponsePayload, CreateTenantResultKeys } from '../../models/support/tenant.js';
 import { insertTenant, selectTenantById } from '../../repositories/tenantRepository.js';
 import { insertUser, selectUserByEmail, selectUserById } from '../../repositories/userRepository.js';
@@ -45,7 +45,7 @@ async function createTenantAndUser(request: CreateTenantRequestPayload): Promise
   const tenantId = await insertTenant(Tenant.create(request.name));
 
   // Create user
-  const mappedUser: Partial<UserEntry> = UserEntry.fromPostRequestPayload({
+  const mappedUser: Partial<UserDatabase> = User.create({
     email: request.user.email,
     firstName: request.user.firstName,
     lastName: request.user.lastName,
@@ -53,7 +53,7 @@ async function createTenantAndUser(request: CreateTenantRequestPayload): Promise
   const userId = await insertUser(mappedUser);
 
   // Link user to tenant
-  await insertUserTenant(UserTenantEntry.create(userId, tenantId));
+  await insertUserTenant(UserTenant.create(userId, tenantId));
 
   return { newTenantId: tenantId, newUserId: userId };
 }

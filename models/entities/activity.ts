@@ -1,4 +1,4 @@
-import type { DealEntry } from './dealEntry.js';
+import type { Deal } from './deal.js';
 import type { PostActivityRequestPayload, PublicActivity, PutActivityRequestPayload } from '../api/payloads/activity.js';
 
 export interface ActivityDatabase {
@@ -23,7 +23,7 @@ export class Activity {
   public id: number;
   public externalUuid: string;
   public tenantId: number;
-  public deal: Pick<DealEntry, 'Id' | 'ExternalUuid'>;
+  public deal: Pick<Deal, 'id' | 'externalUuid'>;
   public description: string;
   public date: string;
   public imageUrl: string;
@@ -35,7 +35,7 @@ export class Activity {
     this.id = data.id;
     this.externalUuid = data.external_uuid;
     this.tenantId = data.tenant_id;
-    this.deal = { Id: data.deal_id, ExternalUuid: data.deal_external_uuid };
+    this.deal = { id: data.deal_id, externalUuid: data.deal_external_uuid };
     this.description = data.description;
     this.date = data.date;
     this.imageUrl = data.image_url;
@@ -69,7 +69,7 @@ export class Activity {
   public toPublic(): PublicActivity {
     return {
       uuid: this.externalUuid,
-      dealUuid: this.deal.ExternalUuid,
+      dealUuid: this.deal.externalUuid,
       description: this.description,
       date: this.date,
       imageUrl: this.imageUrl,

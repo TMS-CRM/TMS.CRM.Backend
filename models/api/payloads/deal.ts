@@ -1,5 +1,5 @@
 import type { integer } from 'aws-sdk/clients/cloudfront.js';
-import { DealProgress, RoomAccess } from '../../entities/dealEntry.js';
+import { DealProgress, RoomAccess } from '../../entities/deal.js';
 import type { PaginatedResponse } from '../responses/pagination.js';
 
 /** The exposed Deal object */

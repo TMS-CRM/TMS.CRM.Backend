@@ -1,26 +1,26 @@
 import { randomUUID } from 'crypto';
 import { handler } from '../../../../lambdas/api/task/getTask.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TaskEntry } from '../../../../models/entities/taskEntry.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TaskDatabase } from '../../../../models/entities/task.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { taskTableName } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TaskEntryBuilder } from '../../../builders/taskEntryBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TaskDatabaseBuilder } from '../../../builders/taskDatabaseBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Task - GET', () => {
-  const tenantsGlobal: TenantEntry[] = [];
-  const tasksGlobal: TaskEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
+  const tasksGlobal: TaskDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
     const task = await knexClient(taskTableName)
       .insert([
-        TaskEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+        TaskDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
           .withDescription('Test are now implemented')
           .withDueDate(new Date().toISOString())
           .withCompleted(true)
@@ -34,10 +34,10 @@ describe('API - Task - GET', () => {
   it('Success - Should get a task', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: tasksGlobal[0].ExternalUuid,
+        uuid: tasksGlobal[0].external_uuid,
       })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -50,9 +50,9 @@ describe('API - Task - GET', () => {
 
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('FetchSuccess');
-    expect(parsedBody.data.description).toBe(tasksGlobal[0].Description);
-    expect(new Date(parsedBody.data.dueDate).getTime()).toBeCloseTo(new Date(tasksGlobal[0].DueDate).getTime());
-    expect(parsedBody.data.completed).toBe(tasksGlobal[0].Completed);
+    expect(parsedBody.data.description).toBe(tasksGlobal[0].description);
+    expect(new Date(parsedBody.data.dueDate).getTime()).toBeCloseTo(new Date(tasksGlobal[0].due_date).getTime());
+    expect(parsedBody.data.completed).toBe(tasksGlobal[0].completed);
     expect(parsedBody.data.uuid).toBeDefined();
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeDefined();
@@ -62,7 +62,7 @@ describe('API - Task - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -83,7 +83,7 @@ describe('API - Task - GET', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

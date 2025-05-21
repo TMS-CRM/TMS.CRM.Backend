@@ -2,13 +2,13 @@ import { randomUUID } from 'crypto';
 import { handler } from '../../../../lambdas/api/auth/signOut.js';
 import { getCognitoClient } from '../../../../lib/aws/cognito.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
-import type { UserEntry } from '../../../../models/entities/userEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { userTableName } from '../../../../repositories/userRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
-import { UserEntryBuilder } from '../../../builders/userEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
 // Mock the getCognitoClient function
 vi.mock('../../../../lib/aws/cognito.js', () => ({
@@ -21,16 +21,16 @@ vi.mock('../../../../lib/aws/cognito.js', () => ({
 });
 
 describe('API - Auth - Sign out', () => {
-  const tenantsGlobal: TenantEntry[] = [];
-  const usersGlobal: UserEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
+  const usersGlobal: UserDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
 
     tenantsGlobal.push(...tenant);
 
     const user = await knexClient(userTableName)
-      .insert([UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe8@example.com').build()])
+      .insert([UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe8@example.com').build()])
       .returning('*');
 
     usersGlobal.push(...user);
@@ -39,7 +39,7 @@ describe('API - Auth - Sign out', () => {
   it('Success - Should sign out a user', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withHeader({
         authorization: `Bearer ${randomUUID()}`,

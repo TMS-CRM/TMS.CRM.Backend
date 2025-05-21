@@ -37,7 +37,7 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<null>
   }
 
   // Soft delete the customer
-  await softDeleteCustomerById(customer.Id);
+  await softDeleteCustomerById(customer.id);
 }
 
 export function formatResponseData(): DeleteSuccess<null> {

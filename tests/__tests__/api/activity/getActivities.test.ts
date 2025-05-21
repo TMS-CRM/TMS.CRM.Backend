@@ -1,30 +1,30 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/activity/getActivities.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { ICustomerEntry } from '../../../../models/entities/customerEntry.js';
-import { DealProgress, type IDealEntry, RoomAccess } from '../../../../models/entities/dealEntry.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
+import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { activityTableName } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { ActivityDatabaseBuilder } from '../../../builders/activityDatabaseBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
+import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Activities - GET', () => {
-  const tenantsGlobal: TenantEntry[] = [];
-  const dealsGlobal: IDealEntry[] = [];
-  const customersGlobal: ICustomerEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
+  const dealsGlobal: DealDatabase[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
     const tenants = await knexClient(tenantTableName)
       .insert([
-        TenantEntryBuilder.make().withName('Tenant 1').build(),
-        TenantEntryBuilder.make().withName('Tenant 2').build(),
-        TenantEntryBuilder.make().withName('Tenant 3').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 1').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 2').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 3').build(),
       ])
       .returning('*');
     tenantsGlobal.push(...tenants);
@@ -32,8 +32,8 @@ describe('API - Activities - GET', () => {
     // Insert customers
     const customer = await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+        CustomerDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -45,8 +45,8 @@ describe('API - Activities - GET', () => {
           .withCustomerImageUrl('http/5678')
           .build(),
 
-        CustomerEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+        CustomerDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Jane')
           .withLastName('Smith')
           .withEmail('jane.smith@example.com')
@@ -64,9 +64,9 @@ describe('API - Activities - GET', () => {
     // Insert deals
     const deals = await knexClient(dealTableName)
       .insert([
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[0].id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')
@@ -81,9 +81,9 @@ describe('API - Activities - GET', () => {
           .withDealImageUrl('https://example.com/image.jpg')
           .build(),
 
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[1].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[1].id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')
@@ -98,9 +98,9 @@ describe('API - Activities - GET', () => {
           .withDealImageUrl('https://example.com/image.jpg')
           .build(),
 
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[1].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[1].id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')
@@ -123,72 +123,72 @@ describe('API - Activities - GET', () => {
     await knexClient(activityTableName)
       .insert([
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Scheduled initial consultation')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image1.jpg')
           .build(),
 
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Sent follow-up email')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image2.jpg')
           .build(),
 
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Completed site visit')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image3.jpg')
           .build(),
 
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Reviewed contract with client')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image4.jpg')
           .build(),
 
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Negotiation phase started')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image5.jpg')
           .build(),
 
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Finalized agreement terms')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image6.jpg')
           .build(),
 
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Client confirmed contract')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image7.jpg')
           .build(),
 
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Deposit payment received')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image8.jpg')
           .build(),
 
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('Project completed successfully')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image9.jpg')
@@ -200,8 +200,8 @@ describe('API - Activities - GET', () => {
     await knexClient(activityTableName)
       .insert([
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[1].Id)
-          .withDealId(dealsGlobal[1].Id)
+          .withTenantId(tenantsGlobal[1].id)
+          .withDealId(dealsGlobal[1].id)
           .withDescription('Develop completed successfully')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image9.jpg')
@@ -213,7 +213,7 @@ describe('API - Activities - GET', () => {
   it('Success - Should get activities with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -238,7 +238,7 @@ describe('API - Activities - GET', () => {
   it('Success - Should get activities with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -263,7 +263,7 @@ describe('API - Activities - GET', () => {
   it('Success - Should return 0 activities if the tenant has no activities', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[2].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[2].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -289,7 +289,7 @@ describe('API - Activities - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

@@ -18,8 +18,8 @@ export async function insertActivity(activity: Partial<ActivityDatabase>): Promi
 /** Get the activity by Id */
 export async function selectActivityById(id: number): Promise<Activity | null> {
   const query = knexClient(activityTableName)
-    .select(`${activityTableName}.*`, `${dealTableName}.ExternalUuid as deal_external_uuid`)
-    .innerJoin(dealTableName, `${activityTableName}.deal_id`, '=', `${dealTableName}.Id`)
+    .select(`${activityTableName}.*`, `${dealTableName}.external_uuid as deal_external_uuid`)
+    .innerJoin(dealTableName, `${activityTableName}.deal_id`, '=', `${dealTableName}.id`)
     .where(`${activityTableName}.id`, id)
     .whereNull(`${activityTableName}.deleted_on`);
 
@@ -31,8 +31,8 @@ export async function selectActivityById(id: number): Promise<Activity | null> {
 /** Get the activity by ExternalUuid */
 export async function selectActivityByExternalUuid(externalUuid: string): Promise<Activity | null> {
   const query = knexClient(activityTableName)
-    .select(`${activityTableName}.*`, `${dealTableName}.ExternalUuid as deal_external_uuid`)
-    .innerJoin(dealTableName, `${activityTableName}.deal_id`, '=', `${dealTableName}.Id`)
+    .select(`${activityTableName}.*`, `${dealTableName}.external_uuid as deal_external_uuid`)
+    .innerJoin(dealTableName, `${activityTableName}.deal_id`, '=', `${dealTableName}.id`)
     .where(`${activityTableName}.external_uuid`, externalUuid)
     .whereNull(`${activityTableName}.deleted_on`);
 
@@ -43,7 +43,7 @@ export async function selectActivityByExternalUuid(externalUuid: string): Promis
 
 export async function selectActivities(limit: number, offset: number, tenantId: number): Promise<PaginatedResponse<Activity>> {
   const baseQuery = knexClient(activityTableName)
-    .innerJoin(dealTableName, `${activityTableName}.deal_id`, '=', `${dealTableName}.Id`)
+    .innerJoin(dealTableName, `${activityTableName}.deal_id`, '=', `${dealTableName}.id`)
     .where(`${activityTableName}.tenant_id`, tenantId)
     .whereNull(`${activityTableName}.deleted_on`);
 
@@ -52,7 +52,7 @@ export async function selectActivities(limit: number, offset: number, tenantId: 
     .clone()
     .limit(limit)
     .offset(offset)
-    .select(`${activityTableName}.*`, `${dealTableName}.ExternalUuid as deal_external_uuid`)) as ExtendedActivityDatabase[];
+    .select(`${activityTableName}.*`, `${dealTableName}.external_uuid as deal_external_uuid`)) as ExtendedActivityDatabase[];
 
   // Get the total number of activities
   const total = (await baseQuery.clone().count('*'))[0]['count'];

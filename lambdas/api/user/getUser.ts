@@ -4,7 +4,7 @@ import type { GetUserResponsePayload } from '../../../models/api/payloads/user.j
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { UserEntry } from '../../../models/entities/userEntry.js';
+import type { User } from '../../../models/entities/user.js';
 import { selectUserByExternalUuid } from '../../../repositories/userRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
@@ -28,7 +28,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 }
 
-export async function queryRecords(validatedRequest: ValidatedApiRequest<null>): Promise<UserEntry> {
+export async function queryRecords(validatedRequest: ValidatedApiRequest<null>): Promise<User> {
   logger.info('Start - queryRecords');
 
   // Validate the user exists
@@ -41,7 +41,7 @@ export async function queryRecords(validatedRequest: ValidatedApiRequest<null>):
   return user;
 }
 
-export function formatResponseData(user: UserEntry): FetchSuccess<GetUserResponsePayload> {
+export function formatResponseData(user: User): FetchSuccess<GetUserResponsePayload> {
   logger.info('Start - formatResponse');
 
   return new FetchSuccess<GetUserResponsePayload>('Successfully fetched user', user.toPublic());

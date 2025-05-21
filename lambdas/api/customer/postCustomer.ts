@@ -5,9 +5,9 @@ import { postCustomerRequestSchema } from '../../../models/api/payloads/customer
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import { CustomerEntry } from '../../../models/entities/customerEntry.js';
+import { Customer } from '../../../models/entities/customer.js';
 import { insertCustomer, selectCustomerById } from '../../../repositories/customerRepository.js';
-import { selectTenantByUuid } from '../../../repositories/tenantRepository.js';
+import { selectTenantByExternalUuid } from '../../../repositories/tenantRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
@@ -33,12 +33,12 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 export async function persistRecords(validatedRequest: ValidatedApiRequest<PostCustomerRequestPayload>): Promise<number> {
   logger.info('Start - persistRecords');
 
-  const tenant = await selectTenantByUuid(validatedRequest.tenantUuid!);
+  const tenant = await selectTenantByExternalUuid(validatedRequest.tenantUuid!);
   if (!tenant) {
     throw new BadRequestError('Tenant does not exist');
   }
 
-  const mappedCustomer: Partial<CustomerEntry> = CustomerEntry.fromPostRequestPayload(tenant.Id, validatedRequest.body!);
+  const mappedCustomer: Partial<Customer> = Customer.create(tenant.id, validatedRequest.body!);
   const customerId = await insertCustomer(mappedCustomer);
 
   return customerId;

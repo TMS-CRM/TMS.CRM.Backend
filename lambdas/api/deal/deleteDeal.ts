@@ -37,7 +37,7 @@ export async function persistRecords(validatedRequest: ValidatedApiRequest<null>
   }
 
   // Soft delete the deal
-  await softDeleteDealById(deal.Id);
+  await softDeleteDealById(deal.id);
 }
 
 export function formatResponseData(): DeleteSuccess<null> {

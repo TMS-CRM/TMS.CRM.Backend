@@ -1,27 +1,27 @@
 import { randomUUID } from 'crypto';
 import { handler } from '../../../../lambdas/api/customer/getCustomer.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Customer - GET', () => {
-  const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
 
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+        CustomerDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -32,8 +32,8 @@ describe('API - Customer - GET', () => {
           .withZipCode('0632')
           .withCustomerImageUrl('http/1234')
           .build(),
-        CustomerEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+        CustomerDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Jane')
           .withLastName('Pan')
           .withEmail('jane.pan@example.com')
@@ -53,10 +53,10 @@ describe('API - Customer - GET', () => {
   it('Success - Should get a customer', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withPathParameters({
-        uuid: customersGlobal[0].ExternalUuid,
+        uuid: customersGlobal[0].external_uuid,
       })
       .build();
 
@@ -69,16 +69,16 @@ describe('API - Customer - GET', () => {
 
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('FetchSuccess');
-    expect(parsedBody.data.uuid).toBe(customersGlobal[0].ExternalUuid);
-    expect(parsedBody.data.firstName).toBe(customersGlobal[0].FirstName);
-    expect(parsedBody.data.lastName).toBe(customersGlobal[0].LastName);
-    expect(parsedBody.data.email).toBe(customersGlobal[0].Email);
-    expect(parsedBody.data.phone).toBe(customersGlobal[0].Phone);
-    expect(parsedBody.data.street).toBe(customersGlobal[0].Street);
-    expect(parsedBody.data.city).toBe(customersGlobal[0].City);
-    expect(parsedBody.data.state).toBe(customersGlobal[0].State);
-    expect(parsedBody.data.zipCode).toBe(customersGlobal[0].ZipCode);
-    expect(parsedBody.data.imageUrl).toBe(customersGlobal[0].ImageUrl);
+    expect(parsedBody.data.uuid).toBe(customersGlobal[0].external_uuid);
+    expect(parsedBody.data.firstName).toBe(customersGlobal[0].first_name);
+    expect(parsedBody.data.lastName).toBe(customersGlobal[0].last_name);
+    expect(parsedBody.data.email).toBe(customersGlobal[0].email);
+    expect(parsedBody.data.phone).toBe(customersGlobal[0].phone);
+    expect(parsedBody.data.street).toBe(customersGlobal[0].street);
+    expect(parsedBody.data.city).toBe(customersGlobal[0].city);
+    expect(parsedBody.data.state).toBe(customersGlobal[0].state);
+    expect(parsedBody.data.zipCode).toBe(customersGlobal[0].zip_code);
+    expect(parsedBody.data.imageUrl).toBe(customersGlobal[0].image_url);
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeDefined();
   });
@@ -87,7 +87,7 @@ describe('API - Customer - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -107,7 +107,7 @@ describe('API - Customer - GET', () => {
     // Event with a random uuid on the path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withPathParameters({ uuid: randomUUID() })
       .build();

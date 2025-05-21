@@ -1,16 +1,16 @@
 import { handler } from '../../../../lambdas/api/customer/postCustomer.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { selectCustomerByExternalUuid } from '../../../../repositories/customerRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Customer - POST', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
   });
 
@@ -29,7 +29,7 @@ describe('API - Customer - POST', () => {
 
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withBody(payload)
       .build();
@@ -59,12 +59,24 @@ describe('API - Customer - POST', () => {
     // Validate the database record
     const customer = await selectCustomerByExternalUuid(parsedBody.data.uuid);
     expect(customer).toBeDefined();
+    expect(customer?.tenantId).toBe(tenantsGlobal[0].id);
+    expect(customer?.firstName).toBe(payload.firstName);
+    expect(customer?.lastName).toBe(payload.lastName);
+    expect(customer?.email).toBe(payload.email);
+    expect(customer?.phone).toBe(payload.phone);
+    expect(customer?.street).toBe(payload.street);
+    expect(customer?.city).toBe(payload.city);
+    expect(customer?.state).toBe(payload.state);
+    expect(customer?.zipCode).toBe(payload.zipCode);
+    expect(customer?.imageUrl).toBe(payload.imageUrl);
+    expect(customer?.createdOn).toBeDefined();
+    expect(customer?.modifiedOn).toBeNull();
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withBody({
         firstName: 'John',

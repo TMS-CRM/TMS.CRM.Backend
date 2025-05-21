@@ -4,33 +4,33 @@ import { handler } from '../../../../lambdas/api/activity/putActivity.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { PutActivityRequestPayload } from '../../../../models/api/payloads/activity.js';
 import type { ActivityDatabase } from '../../../../models/entities/activity.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
-import { type DealEntry, DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
+import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { activityTableName, selectActivityByExternalUuid } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { ActivityDatabaseBuilder } from '../../../builders/activityDatabaseBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
+import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Activity - PUT', () => {
-  const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
-  const dealsGlobal: DealEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
+  const dealsGlobal: DealDatabase[] = [];
   const activitiesGlobal: ActivityDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantEntryBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
       .insert(
-        CustomerEntryBuilder.make()
-          .withTenantId(tenant[0].Id)
+        CustomerDatabaseBuilder.make()
+          .withTenantId(tenant[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -47,9 +47,9 @@ describe('API - Activity - PUT', () => {
 
     const deal = await knexClient(dealTableName)
       .insert(
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[0].id)
           .withStreet('123 Main St')
           .withCity('New York')
           .withState('NY')
@@ -70,8 +70,8 @@ describe('API - Activity - PUT', () => {
     const activity = await knexClient(activityTableName)
       .insert(
         ActivityDatabaseBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withDealId(dealsGlobal[0].Id)
+          .withTenantId(tenantsGlobal[0].id)
+          .withDealId(dealsGlobal[0].id)
           .withDescription('This is a test activity')
           .withImageUrl('https://www.google.com')
           .withDate(new Date().toISOString())
@@ -95,7 +95,7 @@ describe('API - Activity - PUT', () => {
       })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -108,7 +108,7 @@ describe('API - Activity - PUT', () => {
 
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('PersistSuccess');
-    expect(parsedBody.data.dealUuid).toBe(dealsGlobal[0].ExternalUuid);
+    expect(parsedBody.data.dealUuid).toBe(dealsGlobal[0].external_uuid);
     expect(parsedBody.data.description).toBe(payload.description);
     expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
     expect(new Date(parsedBody.data.date).getTime()).toBeCloseTo(new Date(activitiesGlobal[0].date).getTime());
@@ -133,7 +133,7 @@ describe('API - Activity - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -159,11 +159,11 @@ describe('API - Activity - PUT', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({
-        uuid: dealsGlobal[0].ExternalUuid,
+        uuid: dealsGlobal[0].external_uuid,
       })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -191,7 +191,7 @@ describe('API - Activity - PUT', () => {
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

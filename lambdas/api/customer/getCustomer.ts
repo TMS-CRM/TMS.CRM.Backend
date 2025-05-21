@@ -4,7 +4,7 @@ import type { GetCustomerResponsePayload } from '../../../models/api/payloads/cu
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { CustomerEntry } from '../../../models/entities/customerEntry.js';
+import type { Customer } from '../../../models/entities/customer.js';
 import { selectCustomerByExternalUuid } from '../../../repositories/customerRepository.js';
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
@@ -28,7 +28,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 }
 
-export async function queryRecords(validatedRequest: ValidatedApiRequest<null>): Promise<CustomerEntry> {
+export async function queryRecords(validatedRequest: ValidatedApiRequest<null>): Promise<Customer> {
   logger.info('Start - queryRecords');
 
   // Validate the customer if exists
@@ -41,7 +41,7 @@ export async function queryRecords(validatedRequest: ValidatedApiRequest<null>):
   return customer;
 }
 
-export function formatResponseData(customer: CustomerEntry): FetchSuccess<GetCustomerResponsePayload> {
+export function formatResponseData(customer: Customer): FetchSuccess<GetCustomerResponsePayload> {
   logger.info('Start - formatResponse');
 
   return new FetchSuccess<GetCustomerResponsePayload>('Successfully fetched customer', customer.toPublic());

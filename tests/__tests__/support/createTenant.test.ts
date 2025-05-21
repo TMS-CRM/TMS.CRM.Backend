@@ -34,9 +34,9 @@ describe('SUPPORT - Create Tenant', () => {
     const user = await selectUserByExternalUuid(res.data!.user.uuid);
     expect(user).toBeDefined();
 
-    const userTenants = await selectUserTenantsByUserId(user!.Id);
+    const userTenants = await selectUserTenantsByUserId(user!.id);
     expect(userTenants).toBeDefined();
-    expect(userTenants.length).toBe(1);
+    expect(userTenants!.length).toBe(1);
 
     // Verify that setupCognitoUser was called
     expect(mockSetupCognitoUser).toHaveBeenCalled();

@@ -1,31 +1,31 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/deal/getDeals.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { CustomerEntry } from '../../../../models/entities/customerEntry.js';
-import { DealProgress, RoomAccess } from '../../../../models/entities/dealEntry.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { CustomerDatabase } from '../../../../models/entities/customer.js';
+import { DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { CustomerEntryBuilder } from '../../../builders/customerEntryBuilder.js';
-import { DealEntryBuilder } from '../../../builders/dealEntryBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
+import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
+import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 
 describe('API - Deals - GET', () => {
-  const tenantsGlobal: TenantEntry[] = [];
-  const customersGlobal: CustomerEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
+  const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName)
-      .insert([TenantEntryBuilder.make().withName('Tenant 1').build(), TenantEntryBuilder.make().withName('Tenant 2').build()])
+      .insert([TenantDatabaseBuilder.make().withName('Tenant 1').build(), TenantDatabaseBuilder.make().withName('Tenant 2').build()])
       .returning('*');
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
       .insert([
-        CustomerEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+        CustomerDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('John')
           .withLastName('Doe')
           .withEmail('john.doe@example.com')
@@ -37,8 +37,8 @@ describe('API - Deals - GET', () => {
           .withCustomerImageUrl('http/5678')
           .build(),
 
-        CustomerEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+        CustomerDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Jane')
           .withLastName('Smith')
           .withEmail('jane.smith@example.com')
@@ -50,8 +50,8 @@ describe('API - Deals - GET', () => {
           .withCustomerImageUrl('http/6789')
           .build(),
 
-        CustomerEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
+        CustomerDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
           .withFirstName('Sofi')
           .withLastName('Smith')
           .withEmail('sofi.smith@example.com')
@@ -68,9 +68,9 @@ describe('API - Deals - GET', () => {
 
     await knexClient(dealTableName)
       .insert([
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(150)
           .withStreet('202 Pine Street')
           .withCity('Auckland')
@@ -84,9 +84,9 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
 
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(200)
           .withStreet('303 Oak Street')
           .withCity('Christchurch')
@@ -100,9 +100,9 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
 
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(250)
           .withStreet('404 Maple Street')
           .withCity('Hamilton')
@@ -116,9 +116,9 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
 
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(300)
           .withStreet('505 Birch Street')
           .withCity('Dunedin')
@@ -132,9 +132,9 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
 
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(350)
           .withStreet('606 Cedar Street')
           .withCity('Tauranga')
@@ -148,9 +148,9 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
 
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[0].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[0].id)
           .withPrice(400)
           .withStreet('707 Walnut Street')
           .withCity('Napier')
@@ -164,14 +164,14 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
       ])
-      .returning('Id');
+      .returning('*');
 
     // Insert a second deal
     await knexClient(dealTableName)
       .insert([
-        DealEntryBuilder.make()
-          .withTenantId(tenantsGlobal[0].Id)
-          .withCustomerId(customersGlobal[1].Id)
+        DealDatabaseBuilder.make()
+          .withTenantId(tenantsGlobal[0].id)
+          .withCustomerId(customersGlobal[1].id)
           .withPrice(500)
           .withStreet('808 Spruce Street')
           .withCity('Queenstown')
@@ -185,13 +185,13 @@ describe('API - Deals - GET', () => {
           .withRoomAccess(RoomAccess.KeysWithDoorman)
           .build(),
       ])
-      .returning('Id');
+      .returning('*');
   });
 
   it('Success - Should get deals with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -216,7 +216,7 @@ describe('API - Deals - GET', () => {
   it('Success - Should get deals with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -240,7 +240,7 @@ describe('API - Deals - GET', () => {
   it('Success - Should return 0 deals if the tenant has no deals', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[1].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[1].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -266,7 +266,7 @@ describe('API - Deals - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

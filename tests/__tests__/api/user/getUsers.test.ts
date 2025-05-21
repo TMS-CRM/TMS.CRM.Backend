@@ -1,24 +1,24 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/user/getUsers.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
-import type { TenantEntry } from '../../../../models/entities/tenantEntry.js';
+import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { userTableName } from '../../../../repositories/userRepository.js';
 import { userTenantTableName } from '../../../../repositories/userTenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
-import { TenantEntryBuilder } from '../../../builders/tenantEntryBuilder.js';
-import { UserEntryBuilder } from '../../../builders/userEntryBuilder.js';
-import { UserTenantEntryBuilder } from '../../../builders/userTenantEntryBuilder.js';
+import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
+import { UserTenantDatabaseBuilder } from '../../../builders/userTenantDatabaseBuilder.js';
 
 describe('API - User - GET', () => {
-  const tenantsGlobal: TenantEntry[] = [];
+  const tenantsGlobal: TenantDatabase[] = [];
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName)
       .insert([
-        TenantEntryBuilder.make().withName('Tenant 1').build(),
-        TenantEntryBuilder.make().withName('Tenant 2').build(),
-        TenantEntryBuilder.make().withName('Tenant 3').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 1').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 2').build(),
+        TenantDatabaseBuilder.make().withName('Tenant 3').build(),
       ])
       .returning('*');
     tenantsGlobal.push(...tenant);
@@ -26,36 +26,36 @@ describe('API - User - GET', () => {
     // Insert 9 users and link them to the first tenant
     const firstTenantUsers = await knexClient(userTableName)
       .insert([
-        UserEntryBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe3@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Jane').withLastName('Paul').withEmail('jane.paul2@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Marcus').withLastName('Aurelius').withEmail('marcus.aurelius1@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Junior').withLastName('Santos').withEmail('junior.santos1@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Natalia').withLastName('Pontes').withEmail('natalia.pontes1@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Elena').withLastName('Rodriguez').withEmail('elena.rodriguez1@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Kai').withLastName('Chen').withEmail('kai.chen1@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Sofia').withLastName('Patel').withEmail('sofia.patel1@example.com').build(),
-        UserEntryBuilder.make().withFirstName('Lucas').withLastName('Nielsen').withEmail('lucas.nielsen1@example.com').build(),
+        UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe3@example.com').build(),
+        UserDatabaseBuilder.make().withFirstName('Jane').withLastName('Paul').withEmail('jane.paul2@example.com').build(),
+        UserDatabaseBuilder.make().withFirstName('Marcus').withLastName('Aurelius').withEmail('marcus.aurelius1@example.com').build(),
+        UserDatabaseBuilder.make().withFirstName('Junior').withLastName('Santos').withEmail('junior.santos1@example.com').build(),
+        UserDatabaseBuilder.make().withFirstName('Natalia').withLastName('Pontes').withEmail('natalia.pontes1@example.com').build(),
+        UserDatabaseBuilder.make().withFirstName('Elena').withLastName('Rodriguez').withEmail('elena.rodriguez1@example.com').build(),
+        UserDatabaseBuilder.make().withFirstName('Kai').withLastName('Chen').withEmail('kai.chen1@example.com').build(),
+        UserDatabaseBuilder.make().withFirstName('Sofia').withLastName('Patel').withEmail('sofia.patel1@example.com').build(),
+        UserDatabaseBuilder.make().withFirstName('Lucas').withLastName('Nielsen').withEmail('lucas.nielsen1@example.com').build(),
       ])
-      .returning('Id');
+      .returning('id');
 
     await knexClient(userTenantTableName).insert(
-      firstTenantUsers.map((user) => UserTenantEntryBuilder.make().withUserId(user.Id).withTenantId(tenantsGlobal[0].Id).build()),
+      firstTenantUsers.map((user) => UserTenantDatabaseBuilder.make().withUserId(user.id).withTenantId(tenantsGlobal[0].id).build()),
     );
 
     // Create a user and link it to the second tenant
     const secondTenantUsers = await knexClient(userTableName)
-      .insert([UserEntryBuilder.make().withFirstName('Paulo').withLastName('Albuquerque').withEmail('paulo.albuquerque1@example.com').build()])
-      .returning('Id');
+      .insert([UserDatabaseBuilder.make().withFirstName('Paulo').withLastName('Albuquerque').withEmail('paulo.albuquerque1@example.com').build()])
+      .returning('id');
 
     await knexClient(userTenantTableName).insert([
-      UserTenantEntryBuilder.make().withUserId(secondTenantUsers[0].Id).withTenantId(tenantsGlobal[1].Id).build(),
+      UserTenantDatabaseBuilder.make().withUserId(secondTenantUsers[0].id).withTenantId(tenantsGlobal[1].id).build(),
     ]);
   });
 
   it('Success - Should get users with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -80,7 +80,7 @@ describe('API - User - GET', () => {
   it('Success - Should get users with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -105,7 +105,7 @@ describe('API - User - GET', () => {
   it('Success - Should return 0 users if the tenant has no users', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[2].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[2].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -131,7 +131,7 @@ describe('API - User - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].ExternalUuid,
+        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
       })
       .build();
 

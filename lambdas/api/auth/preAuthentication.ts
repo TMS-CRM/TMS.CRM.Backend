@@ -43,19 +43,19 @@ async function determineTenantUuid(event: PreAuthenticationTriggerEvent): Promis
     throw new BadRequestError('User not found');
   }
 
-  const userTenants = await selectUserTenantsByUserId(user.Id);
-  if (!userTenants.length) {
+  const userTenants = await selectUserTenantsByUserId(user.id);
+  if (!userTenants?.length) {
     throw new BadRequestError('User has no tenants');
   }
 
-  const tenant = await selectTenantById(userTenants[0].TenantId);
+  const tenant = await selectTenantById(userTenants[0].tenantId);
   if (!tenant) {
     throw new BadRequestError('Tenant not found');
   }
 
   return {
     event,
-    tenantUuid: tenant.ExternalUuid,
+    tenantUuid: tenant.externalUuid,
   };
 }
 
