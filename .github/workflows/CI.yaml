@@ -47,17 +47,17 @@ jobs:
             echo "No critical vulnerabilities found."
           fi
 
-      - name: Startup localstack
+      - name: Startup local stack
         working-directory: tests
         run: |
           docker compose up -d
-          echo "Waiting for localstack to start..."
+          echo "Waiting for local stack to start..."
           sleep 10
           docker ps
 
       - name: Run tests
         run: npm run test
 
-      - name: Shut down localstack
+      - name: Shut down local stack
         working-directory: tests
         run: docker compose down -v
