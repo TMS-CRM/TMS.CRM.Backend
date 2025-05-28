@@ -22,6 +22,10 @@ jobs:
         run: |
           echo "TMS_CRM_API_DOMAIN=${{ github.environment.variables.TMS_CRM_API_DOMAIN }}"
 
+      - name: Print environment secret (Dev)
+        run: |
+          echo "AWS=${{ secrets.AWS_ACCOUNT_ID }}"
+          
       # - name: Set up Node.js
       #   uses: actions/setup-node@v4
       #   with:
