@@ -20,7 +20,7 @@ jobs:
 
       - name: Print environment variables (Dev)
         run: |
-          echo "TMS_CRM_API_DOMAIN=$TMS_CRM_API_DOMAIN"
+          echo "TMS_CRM_API_DOMAIN=${{ github.environment.variables.TMS_CRM_API_DOMAIN }}"
 
       # - name: Set up Node.js
       #   uses: actions/setup-node@v4
