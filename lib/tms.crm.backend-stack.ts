@@ -34,7 +34,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       ApplicationName: 'TmsCrmBackend',
       Vpc: vpcImporter,
       MinCapacity: 0.5,
-      MaxCapacity: 16,
+      MaxCapacity: 2,
     });
 
     // Cognito
