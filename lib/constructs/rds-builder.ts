@@ -103,7 +103,7 @@ export class RdsBuilder extends Construct {
     const rds = new DatabaseCluster(this, `${props.ApplicationName}DatabaseCluster`, {
       defaultDatabaseName: props.ApplicationName,
       engine: DatabaseClusterEngine.auroraPostgres({
-        version: AuroraPostgresEngineVersion.VER_15_2,
+        version: AuroraPostgresEngineVersion.VER_15_4,
       }),
       serverlessV2MaxCapacity: props.MaxCapacity,
       serverlessV2MinCapacity: props.MinCapacity,
