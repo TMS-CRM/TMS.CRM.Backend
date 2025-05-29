@@ -1,6 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import type { CreateSecretCommandInput } from '@aws-sdk/client-secrets-manager';
-import { CreateSecretCommand, DeleteSecretCommand, GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
+import {
+  CreateSecretCommand,
+  DeleteSecretCommand,
+  GetSecretValueCommand,
+  ResourceNotFoundException,
+  SecretsManagerClient,
+} from '@aws-sdk/client-secrets-manager';
 
 let _secretsManagerClient: SecretsManagerClient;
 
@@ -45,7 +50,7 @@ export async function createSecret(params: CreateSecretCommandInput, overwrite: 
     await secretsManagerClient()
       .send(command)
       .catch((error) => {
-        if (error.code !== 'ResourceNotFoundException') {
+        if (error instanceof ResourceNotFoundException) {
           throw error;
         }
       });
