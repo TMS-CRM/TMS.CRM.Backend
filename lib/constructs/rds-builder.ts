@@ -11,15 +11,15 @@ import {
   SecurityGroup,
   SubnetType,
 } from 'aws-cdk-lib/aws-ec2';
+import type { Vpc } from 'aws-cdk-lib/aws-ec2';
 import { AuroraPostgresEngineVersion, ClusterInstance, Credentials, DatabaseCluster, DatabaseClusterEngine } from 'aws-cdk-lib/aws-rds';
 import type { ISecret } from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 import { RoleBuilder } from './role-builder.js';
-import type { VpcImporter } from './vpc-importer.js';
 
 export interface RdsBuilderProps {
   ApplicationName: string;
-  Vpc: VpcImporter;
+  Vpc: Vpc;
   MinCapacity?: number;
   MaxCapacity?: number;
   EC2Tags?: { [key: string]: string };
@@ -48,7 +48,7 @@ export class RdsBuilder extends Construct {
 
     // SecurityGroups
     const securityGroupRDS = new SecurityGroup(this, `${props.ApplicationName}SecurityGroupRDS`, {
-      vpc: props.Vpc.vpc,
+      vpc: props.Vpc,
       allowAllOutbound: false,
       securityGroupName: `${props.ApplicationName.toLowerCase()}-security-group-RDS`,
     });
@@ -56,7 +56,7 @@ export class RdsBuilder extends Construct {
     securityGroupRDS.addIngressRule(Peer.anyIpv4(), Port.tcp(5432), 'allow incoming traffic from EC2');
 
     const securityGroupEC2 = new SecurityGroup(this, `${props.ApplicationName}SecurityGroupEC2`, {
-      vpc: props.Vpc.vpc,
+      vpc: props.Vpc,
       allowAllOutbound: false,
       securityGroupName: `${props.ApplicationName.toLowerCase()}-security-group-EC2`,
     });
@@ -74,7 +74,7 @@ export class RdsBuilder extends Construct {
 
     // EC2
     const ec2 = new Instance(this, `${props.ApplicationName}EC2DbProxy`, {
-      vpc: props.Vpc.vpc,
+      vpc: props.Vpc,
       vpcSubnets: {
         subnetType: SubnetType.PRIVATE_ISOLATED,
       },
@@ -110,7 +110,7 @@ export class RdsBuilder extends Construct {
       writer: ClusterInstance.serverlessV2('writer', {}),
       readers: [ClusterInstance.serverlessV2('reader-1', { scaleWithWriter: true })],
       credentials: rdsSecretCreator,
-      vpc: props.Vpc.vpc,
+      vpc: props.Vpc,
       securityGroups: [securityGroupRDS],
       vpcSubnets: {
         subnetType: SubnetType.PRIVATE_ISOLATED,
