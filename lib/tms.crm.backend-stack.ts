@@ -6,6 +6,9 @@ import type { CfnApi } from 'aws-cdk-lib/aws-apigatewayv2';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Code, LayerVersion } from 'aws-cdk-lib/aws-lambda';
+import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import type { Construct } from 'constructs';
 import { ApiBuilder } from './constructs/api-gateway-builder.js';
 import { LambdaBuilder } from './constructs/lambda-builder.js';
@@ -295,6 +298,18 @@ export class TmsCrmBackendStack extends cdk.Stack {
       ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
+    }).role;
+
+    const roleKnexMigration = new RoleBuilder(this, 'RoleKnexMigration', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
+      PolicyResources: [rdsInstance.rdsSecretArn],
+      PolicyActions: [
+        'secretsmanager:GetResourcePolicy',
+        'secretsmanager:GetSecretValue',
+        'secretsmanager:DescribeSecret',
+        'secretsmanager:ListSecretVersionIds',
+      ],
     }).role;
 
     // Permissions
@@ -690,6 +705,49 @@ export class TmsCrmBackendStack extends cdk.Stack {
       },
       Dependencies: ['knex', 'pg', 'winston'],
       Vpc: vpc,
+    });
+
+    const lambdaKnexMigration = new LambdaBuilder(this, `${serviceNameCamelCase}KnexMigrationLambda`, {
+      LambdaPath: join(__dirname, '..', 'lambdas', 'support', 'knexMigration.ts'),
+      LambdaName: `${serviceNameKebabCase}-knex-migration`,
+      LambdaRole: roleKnexMigration,
+      LambdaEnv: {
+        DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
+        LOG_LEVEL: 'info',
+      },
+      Dependencies: ['knex', 'pg', 'winston'],
+      Vpc: vpc,
+    });
+
+    // Lambda layer to surface the Knex migration files
+    lambdaKnexMigration.lambda.addLayers(
+      new LayerVersion(this, `${serviceNameCamelCase}KnexMigrationLambdaLayer`, {
+        code: Code.fromAsset(join(__dirname, '..', 'knex')),
+      }),
+    );
+    lambdaKnexMigration.lambda.addEnvironment('MIGRATIONS_DIR', '/opt/migrations');
+
+    // Run the Knex migration on stack deployment
+    new AwsCustomResource(this, `${serviceNameCamelCase}KnexPostStackDeployment`, {
+      policy: AwsCustomResourcePolicy.fromStatements([
+        new PolicyStatement({
+          actions: ['lambda:InvokeFunction'],
+          effect: Effect.ALLOW,
+          resources: [lambdaKnexMigration.lambda.functionArn],
+        }),
+      ]),
+      onUpdate: {
+        service: 'Lambda',
+        action: 'invoke',
+        parameters: {
+          FunctionName: lambdaKnexMigration.lambda.functionName,
+          InvocationType: 'Event',
+          Payload: JSON.stringify({
+            direction: 'up',
+          }),
+        },
+        physicalResourceId: PhysicalResourceId.of(Date.now().toString()),
+      },
     });
 
     // ApiGateway
