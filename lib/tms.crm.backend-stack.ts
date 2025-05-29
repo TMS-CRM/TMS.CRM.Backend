@@ -5,18 +5,21 @@ import { CfnParameter } from 'aws-cdk-lib';
 import type { CfnApi } from 'aws-cdk-lib/aws-apigatewayv2';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
+import { SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import type { Construct } from 'constructs';
 import { ApiBuilder } from './constructs/api-gateway-builder.js';
 import { LambdaBuilder } from './constructs/lambda-builder.js';
+import { PermissionGrantor } from './constructs/permission-grantor.js';
 import { RdsBuilder } from './constructs/rds-builder.js';
 import { RoleBuilder } from './constructs/role-builder.js';
-import { VpcImporter } from './constructs/vpc-importer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export class TmsCrmBackendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    const serviceNamePascalCase = 'TmsCrm';
     const serviceNameCamelCase = 'tmsCrm';
     const serviceNameKebabCase = 'tms-crm';
 
@@ -25,14 +28,29 @@ export class TmsCrmBackendStack extends cdk.Stack {
       description: 'The URL for the TMS CRM API',
     });
 
-    const vpcImporter = new VpcImporter(this, 'VpcImporter', {
-      Name: 'TMS-CRM',
+    const vpc = new Vpc(this, 'TmsCrmVpc', {
+      maxAzs: 2,
+      natGateways: 1,
+      subnetConfiguration: [
+        {
+          name: 'isolated-subnet',
+          subnetType: SubnetType.PRIVATE_ISOLATED,
+        },
+        {
+          name: 'private-subnet',
+          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+        },
+        {
+          name: 'public-subnet',
+          subnetType: SubnetType.PUBLIC,
+        },
+      ],
     });
 
     // RDS
-    const rdsInstance = new RdsBuilder(this, 'TmsCrmBackendRds', {
-      ApplicationName: 'TmsCrmBackend',
-      Vpc: vpcImporter,
+    const rdsInstance = new RdsBuilder(this, `${serviceNamePascalCase}Rds`, {
+      ApplicationName: serviceNamePascalCase,
+      Vpc: vpc,
       MinCapacity: 0.5,
       MaxCapacity: 2,
     });
@@ -40,21 +58,21 @@ export class TmsCrmBackendStack extends cdk.Stack {
     // Cognito
     const roleCognitoPreAuthentication = new RoleBuilder(this, `${serviceNameCamelCase}CognitoPreAuthenticationRole`, {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const lambdaCognitoPreAuthentication = new LambdaBuilder(this, `${serviceNameCamelCase}CognitoPreAuthentication`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'auth', 'preAuthentication.ts'),
       LambdaName: `${serviceNameCamelCase}-cognito-pre-authentication`,
-      LambdaRole: roleCognitoPreAuthentication.role,
+      LambdaRole: roleCognitoPreAuthentication,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const cognitoUserPool = new UserPool(this, `${serviceNameCamelCase}UserPool`, {
@@ -78,469 +96,514 @@ export class TmsCrmBackendStack extends cdk.Stack {
     // Roles
     const roleApiGetActivity = new RoleBuilder(this, 'RoleApiGetActivity', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiPostActivity = new RoleBuilder(this, 'RoleApiPostActivity', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiGetActivities = new RoleBuilder(this, 'RoleApiGetActivities', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiPutActivity = new RoleBuilder(this, 'RoleApiPutActivity', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiDeleteActivity = new RoleBuilder(this, 'RoleApiDeleteActivity', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiGetCustomer = new RoleBuilder(this, 'RoleApiGetCustomer', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiGetCustomers = new RoleBuilder(this, 'RoleApiGetCustomers', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiPostCustomer = new RoleBuilder(this, 'RoleApiPostCustomer', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiPutCustomer = new RoleBuilder(this, 'RoleApiPutCustomer', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiDeleteCustomer = new RoleBuilder(this, 'RoleApiDeleteCustomer', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiGetDeal = new RoleBuilder(this, 'RoleApiGetDeal', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiGetDeals = new RoleBuilder(this, 'RoleApiGetDeals', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiPostDeal = new RoleBuilder(this, 'RoleApiPostDeal', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiPutDeal = new RoleBuilder(this, 'RoleApiPutDeal', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiGetTask = new RoleBuilder(this, 'RoleApiGetTask', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiGetTasks = new RoleBuilder(this, 'RoleApiGetTasks', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiPostTask = new RoleBuilder(this, 'RoleApiPostTask', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiPutTask = new RoleBuilder(this, 'RoleApiPutTask', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiDeleteDeal = new RoleBuilder(this, 'RoleApiDeleteDeal', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiDeleteTask = new RoleBuilder(this, 'RoleApiDeleteTask', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiGetUser = new RoleBuilder(this, 'RoleApiGetUser', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiGetUsers = new RoleBuilder(this, 'RoleApiGetUsers', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiPostUser = new RoleBuilder(this, 'RoleApiPostUser', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [cognitoUserPool.userPoolArn],
       PolicyActions: ['cognito-idp:AdminCreateUser', 'cognito-idp:AdminSetUserPassword'],
-    });
+    }).role;
 
     const roleApiPutUser = new RoleBuilder(this, 'RoleApiPutUser', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiDeleteUser = new RoleBuilder(this, 'RoleApiDeleteUser', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiAuthSignIn = new RoleBuilder(this, 'RoleApiAuthSignIn', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiAuthSignOut = new RoleBuilder(this, 'RoleApiAuthSignOut', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
-    });
+    }).role;
 
     const roleApiAuthSwitchTenant = new RoleBuilder(this, 'RoleApiAuthSwitchTenant', {
       ServicePrincipal: 'lambda.amazonaws.com',
-      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole'],
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
+    }).role;
+
+    const roleSupportCreateTenant = new RoleBuilder(this, 'RoleSupportCreateTenant', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    }).role;
+
+    // Permissions
+    new PermissionGrantor(this, `${serviceNameCamelCase}PermissionGrantorDatabaseAccess`, {
+      RolesToGrant: [
+        roleApiGetActivity,
+        roleApiGetActivities,
+        roleApiPostActivity,
+        roleApiPutActivity,
+        roleApiDeleteActivity,
+        roleApiGetCustomer,
+        roleApiGetCustomers,
+        roleApiPostCustomer,
+        roleApiPutCustomer,
+        roleApiDeleteCustomer,
+        roleApiGetDeal,
+        roleApiGetDeals,
+        roleApiPostDeal,
+        roleApiPutDeal,
+        roleApiDeleteDeal,
+        roleApiGetTask,
+        roleApiGetTasks,
+        roleApiPostTask,
+        roleApiPutTask,
+        roleApiDeleteTask,
+        roleApiGetUser,
+        roleApiGetUsers,
+        roleApiPostUser,
+        roleApiPutUser,
+        roleApiDeleteUser,
+        roleApiAuthSignIn,
+        roleApiAuthSignOut,
+        roleApiAuthSwitchTenant,
+        roleSupportCreateTenant,
+        roleCognitoPreAuthentication,
+      ],
+      PolicyResources: [rdsInstance.rdsSecretArn],
+      PolicyActions: ['secretsmanager:GetSecretValue'],
     });
 
     // Lambdas
     const lambdaApiGetActivity = new LambdaBuilder(this, `${serviceNameCamelCase}ApiGetActivity`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'activity', 'getActivity.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-activity`,
-      LambdaRole: roleApiGetActivity.role,
+      LambdaRole: roleApiGetActivity,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiGetActivities = new LambdaBuilder(this, `${serviceNameCamelCase}ApiGetActivities`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'activity', 'getActivities.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-activities`,
-      LambdaRole: roleApiGetActivities.role,
+      LambdaRole: roleApiGetActivities,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiPostActivity = new LambdaBuilder(this, `${serviceNameCamelCase}ApiPostActivity`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'activity', 'postActivity.ts'),
       LambdaName: `${serviceNameKebabCase}-api-post-activity`,
-      LambdaRole: roleApiPostActivity.role,
+      LambdaRole: roleApiPostActivity,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiPutActivity = new LambdaBuilder(this, `${serviceNameCamelCase}ApiPutActivity`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'activity', 'putActivity.ts'),
       LambdaName: `${serviceNameKebabCase}-api-put-activity`,
-      LambdaRole: roleApiPutActivity.role,
+      LambdaRole: roleApiPutActivity,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiDeleteActivity = new LambdaBuilder(this, `${serviceNameCamelCase}ApiDeleteActivity`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'activity', 'deleteActivity.ts'),
       LambdaName: `${serviceNameKebabCase}-api-delete-activity`,
-      LambdaRole: roleApiDeleteActivity.role,
+      LambdaRole: roleApiDeleteActivity,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiGetCustomer = new LambdaBuilder(this, `${serviceNameCamelCase}ApiGetCustomer`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'customer', 'getCustomer.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-customer`,
-      LambdaRole: roleApiGetCustomer.role,
+      LambdaRole: roleApiGetCustomer,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiGetCustomers = new LambdaBuilder(this, `${serviceNameCamelCase}ApiGetCustomers`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'customer', 'getCustomers.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-customers`,
-      LambdaRole: roleApiGetCustomers.role,
+      LambdaRole: roleApiGetCustomers,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiPostCustomer = new LambdaBuilder(this, `${serviceNameCamelCase}ApiPostCustomer`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'customer', 'postCustomer.ts'),
       LambdaName: `${serviceNameKebabCase}-api-post-customer`,
-      LambdaRole: roleApiPostCustomer.role,
+      LambdaRole: roleApiPostCustomer,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiPutCustomer = new LambdaBuilder(this, `${serviceNameCamelCase}ApiPutCustomer`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'customer', 'putCustomer.ts'),
       LambdaName: `${serviceNameKebabCase}-api-put-customer`,
-      LambdaRole: roleApiPutCustomer.role,
+      LambdaRole: roleApiPutCustomer,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiDeleteCustomer = new LambdaBuilder(this, `${serviceNameCamelCase}ApiDeleteCustomer`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'customer', 'deleteCustomer.ts'),
       LambdaName: `${serviceNameKebabCase}-api-delete-customer`,
-      LambdaRole: roleApiDeleteCustomer.role,
+      LambdaRole: roleApiDeleteCustomer,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiGetDeal = new LambdaBuilder(this, `${serviceNameCamelCase}ApiGetDeal`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'deal', 'getDeal.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-deal`,
-      LambdaRole: roleApiGetDeal.role,
+      LambdaRole: roleApiGetDeal,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiGetDeals = new LambdaBuilder(this, `${serviceNameCamelCase}ApiGetDeals`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'deal', 'getDeals.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-deals`,
-      LambdaRole: roleApiGetDeals.role,
+      LambdaRole: roleApiGetDeals,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiPostDeal = new LambdaBuilder(this, `${serviceNameCamelCase}ApiPostDeal`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'deal', 'postDeal.ts'),
       LambdaName: `${serviceNameKebabCase}-api-post-deal`,
-      LambdaRole: roleApiPostDeal.role,
+      LambdaRole: roleApiPostDeal,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiPutDeal = new LambdaBuilder(this, `${serviceNameCamelCase}ApiPutDeal`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'deal', 'putDeal.ts'),
       LambdaName: `${serviceNameKebabCase}-api-put-deal`,
-      LambdaRole: roleApiPutDeal.role,
+      LambdaRole: roleApiPutDeal,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiDeleteDeal = new LambdaBuilder(this, `${serviceNameCamelCase}ApiDeleteDeal`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'deal', 'deleteDeal.ts'),
       LambdaName: `${serviceNameKebabCase}-api-delete-deal`,
-      LambdaRole: roleApiDeleteDeal.role,
+      LambdaRole: roleApiDeleteDeal,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiGetTask = new LambdaBuilder(this, `${serviceNameCamelCase}ApiGetTask`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'task', 'getTask.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-task`,
-      LambdaRole: roleApiGetTask.role,
+      LambdaRole: roleApiGetTask,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiGetTasks = new LambdaBuilder(this, `${serviceNameCamelCase}ApiGetTasks`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'task', 'getTasks.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-tasks`,
-      LambdaRole: roleApiGetTasks.role,
+      LambdaRole: roleApiGetTasks,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiPostTask = new LambdaBuilder(this, `${serviceNameCamelCase}ApiPostTask`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'task', 'postTask.ts'),
       LambdaName: `${serviceNameKebabCase}-api-post-task`,
-      LambdaRole: roleApiPostTask.role,
+      LambdaRole: roleApiPostTask,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiPutTask = new LambdaBuilder(this, `${serviceNameCamelCase}ApiPutTask`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'task', 'putTask.ts'),
       LambdaName: `${serviceNameKebabCase}-api-put-task`,
-      LambdaRole: roleApiPutTask.role,
+      LambdaRole: roleApiPutTask,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiDeleteTask = new LambdaBuilder(this, `${serviceNameCamelCase}ApiDeleteTask`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'task', 'deleteTask.ts'),
       LambdaName: `${serviceNameKebabCase}-api-delete-task`,
-      LambdaRole: roleApiDeleteTask.role,
+      LambdaRole: roleApiDeleteTask,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiGetUser = new LambdaBuilder(this, `${serviceNameCamelCase}ApiGetUser`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'getUser.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-user`,
-      LambdaRole: roleApiGetUser.role,
+      LambdaRole: roleApiGetUser,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiGetUsers = new LambdaBuilder(this, `${serviceNameCamelCase}ApiGetUsers`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'getUsers.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-users`,
-      LambdaRole: roleApiGetUsers.role,
+      LambdaRole: roleApiGetUsers,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiPostUser = new LambdaBuilder(this, `${serviceNameCamelCase}ApiPostUser`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'postUser.ts'),
       LambdaName: `${serviceNameKebabCase}-api-post-user`,
-      LambdaRole: roleApiPostUser.role,
+      LambdaRole: roleApiPostUser,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
@@ -548,37 +611,37 @@ export class TmsCrmBackendStack extends cdk.Stack {
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
       Dependencies: ['knex', 'pg', 'winston', '@aws-sdk/client-cognito-identity-provider'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiPutUser = new LambdaBuilder(this, `${serviceNameCamelCase}ApiPutUser`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'putUser.ts'),
       LambdaName: `${serviceNameKebabCase}-api-put-user`,
-      LambdaRole: roleApiPutUser.role,
+      LambdaRole: roleApiPutUser,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiDeleteUser = new LambdaBuilder(this, `${serviceNameCamelCase}ApiDeleteUser`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'deleteUser.ts'),
       LambdaName: `${serviceNameKebabCase}-api-delete-user`,
-      LambdaRole: roleApiDeleteUser.role,
+      LambdaRole: roleApiDeleteUser,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiAuthSignIn = new LambdaBuilder(this, `${serviceNameCamelCase}ApiAuthSignIn`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'auth', 'signIn.ts'),
       LambdaName: `${serviceNameKebabCase}-api-auth-sign-in`,
-      LambdaRole: roleApiAuthSignIn.role,
+      LambdaRole: roleApiAuthSignIn,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
@@ -586,25 +649,25 @@ export class TmsCrmBackendStack extends cdk.Stack {
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiAuthSignOut = new LambdaBuilder(this, `${serviceNameCamelCase}ApiAuthSignOut`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'auth', 'signOut.ts'),
       LambdaName: `${serviceNameKebabCase}-api-auth-sign-out`,
-      LambdaRole: roleApiAuthSignOut.role,
+      LambdaRole: roleApiAuthSignOut,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
 
     const lambdaApiAuthSwitchTenant = new LambdaBuilder(this, `${serviceNameCamelCase}ApiAuthSwitchTenant`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'auth', 'switchTenant.ts'),
       LambdaName: `${serviceNameKebabCase}-api-auth-switch-tenant`,
-      LambdaRole: roleApiAuthSwitchTenant.role,
+      LambdaRole: roleApiAuthSwitchTenant,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
@@ -612,8 +675,22 @@ export class TmsCrmBackendStack extends cdk.Stack {
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
       Dependencies: ['knex', 'pg', 'winston'],
-      Vpc: vpcImporter.vpc,
+      Vpc: vpc,
     }).lambda;
+
+    new LambdaBuilder(this, `${serviceNameCamelCase}SupportCreateTenant`, {
+      LambdaPath: join(__dirname, '..', 'lambdas', 'support', 'createTenant.ts'),
+      LambdaName: `${serviceNameKebabCase}-support-create-tenant`,
+      LambdaRole: roleSupportCreateTenant,
+      LambdaEnv: {
+        DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
+        LOG_LEVEL: 'info',
+        USER_POOL_ID: cognitoUserPool.userPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+      },
+      Dependencies: ['knex', 'pg', 'winston'],
+      Vpc: vpc,
+    });
 
     // ApiGateway
     const corsConfig: CfnApi.CorsProperty = {
@@ -681,7 +758,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiGetActivity`, {
       Method: 'GET',
-      Route: '/activity/{uuid}',
+      Route: '/activities/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetActivityIntegration`, {
@@ -691,7 +768,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiGetActivities`, {
       Method: 'GET',
-      Route: '/activity',
+      Route: '/activities',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetActivitiesIntegration`, {
@@ -701,7 +778,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiPostActivity`, {
       Method: 'POST',
-      Route: '/activity',
+      Route: '/activities',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiPostActivityIntegration`, {
@@ -711,7 +788,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiPutActivity`, {
       Method: 'PUT',
-      Route: '/activity/{uuid}',
+      Route: '/activities/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiPutActivityIntegration`, {
@@ -721,7 +798,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiDeleteActivity`, {
       Method: 'DELETE',
-      Route: '/activity/{uuid}',
+      Route: '/activities/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiDeleteActivityIntegration`, {
@@ -731,7 +808,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiGetCustomer`, {
       Method: 'GET',
-      Route: '/customer/{uuid}',
+      Route: '/customers/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetCustomerIntegration`, {
@@ -741,7 +818,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiGetCustomers`, {
       Method: 'GET',
-      Route: '/customer',
+      Route: '/customers',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetCustomersIntegration`, {
@@ -751,7 +828,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiPostCustomer`, {
       Method: 'POST',
-      Route: '/customer',
+      Route: '/customers',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiPostCustomerIntegration`, {
@@ -761,7 +838,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiPutCustomer`, {
       Method: 'PUT',
-      Route: '/customer/{uuid}',
+      Route: '/customers/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiPutCustomerIntegration`, {
@@ -771,7 +848,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiDeleteCustomer`, {
       Method: 'DELETE',
-      Route: '/customer/{uuid}',
+      Route: '/customers/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiDeleteCustomerIntegration`, {
@@ -781,7 +858,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiGetDeal`, {
       Method: 'GET',
-      Route: '/deal/{uuid}',
+      Route: '/deals/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetDealIntegration`, {
@@ -791,7 +868,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiGetDeals`, {
       Method: 'GET',
-      Route: '/deal',
+      Route: '/deals',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetDealsIntegration`, {
@@ -801,7 +878,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiPostDeal`, {
       Method: 'POST',
-      Route: '/deal',
+      Route: '/deals',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiPostDealIntegration`, {
@@ -811,7 +888,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiPutDeal`, {
       Method: 'PUT',
-      Route: '/deal/{uuid}',
+      Route: '/deals/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiPutDealIntegration`, {
@@ -821,7 +898,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiDeleteDeal`, {
       Method: 'DELETE',
-      Route: '/deal/{uuid}',
+      Route: '/deals/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiDeleteDealIntegration`, {
@@ -831,7 +908,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiGetTask`, {
       Method: 'GET',
-      Route: '/task/{uuid}',
+      Route: '/tasks/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetTaskIntegration`, {
@@ -841,7 +918,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiGetTasks`, {
       Method: 'GET',
-      Route: '/task',
+      Route: '/tasks',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetTasksIntegration`, {
@@ -851,7 +928,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiPostTask`, {
       Method: 'POST',
-      Route: '/task',
+      Route: '/tasks',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiPostTaskIntegration`, {
@@ -861,7 +938,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiPutTask`, {
       Method: 'PUT',
-      Route: '/task/{uuid}',
+      Route: '/tasks/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiPutTaskIntegration`, {
@@ -871,7 +948,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiDeleteTask`, {
       Method: 'DELETE',
-      Route: '/task/{uuid}',
+      Route: '/tasks/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiDeleteTaskIntegration`, {
@@ -881,7 +958,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiGetUser`, {
       Method: 'GET',
-      Route: '/user/{uuid}',
+      Route: '/users/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetUserIntegration`, {
@@ -891,7 +968,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiGetUsers`, {
       Method: 'GET',
-      Route: '/user',
+      Route: '/users',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiGetUsersIntegration`, {
@@ -901,7 +978,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiPostUser`, {
       Method: 'POST',
-      Route: '/user',
+      Route: '/users',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiPostUserIntegration`, {
@@ -911,7 +988,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiPutUser`, {
       Method: 'PUT',
-      Route: '/user/{uuid}',
+      Route: '/users/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiPutUserIntegration`, {
@@ -921,7 +998,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     api.addRoute(`${serviceNameCamelCase}ApiDeleteUser`, {
       Method: 'DELETE',
-      Route: '/user/{uuid}',
+      Route: '/users/{uuid}',
       Authorizer: cognitoAuthorizer,
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameCamelCase}ApiDeleteUserIntegration`, {
