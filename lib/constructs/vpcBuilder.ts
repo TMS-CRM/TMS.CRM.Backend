@@ -28,17 +28,17 @@ export class VpcBuilder extends Construct {
       natGateways: props.natGateways,
       subnetConfiguration: [
         {
-          name: `${props.applicationName}-public`,
+          name: 'public-subnet',
           subnetType: SubnetType.PUBLIC,
           cidrMask: 24,
         },
         {
-          name: `${props.applicationName}-private-app`,
+          name: 'private-subnet',
           subnetType: SubnetType.PRIVATE_WITH_EGRESS,
           cidrMask: 24,
         },
         {
-          name: `${props.applicationName}-private-db`,
+          name: 'private-database-subnet',
           subnetType: SubnetType.PRIVATE_ISOLATED,
           cidrMask: 24,
         },
