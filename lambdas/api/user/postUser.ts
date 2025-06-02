@@ -1,5 +1,7 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
+import type { Knex } from 'knex';
 import { setupCognitoUser } from '../../../lib/aws/cognito.js';
+import { knexClient } from '../../../lib/utils/knexClient.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { type PostUserRequestPayload, type PostUserResponsePayload, postUserRequestSchema } from '../../../models/api/payloads/user.js';
 import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
@@ -16,12 +18,21 @@ const USER_POOL_ID = process.env.USER_POOL_ID;
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
   logger.info('Request received: ', request);
 
+  const transaction = await knexClient.transaction();
+
   return validateRequest(request)
-    .then(persistRecords)
-    .then(createCognitoUser)
+    .then((request) => persistRecords(request, transaction))
+    .then((userId) => createCognitoUser(userId, transaction))
+    .then(async (response) => {
+      await transaction.commit();
+      return response;
+    })
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error: Error) => new HttpErrorResponse(error));
+    .catch(async (error: Error) => {
+      await transaction.rollback();
+      return new HttpErrorResponse(error);
+    });
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
@@ -35,7 +46,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 }
 
-async function persistRecords(validatedRequest: ValidatedApiRequest<PostUserRequestPayload>): Promise<number> {
+async function persistRecords(validatedRequest: ValidatedApiRequest<PostUserRequestPayload>, transaction: Knex.Transaction): Promise<number> {
   logger.info('Start - persistRecords');
 
   const tenant = await selectTenantByExternalUuid(validatedRequest.tenantUuid!);
@@ -44,24 +55,24 @@ async function persistRecords(validatedRequest: ValidatedApiRequest<PostUserRequ
   }
 
   const mappedUser: Partial<UserDatabase> = User.create(validatedRequest.body!);
-  const userId = await insertUser(mappedUser);
+  const userId = await insertUser(mappedUser, transaction);
 
   // Create a link between the user and the tenant
-  await insertUserTenant(UserTenant.create(userId, tenant.id));
+  await insertUserTenant(UserTenant.create(userId, tenant.id), transaction);
 
   return userId;
 }
 
-async function createCognitoUser(userId: number): Promise<number> {
+async function createCognitoUser(userId: number, transaction: Knex.Transaction): Promise<number> {
   logger.info('Start - createCognitoUser');
 
-  const user = await selectUserById(userId);
+  const user = await selectUserById(userId, transaction);
 
   if (!user) {
     throw new BadRequestError('User not found');
   }
 
-  await setupCognitoUser(user, USER_POOL_ID!);
+  await setupCognitoUser(user, USER_POOL_ID!, transaction);
 
   return user.id;
 }

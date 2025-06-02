@@ -1,3 +1,4 @@
+import type { Knex } from 'knex';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import { Tenant, type TenantDatabase } from '../models/entities/tenant.js';
@@ -5,12 +6,13 @@ import { Tenant, type TenantDatabase } from '../models/entities/tenant.js';
 export const tenantTableName = 'tenant';
 
 /** Insert the tenant */
-export async function insertTenant(tenant: Partial<TenantDatabase>): Promise<number> {
-  const query = knexClient(tenantTableName).insert(tenant).returning('id');
-  const record = (await query) as TenantDatabase[];
+export async function insertTenant(tenant: Partial<TenantDatabase>, transaction?: Knex.Transaction): Promise<number> {
+  const queryContext = transaction ? transaction(tenantTableName) : knexClient(tenantTableName);
 
-  logger.info(`Successfully inserted Tenant. Id: ${record[0].id}`);
-  return record[0].id;
+  const records = (await queryContext.insert(tenant).returning('id')) as TenantDatabase[];
+
+  logger.info(`Successfully inserted Tenant. Id: ${records[0].id}`);
+  return records[0].id;
 }
 
 /** Get the Tenant by Id */
