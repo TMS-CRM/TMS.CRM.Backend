@@ -1,4 +1,5 @@
 import { AdminCreateUserCommand, CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
+import type { Knex } from 'knex';
 import type { User } from '../../models/entities/user.js';
 import { updateUser } from '../../repositories/userRepository.js';
 
@@ -15,7 +16,7 @@ export function getCognitoClient(): CognitoIdentityProviderClient {
   return _cognitoIdentityProviderClient;
 }
 
-export async function setupCognitoUser(user: User, userPoolId: string): Promise<void> {
+export async function setupCognitoUser(user: User, userPoolId: string, transaction: Knex.Transaction): Promise<void> {
   const createUserResponse = await getCognitoClient().send(
     new AdminCreateUserCommand({
       UserPoolId: userPoolId,
@@ -37,21 +38,5 @@ export async function setupCognitoUser(user: User, userPoolId: string): Promise<
   }
 
   // Update the user with the Cognito user uuid
-  await updateUser(user.id, { cognito_uuid: cognitoUserUuid });
+  await updateUser(user.id, { cognito_uuid: cognitoUserUuid }, transaction);
 }
-
-// export async function createUserPool(poolName: string): Promise<UserPoolType> {
-//   const client = getCognitoClient();
-
-//   const response = await client.send(
-//     new CreateUserPoolCommand({
-//       PoolName: poolName,
-//     }),
-//   );
-
-//   if (!response.UserPool) {
-//     throw new Error('Failed to create Cognito pool');
-//   }
-
-//   return response.UserPool;
-// }

@@ -56,6 +56,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpc,
       MinCapacity: 0.5,
       MaxCapacity: 2,
+      EnableReaderInstance: false,
     });
 
     // Cognito
@@ -349,6 +350,12 @@ export class TmsCrmBackendStack extends cdk.Stack {
       ],
       PolicyResources: [rdsInstance.rdsSecretArn],
       PolicyActions: ['secretsmanager:GetSecretValue'],
+    });
+
+    new PermissionGrantor(this, `${serviceNameCamelCase}PermissionGrantorCognitoAccess`, {
+      RolesToGrant: [roleApiPostUser, roleApiAuthSignIn, roleApiAuthSignOut, roleApiAuthSwitchTenant, roleSupportCreateTenant],
+      PolicyActions: ['cognito-idp:AdminInitiateAuth', 'cognito-idp:GlobalSignOut', 'cognito-idp:AdminCreateUser'],
+      PolicyResources: [cognitoUserPool.userPoolArn],
     });
 
     // Lambdas

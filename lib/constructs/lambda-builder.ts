@@ -33,7 +33,7 @@ export class LambdaBuilder extends Construct {
       entry: this.props.LambdaPath,
       functionName: this.props.LambdaName,
       handler: 'handler',
-      runtime: Runtime.NODEJS_18_X,
+      runtime: Runtime.NODEJS_22_X,
       timeout: this.props.LambdaTimeout ?? Duration.seconds(60),
       role: this.props.LambdaRole,
       bundling: {

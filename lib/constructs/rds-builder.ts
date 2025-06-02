@@ -20,6 +20,7 @@ import { RoleBuilder } from './role-builder.js';
 export interface RdsBuilderProps {
   ApplicationName: string;
   Vpc: Vpc;
+  EnableReaderInstance: boolean;
   MinCapacity?: number;
   MaxCapacity?: number;
   EC2Tags?: { [key: string]: string };
@@ -108,7 +109,7 @@ export class RdsBuilder extends Construct {
       serverlessV2MaxCapacity: props.MaxCapacity,
       serverlessV2MinCapacity: props.MinCapacity,
       writer: ClusterInstance.serverlessV2('writer', {}),
-      readers: [ClusterInstance.serverlessV2('reader-1', { scaleWithWriter: true })],
+      readers: props.EnableReaderInstance ? [ClusterInstance.serverlessV2('reader-1', { scaleWithWriter: true })] : [],
       credentials: rdsSecretCreator,
       vpc: props.Vpc,
       securityGroups: [securityGroupRDS],
