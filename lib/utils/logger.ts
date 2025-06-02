@@ -18,6 +18,6 @@ const awsCloudWatchFormat = format.printf(
 
 export const logger = createLogger({
   level: process.env.LOG_LEVEL ?? 'silly',
-  format: process.env.RUN_LOCAL ? combine(format.colorize({ all: true }), developEnvFormat) : awsCloudWatchFormat,
+  format: process.env.RUN_LOCAL ? combine(format.colorize({ all: false }), developEnvFormat) : awsCloudWatchFormat,
   transports: [new transports.Console()],
 });

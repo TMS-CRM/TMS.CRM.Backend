@@ -2,9 +2,10 @@ import { AdminInitiateAuthCommand, type AuthenticationResultType } from '@aws-sd
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { getCognitoClient } from '../../../lib/aws/cognito.js';
 import { logger } from '../../../lib/utils/logger.js';
+import { toHttpErrorResponse } from '../../../lib/utils/response.js';
 import type { SignInRequestPayload, SignInResponsePayload } from '../../../models/api/payloads/signIn.js';
 import { signInRequestSchema } from '../../../models/api/payloads/signIn.js';
-import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
 
@@ -18,7 +19,7 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(authenticateUser)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error: Error) => new HttpErrorResponse(error));
+    .catch(toHttpErrorResponse);
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
