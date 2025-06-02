@@ -5,7 +5,6 @@ import { CfnParameter } from 'aws-cdk-lib';
 import type { CfnApi } from 'aws-cdk-lib/aws-apigatewayv2';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
-import { SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Code, LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
@@ -15,6 +14,7 @@ import { LambdaBuilder } from './constructs/lambda-builder.js';
 import { PermissionGrantor } from './constructs/permission-grantor.js';
 import { RdsBuilder } from './constructs/rds-builder.js';
 import { RoleBuilder } from './constructs/role-builder.js';
+import { VpcBuilder } from './constructs/vpcBuilder.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -31,24 +31,12 @@ export class TmsCrmBackendStack extends cdk.Stack {
       description: 'The URL for the TMS CRM API',
     });
 
-    const vpc = new Vpc(this, 'TmsCrmVpc', {
+    // Create secure VPC
+    const vpc = new VpcBuilder(this, 'TmsCrmVpc', {
+      applicationName: serviceNamePascalCase,
       maxAzs: 2,
       natGateways: 1,
-      subnetConfiguration: [
-        {
-          name: 'isolated-subnet',
-          subnetType: SubnetType.PRIVATE_ISOLATED,
-        },
-        {
-          name: 'private-subnet',
-          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
-        },
-        {
-          name: 'public-subnet',
-          subnetType: SubnetType.PUBLIC,
-        },
-      ],
-    });
+    }).vpc;
 
     // RDS
     const rdsInstance = new RdsBuilder(this, `${serviceNamePascalCase}Rds`, {
