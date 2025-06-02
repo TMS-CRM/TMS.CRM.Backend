@@ -1,4 +1,6 @@
+import type { Knex } from 'knex';
 import { setupCognitoUser } from '../../lib/aws/cognito.js';
+import { knexClient } from '../../lib/utils/knexClient.js';
 import { logger } from '../../lib/utils/logger.js';
 import { BadRequestError } from '../../models/api/responses/errors.js';
 import { PersistSuccess } from '../../models/api/responses/success.js';
@@ -20,7 +22,21 @@ const USER_POOL_ID = process.env.USER_POOL_ID;
 export async function handler(request: CreateTenantRequestPayload): Promise<PersistSuccess<CreateTenantResponsePayload>> {
   logger.info('Request received: ', request);
 
-  return validateRequest(request).then(createTenantAndUser).then(createCognitoUser).then(formatResponseData);
+  const transaction = await knexClient.transaction();
+
+  return validateRequest(request)
+    .then((request) => createTenantAndUser(request, transaction))
+    .then((payload) => createCognitoUser(payload, transaction))
+    .then(async (response) => {
+      await transaction.commit();
+      return response;
+    })
+    .then(formatResponseData)
+    .catch(async (error: Error) => {
+      logger.error('Error creating tenant and user, rolling back transaction.', error);
+      await transaction.rollback();
+      throw error;
+    });
 }
 
 async function validateRequest(request: CreateTenantRequestPayload): Promise<CreateTenantRequestPayload> {
@@ -38,11 +54,11 @@ async function validateRequest(request: CreateTenantRequestPayload): Promise<Cre
   return request;
 }
 
-async function createTenantAndUser(request: CreateTenantRequestPayload): Promise<CreateTenantResultKeys> {
+async function createTenantAndUser(request: CreateTenantRequestPayload, transaction: Knex.Transaction): Promise<CreateTenantResultKeys> {
   logger.info('Start - createTenant');
 
   // Create tenant
-  const tenantId = await insertTenant(Tenant.create(request.name));
+  const tenantId = await insertTenant(Tenant.create(request.name), transaction);
 
   // Create user
   const mappedUser: Partial<UserDatabase> = User.create({
@@ -50,20 +66,25 @@ async function createTenantAndUser(request: CreateTenantRequestPayload): Promise
     firstName: request.user.firstName,
     lastName: request.user.lastName,
   });
-  const userId = await insertUser(mappedUser);
+  const userId = await insertUser(mappedUser, transaction);
 
   // Link user to tenant
-  await insertUserTenant(UserTenant.create(userId, tenantId));
+  await insertUserTenant(UserTenant.create(userId, tenantId), transaction);
 
   return { newTenantId: tenantId, newUserId: userId };
 }
 
-async function createCognitoUser(payload: CreateTenantResultKeys): Promise<CreateTenantResultKeys> {
+async function createCognitoUser(payload: CreateTenantResultKeys, transaction: Knex.Transaction): Promise<CreateTenantResultKeys> {
   logger.info('Start - createCognitoUser');
 
   // Create Cognito user
-  const user = await selectUserById(payload.newUserId);
-  await setupCognitoUser(user!, USER_POOL_ID!);
+  const user = await selectUserById(payload.newUserId, transaction);
+
+  if (!user) {
+    throw new BadRequestError('User not found');
+  }
+
+  await setupCognitoUser(user, USER_POOL_ID!, transaction);
 
   return payload;
 }

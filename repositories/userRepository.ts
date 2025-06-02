@@ -1,3 +1,4 @@
+import type { Knex } from 'knex';
 import { userTenantTableName } from './userTenantRepository.js';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
@@ -7,18 +8,19 @@ import { User, type UserDatabase } from '../models/entities/user.js';
 export const userTableName = 'user';
 
 /** Insert the User */
-export async function insertUser(user: Partial<UserDatabase>): Promise<number> {
-  const query = knexClient(userTableName).insert(user).returning('id');
-  const records = (await query) as UserDatabase[];
+export async function insertUser(user: Partial<UserDatabase>, transaction?: Knex.Transaction): Promise<number> {
+  const queryContext = transaction ? transaction(userTableName) : knexClient(userTableName);
+
+  const records = (await queryContext.insert(user).returning('id')) as UserDatabase[];
 
   logger.info(`Successfully inserted User. Id: ${records[0].id}`);
   return records[0].id;
 }
 
 /** Get the User by id */
-export async function selectUserById(id: number): Promise<User | null> {
-  const query = knexClient(userTableName).select('*').where('id', id);
-  const records = (await query) as UserDatabase[];
+export async function selectUserById(id: number, transaction?: Knex.Transaction): Promise<User | null> {
+  const queryContext = transaction ? transaction(userTableName) : knexClient(userTableName);
+  const records = (await queryContext.select('*').where('id', id)) as UserDatabase[];
 
   return records.length > 0 ? new User(records[0]) : null;
 }
@@ -71,8 +73,9 @@ export async function selectUsers(limit: number, offset: number, tenantId: numbe
 }
 
 /** Update the User */
-export async function updateUser(userId: number, user: Partial<UserDatabase>): Promise<void> {
-  await knexClient(userTableName).update(user).where('id', userId);
+export async function updateUser(userId: number, user: Partial<UserDatabase>, transaction?: Knex.Transaction): Promise<void> {
+  const queryContext = transaction ? transaction(userTableName) : knexClient(userTableName);
+  await queryContext.update(user).where('id', userId);
 
   logger.info(`Successfully updated User. Id: ${userId}`);
 }
