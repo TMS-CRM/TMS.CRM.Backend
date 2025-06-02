@@ -18,7 +18,7 @@ export async function handler(event: PreAuthenticationTriggerEvent): Promise<Pre
   return determineTenantUuid(event)
     .then(formatResponse)
     .catch((error: Error) => {
-      logger.error(error);
+      logger.info(error);
       throw error;
     });
 }

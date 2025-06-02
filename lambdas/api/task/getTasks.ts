@@ -1,7 +1,8 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { logger } from '../../../lib/utils/logger.js';
+import { toHttpErrorResponse } from '../../../lib/utils/response.js';
 import type { GetTaskListFilter, GetTaskListResponsePayload, PublicTask } from '../../../models/api/payloads/task.js';
-import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { BadRequestError } from '../../../models/api/responses/errors.js';
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
@@ -16,7 +17,7 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(queryRecords)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error: Error) => new HttpErrorResponse(error));
+    .catch(toHttpErrorResponse);
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await

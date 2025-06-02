@@ -3,8 +3,9 @@ import type { Knex } from 'knex';
 import { setupCognitoUser } from '../../../lib/aws/cognito.js';
 import { knexClient } from '../../../lib/utils/knexClient.js';
 import { logger } from '../../../lib/utils/logger.js';
+import { toHttpErrorResponse } from '../../../lib/utils/response.js';
 import { type PostUserRequestPayload, type PostUserResponsePayload, postUserRequestSchema } from '../../../models/api/payloads/user.js';
-import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import { User, type UserDatabase } from '../../../models/entities/user.js';
@@ -31,7 +32,7 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then((response) => new HttpOkResponse(response))
     .catch(async (error: Error) => {
       await transaction.rollback();
-      return new HttpErrorResponse(error);
+      return toHttpErrorResponse(error);
     });
 }
 

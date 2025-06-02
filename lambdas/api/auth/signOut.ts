@@ -2,7 +2,8 @@ import { GlobalSignOutCommand } from '@aws-sdk/client-cognito-identity-provider'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { getCognitoClient } from '../../../lib/aws/cognito.js';
 import { logger } from '../../../lib/utils/logger.js';
-import { BadRequestError, HttpErrorResponse } from '../../../models/api/responses/errors.js';
+import { toHttpErrorResponse } from '../../../lib/utils/response.js';
+import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
 
@@ -13,7 +14,7 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
     .then(signOutUser)
     .then(formatResponseData)
     .then((response) => new HttpOkResponse(response))
-    .catch((error: Error) => new HttpErrorResponse(error));
+    .catch(toHttpErrorResponse);
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
