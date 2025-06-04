@@ -13,7 +13,7 @@ const USER_POOL_ID = process.env.USER_POOL_ID;
 const USER_POOL_CLIENT_ID = process.env.USER_POOL_CLIENT_ID;
 
 export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyStructuredResultV2> {
-  logger.info('Request received: ', request);
+  logger.info('Request received');
 
   return validateRequest(request)
     .then(authenticateUser)
