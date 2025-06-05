@@ -11,7 +11,7 @@ import {
   SecurityGroup,
   SubnetType,
 } from 'aws-cdk-lib/aws-ec2';
-import type { Vpc } from 'aws-cdk-lib/aws-ec2';
+import type { IVpc } from 'aws-cdk-lib/aws-ec2';
 import { AuroraPostgresEngineVersion, ClusterInstance, Credentials, DatabaseCluster, DatabaseClusterEngine } from 'aws-cdk-lib/aws-rds';
 import type { ISecret } from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
@@ -19,7 +19,7 @@ import { RoleBuilder } from './role-builder.js';
 
 export interface RdsBuilderProps {
   ApplicationName: string;
-  Vpc: Vpc;
+  Vpc: IVpc;
   EnableReaderInstance: boolean;
   MinCapacity?: number;
   MaxCapacity?: number;
