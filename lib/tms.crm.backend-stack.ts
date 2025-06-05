@@ -35,7 +35,6 @@ export class TmsCrmBackendStack extends cdk.Stack {
     const vpc = new VpcBuilder(this, 'TmsCrmVpc', {
       applicationName: serviceNamePascalCase,
       maxAzs: 2,
-      natGateways: 1,
     }).vpc;
 
     // RDS
