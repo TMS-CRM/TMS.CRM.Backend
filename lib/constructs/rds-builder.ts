@@ -18,7 +18,8 @@ import { Construct } from 'constructs';
 import { RoleBuilder } from './role-builder.js';
 
 export interface RdsBuilderProps {
-  ApplicationName: string;
+  applicationNameUppercase: string;
+  applicationNameKebabCase: string;
   Vpc: IVpc;
   EnableReaderInstance: boolean;
   MinCapacity?: number;
@@ -48,25 +49,25 @@ export class RdsBuilder extends Construct {
     }
 
     // SecurityGroups
-    const securityGroupRDS = new SecurityGroup(this, `${props.ApplicationName}SecurityGroupRDS`, {
+    const securityGroupRDS = new SecurityGroup(this, `${props.applicationNameUppercase}SecurityGroupRDS`, {
       vpc: props.Vpc,
       allowAllOutbound: false,
-      securityGroupName: `${props.ApplicationName.toLowerCase()}-security-group-RDS`,
+      securityGroupName: `${props.applicationNameKebabCase}-security-group-RDS`,
     });
     securityGroupRDS.addEgressRule(Peer.anyIpv4(), Port.tcp(443), 'allow outgoing traffic to aws services');
     securityGroupRDS.addIngressRule(Peer.anyIpv4(), Port.tcp(5432), 'allow incoming traffic from EC2');
 
-    const securityGroupEC2 = new SecurityGroup(this, `${props.ApplicationName}SecurityGroupEC2`, {
+    const securityGroupEC2 = new SecurityGroup(this, `${props.applicationNameUppercase}SecurityGroupEC2`, {
       vpc: props.Vpc,
       allowAllOutbound: false,
-      securityGroupName: `${props.ApplicationName.toLowerCase()}-security-group-EC2`,
+      securityGroupName: `${props.applicationNameKebabCase}-security-group-EC2`,
     });
     securityGroupEC2.addIngressRule(Peer.anyIpv4(), Port.tcp(443), 'allow incoming traffic from SSM');
     securityGroupEC2.addEgressRule(Peer.anyIpv4(), Port.tcp(443), 'allow outgoing traffic to aws services. Needed for SSM connection');
     securityGroupEC2.addEgressRule(Peer.anyIpv4(), Port.tcp(5432), 'allow outgoing traffic to RDS');
 
     // Role
-    const roleSsmManagedInstance = new RoleBuilder(this, `${props.ApplicationName}RoleBuilderSsmManagedInstance`, {
+    const roleSsmManagedInstance = new RoleBuilder(this, `${props.applicationNameUppercase}RoleBuilderSsmManagedInstance`, {
       ServicePrincipal: 'ec2.amazonaws.com',
       ManagedPolicyNames: ['service-role/AmazonEC2RoleForSSM'],
       PolicyResources: [],
@@ -74,7 +75,7 @@ export class RdsBuilder extends Construct {
     });
 
     // EC2
-    const ec2 = new Instance(this, `${props.ApplicationName}EC2DbProxy`, {
+    const ec2 = new Instance(this, `${props.applicationNameUppercase}EC2DbProxy`, {
       vpc: props.Vpc,
       vpcSubnets: {
         subnetType: SubnetType.PRIVATE_ISOLATED,
@@ -96,13 +97,13 @@ export class RdsBuilder extends Construct {
     }
 
     // Secret
-    const rdsSecretCreator: Credentials = Credentials.fromGeneratedSecret(`${props.ApplicationName}Admin`, {
-      secretName: `${props.ApplicationName}_PostGresAdmin`,
+    const rdsSecretCreator: Credentials = Credentials.fromGeneratedSecret(`${props.applicationNameUppercase}Admin`, {
+      secretName: `${props.applicationNameUppercase}/PostgresAdmin`,
     });
 
     // RDS
-    const rds = new DatabaseCluster(this, `${props.ApplicationName}DatabaseCluster`, {
-      defaultDatabaseName: props.ApplicationName,
+    const rds = new DatabaseCluster(this, `${props.applicationNameUppercase}DatabaseCluster`, {
+      defaultDatabaseName: 'tms_crm',
       engine: DatabaseClusterEngine.auroraPostgres({
         version: AuroraPostgresEngineVersion.VER_15_4,
       }),
