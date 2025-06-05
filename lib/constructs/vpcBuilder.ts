@@ -36,7 +36,7 @@ export class VpcBuilder extends Construct {
   public readonly databaseSubnets: CfnSubnet[] = [];
   public readonly natGateway: CfnNatGateway;
 
-  private readonly vpcName: string;
+  private readonly vpcResourceId: string;
   private readonly ephemeralPortFrom = 32768;
   private readonly ephemeralPortTo = 65535;
   private readonly awsEphemeralPortFrom = 1024;
@@ -46,7 +46,7 @@ export class VpcBuilder extends Construct {
   constructor(scope: Construct, id: string, props: VpcBuilderProps) {
     super(scope, id);
 
-    this.vpcName = `${props.applicationName}-VPC`;
+    this.vpcResourceId = `${props.applicationName}VPC`;
     this.vpc = this.createVpc();
 
     this.createSubnets(props);
@@ -64,7 +64,7 @@ export class VpcBuilder extends Construct {
   }
 
   private createVpc(): CfnVPC {
-    return new CfnVPC(this, this.vpcName, {
+    return new CfnVPC(this, this.vpcResourceId, {
       cidrBlock: '10.20.0.0/20',
       enableDnsHostnames: true,
       enableDnsSupport: true,
@@ -76,7 +76,7 @@ export class VpcBuilder extends Construct {
       const availabilityZone = `${this.defaultAvailabilityZone}${az}`;
       const baseCidrIndex = index * 3;
 
-      const publicSubnet = new CfnSubnet(this, `${props.applicationName}-public-subnet-${index + 1}-${availabilityZone}`, {
+      const publicSubnet = new CfnSubnet(this, `${this.vpcResourceId}PublicSubnet${index + 1}${az}`, {
         vpcId: this.vpc.ref,
         cidrBlock: `10.20.${baseCidrIndex}.0/24`,
         availabilityZone: availabilityZone,
@@ -84,7 +84,7 @@ export class VpcBuilder extends Construct {
       });
       this.publicSubnets.push(publicSubnet);
 
-      const privateSubnet = new CfnSubnet(this, `${props.applicationName}-private-subnet-${index + 1}-${availabilityZone}`, {
+      const privateSubnet = new CfnSubnet(this, `${this.vpcResourceId}PrivateSubnet${index + 1}${az}`, {
         vpcId: this.vpc.ref,
         cidrBlock: `10.20.${baseCidrIndex + 1}.0/24`,
         availabilityZone: availabilityZone,
@@ -92,7 +92,7 @@ export class VpcBuilder extends Construct {
       });
       this.privateSubnets.push(privateSubnet);
 
-      const dbSubnet = new CfnSubnet(this, `${props.applicationName}-database-subnet-${index + 1}-${availabilityZone}`, {
+      const dbSubnet = new CfnSubnet(this, `${this.vpcResourceId}DatabaseSubnet${index + 1}${az}`, {
         vpcId: this.vpc.ref,
         cidrBlock: `10.20.${baseCidrIndex + 2}.0/24`,
         availabilityZone: availabilityZone,
@@ -103,9 +103,9 @@ export class VpcBuilder extends Construct {
   }
 
   private createInternetGateway(): CfnInternetGateway {
-    const igw = new CfnInternetGateway(this, `${this.vpcName}-IGW`, {});
+    const igw = new CfnInternetGateway(this, `${this.vpcResourceId}IGW`, {});
 
-    new CfnVPCGatewayAttachment(this, `${this.vpcName}-IGW-attachment`, {
+    new CfnVPCGatewayAttachment(this, `${this.vpcResourceId}IGWAttachment`, {
       vpcId: this.vpc.ref,
       internetGatewayId: igw.ref,
     });
@@ -114,11 +114,11 @@ export class VpcBuilder extends Construct {
   }
 
   private createNATGateway(): CfnNatGateway {
-    const natEip = new CfnEIP(this, `${this.vpcName}-NAT-eip`, {
+    const natEip = new CfnEIP(this, `${this.vpcResourceId}NatEip`, {
       domain: 'vpc',
     });
 
-    return new CfnNatGateway(this, `${this.vpcName}-NAT-gateway`, {
+    return new CfnNatGateway(this, `${this.vpcResourceId}NatGateway`, {
       subnetId: this.publicSubnets[0].ref,
       allocationId: natEip.attrAllocationId,
     });
@@ -126,19 +126,19 @@ export class VpcBuilder extends Construct {
 
   // ---- NACLs ----
   private configureDatabaseNACL(): void {
-    const databaseNACL = new CfnNetworkAcl(this, `${this.vpcName}-database-NACL`, {
+    const databaseNACL = new CfnNetworkAcl(this, `${this.vpcResourceId}DatabaseNACL`, {
       vpcId: this.vpc.ref,
     });
 
     this.databaseSubnets.forEach((subnet, idx) => {
-      new CfnSubnetNetworkAclAssociation(this, `${this.vpcName}-database-NACL-assoc-${idx}`, {
+      new CfnSubnetNetworkAclAssociation(this, `${this.vpcResourceId}DatabaseNACLAssoc${idx}`, {
         subnetId: subnet.ref,
         networkAclId: databaseNACL.ref,
       });
     });
 
     // Inbound entries
-    new CfnNetworkAclEntry(this, `${this.vpcName}-database-NACL-inbound-vpc-a`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}DatabaseNACLInboundVpcA`, {
       egress: false,
       ruleNumber: 200,
       protocol: -1,
@@ -147,7 +147,7 @@ export class VpcBuilder extends Construct {
       networkAclId: databaseNACL.ref,
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-database-NACL-inbound-vpc-b`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}DatabaseNACLInboundVpcB`, {
       egress: false,
       ruleNumber: 400,
       protocol: -1,
@@ -156,7 +156,7 @@ export class VpcBuilder extends Construct {
       networkAclId: databaseNACL.ref,
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-database-NACL-inbound-ephemeral`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}DatabaseNACLInboundEphemeral`, {
       egress: false,
       ruleNumber: 5010,
       protocol: 6,
@@ -167,7 +167,7 @@ export class VpcBuilder extends Construct {
     });
 
     // Outbound entries
-    new CfnNetworkAclEntry(this, `${this.vpcName}-database-NACL-outbound-vpc-a`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}DatabaseNACLOutboundVpcA`, {
       egress: true,
       ruleNumber: 200,
       protocol: -1,
@@ -176,7 +176,7 @@ export class VpcBuilder extends Construct {
       networkAclId: databaseNACL.ref,
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-database-NACL-outbound-vpc-b`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}DatabaseNACLOutboundVpcB`, {
       egress: true,
       ruleNumber: 400,
       protocol: -1,
@@ -185,7 +185,7 @@ export class VpcBuilder extends Construct {
       networkAclId: databaseNACL.ref,
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-database-NACL-outbound-https`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}DatabaseNACLOutboundHttps`, {
       egress: true,
       ruleNumber: 5000,
       protocol: 6,
@@ -195,7 +195,7 @@ export class VpcBuilder extends Construct {
       networkAclId: databaseNACL.ref,
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-database-NACL-outbound-http`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}DatabaseNACLOutboundHttp`, {
       egress: true,
       ruleNumber: 5020,
       protocol: 6,
@@ -207,19 +207,19 @@ export class VpcBuilder extends Construct {
   }
 
   private configurePrivateNACL(): void {
-    const privateNACL = new CfnNetworkAcl(this, `${this.vpcName}-private-NACL`, {
+    const privateNACL = new CfnNetworkAcl(this, `${this.vpcResourceId}PrivateNACL`, {
       vpcId: this.vpc.ref,
     });
 
     this.privateSubnets.forEach((subnet, idx) => {
-      new CfnSubnetNetworkAclAssociation(this, `${this.vpcName}-private-NACL-assoc-${idx}`, {
+      new CfnSubnetNetworkAclAssociation(this, `${this.vpcResourceId}PrivateNACLAssoc${idx}`, {
         subnetId: subnet.ref,
         networkAclId: privateNACL.ref,
       });
     });
 
     // Inbound entries
-    new CfnNetworkAclEntry(this, `${this.vpcName}-private-NACL-inbound-ephemeral-from-internet`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PrivateNACLInboundEphemeralFromInternet`, {
       networkAclId: privateNACL.ref,
       ruleNumber: 5010,
       protocol: 6,
@@ -229,7 +229,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: this.awsEphemeralPortFrom, to: this.ephemeralPortTo },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-private-NACL-inbound-http-from-public`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PrivateNACLInboundHttpFromPublic`, {
       networkAclId: privateNACL.ref,
       ruleNumber: 5020,
       protocol: 6,
@@ -239,7 +239,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: 80, to: 80 },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-private-NACL-inbound-https-from-public`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PrivateNACLInboundHttpsFromPublic`, {
       networkAclId: privateNACL.ref,
       ruleNumber: 5021,
       protocol: 6,
@@ -250,7 +250,7 @@ export class VpcBuilder extends Construct {
     });
 
     // Outbound entries
-    new CfnNetworkAclEntry(this, `${this.vpcName}-private-NACL-outbound-to-db`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PrivateNACLOutboundToDb`, {
       networkAclId: privateNACL.ref,
       ruleNumber: 4000,
       protocol: -1,
@@ -259,7 +259,7 @@ export class VpcBuilder extends Construct {
       cidrBlock: this.databaseCidr,
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-private-NACL-outbound-https`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PrivateNACLOutboundHttps`, {
       networkAclId: privateNACL.ref,
       ruleNumber: 5000,
       protocol: 6,
@@ -269,7 +269,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: 443, to: 443 },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-private-NACL-outbound-to-public-ephemeral`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PrivateNACLOutboundToPublicEphemeral`, {
       networkAclId: privateNACL.ref,
       ruleNumber: 5030,
       protocol: 6,
@@ -279,7 +279,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: this.awsEphemeralPortFrom, to: this.ephemeralPortTo },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-private-NACL-outbound-http`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PrivateNACLOutboundHttp`, {
       networkAclId: privateNACL.ref,
       ruleNumber: 5100,
       protocol: 6,
@@ -291,19 +291,19 @@ export class VpcBuilder extends Construct {
   }
 
   private configurePublicNACL(): void {
-    const publicNACL = new CfnNetworkAcl(this, `${this.vpcName}-public-NACL`, {
+    const publicNACL = new CfnNetworkAcl(this, `${this.vpcResourceId}PublicNACL`, {
       vpcId: this.vpc.ref,
     });
 
     this.publicSubnets.forEach((subnet, idx) => {
-      new CfnSubnetNetworkAclAssociation(this, `${this.vpcName}-public-NACL-assoc-${idx}`, {
+      new CfnSubnetNetworkAclAssociation(this, `${this.vpcResourceId}PublicNACLAssoc${idx}`, {
         subnetId: subnet.ref,
         networkAclId: publicNACL.ref,
       });
     });
 
     // Inbound entries
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-inbound-to-db`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLInboundToDb`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 5,
       protocol: 6,
@@ -313,7 +313,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: 443, to: 443 },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-inbound-http-to-db`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLInboundHttpToDb`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 7,
       protocol: 6,
@@ -323,7 +323,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: 80, to: 80 },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-inbound-to-private`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLInboundToPrivate`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 100,
       protocol: -1,
@@ -332,7 +332,7 @@ export class VpcBuilder extends Construct {
       cidrBlock: '10.20.4.0/22',
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-inbound-ephemeral-from-internet`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLInboundEphemeralFromInternet`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 1150,
       protocol: 6,
@@ -342,7 +342,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: this.awsEphemeralPortFrom, to: this.ephemeralPortTo },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-inbound-https-from-internet`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLInboundHttpsFromInternet`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 1350,
       protocol: 6,
@@ -352,7 +352,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: 443, to: 443 },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-inbound-http-from-internet`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLInboundHttpFromInternet`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 1400,
       protocol: 6,
@@ -363,7 +363,7 @@ export class VpcBuilder extends Construct {
     });
 
     // Outbound entries
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-outbound-to-db`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLOutboundToDb`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 5,
       protocol: 6,
@@ -373,7 +373,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: this.awsEphemeralPortFrom, to: this.ephemeralPortTo },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-outbound-to-db-deny`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLOutboundToDbDeny`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 10,
       protocol: -1,
@@ -382,7 +382,7 @@ export class VpcBuilder extends Construct {
       cidrBlock: this.databaseCidr,
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-outbound-to-private`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLOutboundToPrivate`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 50,
       protocol: 6,
@@ -392,7 +392,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: this.awsEphemeralPortFrom, to: this.ephemeralPortTo },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-outbound-http-to-private`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLOutboundHttpToPrivate`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 51,
       protocol: 6,
@@ -402,7 +402,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: 80, to: 80 },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-outbound-https-to-private`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLOutboundHttpsToPrivate`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 52,
       protocol: 6,
@@ -412,7 +412,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: 443, to: 443 },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-outbound-ephemeral-from-internet`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLOutboundEphemeralFromInternet`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 1200,
       protocol: 6,
@@ -422,7 +422,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: this.awsEphemeralPortFrom, to: this.ephemeralPortTo },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-outbound-https-from-internet`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLOutboundHttpsFromInternet`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 1250,
       protocol: 6,
@@ -432,7 +432,7 @@ export class VpcBuilder extends Construct {
       portRange: { from: 443, to: 443 },
     });
 
-    new CfnNetworkAclEntry(this, `${this.vpcName}-public-NACL-outbound-http-from-internet`, {
+    new CfnNetworkAclEntry(this, `${this.vpcResourceId}PublicNACLOutboundHttpFromInternet`, {
       networkAclId: publicNACL.ref,
       ruleNumber: 1300,
       protocol: 6,
@@ -446,20 +446,20 @@ export class VpcBuilder extends Construct {
   // ---- Route Tables ----
   private configurePublicRouteTable(igwId: string): void {
     // Create route table for public subnets
-    const publicRouteTable = new CfnRouteTable(this, `${this.vpcName}-public-rt`, {
+    const publicRouteTable = new CfnRouteTable(this, `${this.vpcResourceId}PublicRouteTable`, {
       vpcId: this.vpc.ref,
     });
 
     // Associate public subnets with this route table
     this.publicSubnets.forEach((subnet, idx) => {
-      new CfnSubnetRouteTableAssociation(this, `${this.vpcName}-public-rt-assoc-${idx}`, {
+      new CfnSubnetRouteTableAssociation(this, `${this.vpcResourceId}PublicRouteTableAssoc${idx}`, {
         subnetId: subnet.ref,
         routeTableId: publicRouteTable.ref,
       });
     });
 
     // Create a default route to the internet gateway
-    new CfnRoute(this, `${this.vpcName}-public-rt-default-route`, {
+    new CfnRoute(this, `${this.vpcResourceId}PublicRouteTableDefaultRoute`, {
       routeTableId: publicRouteTable.ref,
       destinationCidrBlock: '0.0.0.0/0',
       gatewayId: igwId,
@@ -468,20 +468,20 @@ export class VpcBuilder extends Construct {
 
   private configurePrivateRouteTable(): void {
     // Create route table for private subnets
-    const privateRouteTable = new CfnRouteTable(this, `${this.vpcName}-private-rt`, {
+    const privateRouteTable = new CfnRouteTable(this, `${this.vpcResourceId}PrivateRouteTable`, {
       vpcId: this.vpc.ref,
     });
 
     // Associate private subnets with this route table
     this.privateSubnets.forEach((subnet, idx) => {
-      new CfnSubnetRouteTableAssociation(this, `${this.vpcName}-private-rt-assoc-${idx}`, {
+      new CfnSubnetRouteTableAssociation(this, `${this.vpcResourceId}PrivateRouteTableAssoc${idx}`, {
         subnetId: subnet.ref,
         routeTableId: privateRouteTable.ref,
       });
     });
 
     // Create a default route to the NAT Gateway for outbound internet access
-    new CfnRoute(this, `${this.vpcName}-private-rt-default-route`, {
+    new CfnRoute(this, `${this.vpcResourceId}PrivateRouteTableDefaultRoute`, {
       routeTableId: privateRouteTable.ref,
       destinationCidrBlock: '0.0.0.0/0',
       natGatewayId: this.natGateway.ref,
@@ -490,13 +490,13 @@ export class VpcBuilder extends Construct {
 
   private configureDatabaseRouteTable(): void {
     // Create route table for database subnets
-    const databaseRouteTable = new CfnRouteTable(this, `${this.vpcName}-database-rt`, {
+    const databaseRouteTable = new CfnRouteTable(this, `${this.vpcResourceId}DatabaseRouteTable`, {
       vpcId: this.vpc.ref,
     });
 
     // Associate database subnets with this route table
     this.databaseSubnets.forEach((subnet, idx) => {
-      new CfnSubnetRouteTableAssociation(this, `${this.vpcName}-database-rt-assoc-${idx}`, {
+      new CfnSubnetRouteTableAssociation(this, `${this.vpcResourceId}DatabaseRouteTableAssoc${idx}`, {
         subnetId: subnet.ref,
         routeTableId: databaseRouteTable.ref,
       });
