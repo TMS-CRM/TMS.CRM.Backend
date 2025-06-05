@@ -33,7 +33,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     // Create secure VPC
     const vpcBuilder = new VpcBuilder(this, `${serviceNameUppercase}VPC`, {
-      applicationName: serviceNameUppercase,
+      serviceNameUppercase: serviceNameUppercase,
+      serviceNameKebabCase: serviceNameKebabCase,
       azs: ['a', 'b'],
     });
 
