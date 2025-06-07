@@ -1,4 +1,4 @@
-import type { PreAuthenticationTriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/pre-authentication.js';
+import type { PreTokenGenerationTriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/pre-token-generation.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { selectTenantById } from '../../../repositories/tenantRepository.js';
@@ -6,13 +6,13 @@ import { selectUserByCognitoUuid } from '../../../repositories/userRepository.js
 import { selectUserTenantsByUserId } from '../../../repositories/userTenantRepository.js';
 
 /**
- * This lambda function is triggered before the authentication process.
+ * This lambda function is triggered before the token generation process.
  * It is used to add a custom claim (tenantUuid) to the user's JWT token.
  *
  * @see https://aws.amazon.com/blogs/security/how-to-customize-access-tokens-in-amazon-cognito-user-pools/
  */
 
-export async function handler(event: PreAuthenticationTriggerEvent): Promise<PreAuthenticationTriggerEvent> {
+export async function handler(event: PreTokenGenerationTriggerEvent): Promise<PreTokenGenerationTriggerEvent> {
   logger.info('Request received: ', event);
 
   return determineTenantUuid(event)
@@ -23,10 +23,10 @@ export async function handler(event: PreAuthenticationTriggerEvent): Promise<Pre
     });
 }
 
-async function determineTenantUuid(event: PreAuthenticationTriggerEvent): Promise<{ event: PreAuthenticationTriggerEvent; tenantUuid: string }> {
+async function determineTenantUuid(event: PreTokenGenerationTriggerEvent): Promise<{ event: PreTokenGenerationTriggerEvent; tenantUuid: string }> {
   logger.info('Start - determineTenantUuid');
 
-  // If a preferred tenant uuid is provided, use it
+  // If a preferred tenant uuid is provided (from the switchTenant lambda), use it
   const preferredTenantUuid = event.request.clientMetadata?.preferredTenantUuid;
   if (preferredTenantUuid) {
     return {
@@ -59,20 +59,8 @@ async function determineTenantUuid(event: PreAuthenticationTriggerEvent): Promis
   };
 }
 
-function formatResponse(payload: { event: PreAuthenticationTriggerEvent; tenantUuid: string }): PreAuthenticationTriggerEvent {
+function formatResponse(payload: { event: PreTokenGenerationTriggerEvent; tenantUuid: string }): PreTokenGenerationTriggerEvent {
   logger.info('Start - formatResponse');
-
-  // // Add the tenantId as a custom claim
-  // payload.event.response = {
-  //   claimsAndScopeOverrideDetails: {
-  //     idTokenGeneration: {},
-  //     accessTokenGeneration: {
-  //       claimsToAddOrOverride: {
-  //         'custom:tenantUuid': payload.tenantUuid,
-  //       },
-  //     },
-  //   },
-  // };
 
   logger.info(`tenantUuid: ${payload.tenantUuid}`);
 

@@ -1,5 +1,5 @@
-import type { PreAuthenticationTriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/pre-authentication.js';
-import { handler } from '../../../../lambdas/api/auth/preAuthentication.js';
+import type { PreTokenGenerationTriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/pre-token-generation.js';
+import { handler } from '../../../../lambdas/api/auth/preTokenGeneration.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import type { UserDatabase } from '../../../../models/entities/user.js';
@@ -10,7 +10,7 @@ import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.j
 import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 import { UserTenantDatabaseBuilder } from '../../../builders/userTenantDatabaseBuilder.js';
 
-describe('API - Auth - PreAuthentication', () => {
+describe('API - Auth - PreTokenGeneration', () => {
   const tenantsGlobal: TenantDatabase[] = [];
   const usersGlobal: UserDatabase[] = [];
 
@@ -38,11 +38,11 @@ describe('API - Auth - PreAuthentication', () => {
   });
 
   it('Success - Should add tenantUuid to claims', async () => {
-    const event: PreAuthenticationTriggerEvent = {
+    const event: PreTokenGenerationTriggerEvent = {
       version: '1',
       region: 'us-east-1',
       userPoolId: 'us-east-1_example',
-      triggerSource: 'PreAuthentication_Authentication',
+      triggerSource: 'TokenGeneration_Authentication',
       userName: 'exampleUser',
       callerContext: {
         awsSdkVersion: '1',
@@ -52,8 +52,15 @@ describe('API - Auth - PreAuthentication', () => {
         userAttributes: {
           sub: usersGlobal[0].cognito_uuid,
         },
+        groupConfiguration: {
+          groupsToOverride: [],
+        },
       },
-      response: {},
+      response: {
+        claimsOverrideDetails: {
+          claimsToAddOrOverride: {},
+        },
+      },
     };
 
     const result = await handler(event);

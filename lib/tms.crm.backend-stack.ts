@@ -58,17 +58,17 @@ export class TmsCrmBackendStack extends cdk.Stack {
     });
 
     // Cognito
-    const roleCognitoPreAuthentication = new RoleBuilder(this, `${serviceNameUppercase}CognitoPreAuthenticationRole`, {
+    const roleCognitoPreTokenGeneration = new RoleBuilder(this, `${serviceNameUppercase}CognitoPreTokenGenerationRole`, {
       ServicePrincipal: 'lambda.amazonaws.com',
       ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
       PolicyResources: [],
       PolicyActions: [],
     }).role;
 
-    const lambdaCognitoPreAuthentication = new LambdaBuilder(this, `${serviceNameUppercase}CognitoPreAuthentication`, {
-      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'auth', 'preAuthentication.ts'),
-      LambdaName: `${serviceNameKebabCase}-cognito-pre-authentication`,
-      LambdaRole: roleCognitoPreAuthentication,
+    const lambdaCognitoPreTokenGeneration = new LambdaBuilder(this, `${serviceNameUppercase}CognitoPreTokenGeneration`, {
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'auth', 'preTokenGeneration.ts'),
+      LambdaName: `${serviceNameKebabCase}-cognito-pre-token-generation`,
+      LambdaRole: roleCognitoPreTokenGeneration,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
@@ -81,7 +81,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       userPoolName: `${serviceNameUppercase}UserPool`,
       signInAliases: { email: true },
       lambdaTriggers: {
-        preAuthentication: lambdaCognitoPreAuthentication,
+        preTokenGeneration: lambdaCognitoPreTokenGeneration,
       },
     });
 
@@ -342,7 +342,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
         roleApiAuthSignIn,
         roleApiAuthSignOut,
         roleApiAuthSwitchTenant,
-        roleCognitoPreAuthentication,
+        roleCognitoPreTokenGeneration,
         roleKnexMigration,
         roleSupportCreateTenant,
       ],
