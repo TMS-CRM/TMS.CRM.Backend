@@ -517,6 +517,11 @@ export class VpcBuilder extends Construct {
       });
     });
 
-    // No default route to internet - database subnets are isolated
+    // Create a default route to the NAT Gateway for outbound internet access
+    new CfnRoute(this, `${this.vpcResourceId}DatabaseRouteTableDefaultRoute`, {
+      routeTableId: databaseRouteTable.ref,
+      destinationCidrBlock: '0.0.0.0/0',
+      natGatewayId: this.natGateway.ref,
+    });
   }
 }
