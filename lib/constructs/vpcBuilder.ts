@@ -74,13 +74,20 @@ export class VpcBuilder extends Construct {
   }
 
   private createSubnets(props: VpcBuilderProps): void {
+    const publicOffset = 0;
+    const privateOffset = 4;
+    const databaseOffset = 8;
+
     props.azs.forEach((az, index) => {
       const availabilityZone = `${this.defaultAvailabilityZone}${az}`;
-      const baseCidrIndex = index * 3;
+
+      const publicCidrIndex = publicOffset + index;
+      const privateCidrIndex = privateOffset + index;
+      const databaseCidrIndex = databaseOffset + index;
 
       const publicSubnet = new CfnSubnet(this, `${this.vpcResourceId}PublicSubnet${az}`, {
         vpcId: this.vpc.ref,
-        cidrBlock: `10.20.${baseCidrIndex}.0/24`,
+        cidrBlock: `10.20.${publicCidrIndex}.0/24`,
         availabilityZone: availabilityZone,
         tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-public-subnet-${availabilityZone}` }],
       });
@@ -88,7 +95,7 @@ export class VpcBuilder extends Construct {
 
       const privateSubnet = new CfnSubnet(this, `${this.vpcResourceId}PrivateSubnet${az}`, {
         vpcId: this.vpc.ref,
-        cidrBlock: `10.20.${baseCidrIndex + 1}.0/24`,
+        cidrBlock: `10.20.${privateCidrIndex}.0/24`,
         availabilityZone: availabilityZone,
         tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-private-subnet-${availabilityZone}` }],
       });
@@ -96,7 +103,7 @@ export class VpcBuilder extends Construct {
 
       const dbSubnet = new CfnSubnet(this, `${this.vpcResourceId}DatabaseSubnet${az}`, {
         vpcId: this.vpc.ref,
-        cidrBlock: `10.20.${baseCidrIndex + 2}.0/24`,
+        cidrBlock: `10.20.${databaseCidrIndex}.0/24`,
         availabilityZone: availabilityZone,
         tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-database-subnet-${availabilityZone}` }],
       });
