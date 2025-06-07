@@ -50,6 +50,8 @@ async function authenticateUser(validatedRequest: ValidatedApiRequest<SignInRequ
 
   const response = await getCognitoClient().send(authCommand);
 
+  logger.info(`response: ${JSON.stringify(response)}`);
+
   if (!response.AuthenticationResult) {
     throw new BadRequestError('Authentication failed');
   }
