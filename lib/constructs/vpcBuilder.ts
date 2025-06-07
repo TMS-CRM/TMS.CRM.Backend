@@ -82,7 +82,6 @@ export class VpcBuilder extends Construct {
         vpcId: this.vpc.ref,
         cidrBlock: `10.20.${baseCidrIndex}.0/24`,
         availabilityZone: availabilityZone,
-        mapPublicIpOnLaunch: true,
         tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-public-subnet-${availabilityZone}` }],
       });
       this.publicSubnets.push(publicSubnet);
@@ -91,7 +90,6 @@ export class VpcBuilder extends Construct {
         vpcId: this.vpc.ref,
         cidrBlock: `10.20.${baseCidrIndex + 1}.0/24`,
         availabilityZone: availabilityZone,
-        mapPublicIpOnLaunch: false,
         tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-private-subnet-${availabilityZone}` }],
       });
       this.privateSubnets.push(privateSubnet);
@@ -100,7 +98,6 @@ export class VpcBuilder extends Construct {
         vpcId: this.vpc.ref,
         cidrBlock: `10.20.${baseCidrIndex + 2}.0/24`,
         availabilityZone: availabilityZone,
-        mapPublicIpOnLaunch: false,
         tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-database-subnet-${availabilityZone}` }],
       });
       this.databaseSubnets.push(dbSubnet);
