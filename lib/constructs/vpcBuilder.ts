@@ -15,7 +15,8 @@ import {
 import { Construct } from 'constructs';
 
 export interface VpcBuilderProps {
-  applicationName: string;
+  serviceNameUppercase: string;
+  serviceNameKebabCase: string;
   azs: string[];
 }
 
@@ -46,28 +47,29 @@ export class VpcBuilder extends Construct {
   constructor(scope: Construct, id: string, props: VpcBuilderProps) {
     super(scope, id);
 
-    this.vpcResourceId = `${props.applicationName}VPC`;
-    this.vpc = this.createVpc();
+    this.vpcResourceId = `${props.serviceNameUppercase}VPC`;
+    this.vpc = this.createVpc(props);
 
     this.createSubnets(props);
 
-    const igw = this.createInternetGateway();
-    this.natGateway = this.createNATGateway();
+    const igw = this.createInternetGateway(props);
+    this.natGateway = this.createNATGateway(props);
 
-    this.configureDatabaseNACL();
-    this.configurePrivateNACL();
-    this.configurePublicNACL();
+    this.configureDatabaseNACL(props);
+    this.configurePrivateNACL(props);
+    this.configurePublicNACL(props);
 
-    this.configurePublicRouteTable(igw.ref);
-    this.configurePrivateRouteTable();
-    this.configureDatabaseRouteTable();
+    this.configurePublicRouteTable(igw.ref, props);
+    this.configurePrivateRouteTable(props);
+    this.configureDatabaseRouteTable(props);
   }
 
-  private createVpc(): CfnVPC {
+  private createVpc(props: VpcBuilderProps): CfnVPC {
     return new CfnVPC(this, this.vpcResourceId, {
       cidrBlock: '10.20.0.0/20',
       enableDnsHostnames: true,
       enableDnsSupport: true,
+      tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-vpc` }],
     });
   }
 
@@ -76,34 +78,39 @@ export class VpcBuilder extends Construct {
       const availabilityZone = `${this.defaultAvailabilityZone}${az}`;
       const baseCidrIndex = index * 3;
 
-      const publicSubnet = new CfnSubnet(this, `${this.vpcResourceId}PublicSubnet${index + 1}${az}`, {
+      const publicSubnet = new CfnSubnet(this, `${this.vpcResourceId}PublicSubnet${az}`, {
         vpcId: this.vpc.ref,
         cidrBlock: `10.20.${baseCidrIndex}.0/24`,
         availabilityZone: availabilityZone,
         mapPublicIpOnLaunch: true,
+        tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-public-subnet-${availabilityZone}` }],
       });
       this.publicSubnets.push(publicSubnet);
 
-      const privateSubnet = new CfnSubnet(this, `${this.vpcResourceId}PrivateSubnet${index + 1}${az}`, {
+      const privateSubnet = new CfnSubnet(this, `${this.vpcResourceId}PrivateSubnet${az}`, {
         vpcId: this.vpc.ref,
         cidrBlock: `10.20.${baseCidrIndex + 1}.0/24`,
         availabilityZone: availabilityZone,
         mapPublicIpOnLaunch: false,
+        tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-private-subnet-${availabilityZone}` }],
       });
       this.privateSubnets.push(privateSubnet);
 
-      const dbSubnet = new CfnSubnet(this, `${this.vpcResourceId}DatabaseSubnet${index + 1}${az}`, {
+      const dbSubnet = new CfnSubnet(this, `${this.vpcResourceId}DatabaseSubnet${az}`, {
         vpcId: this.vpc.ref,
         cidrBlock: `10.20.${baseCidrIndex + 2}.0/24`,
         availabilityZone: availabilityZone,
         mapPublicIpOnLaunch: false,
+        tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-database-subnet-${availabilityZone}` }],
       });
       this.databaseSubnets.push(dbSubnet);
     });
   }
 
-  private createInternetGateway(): CfnInternetGateway {
-    const igw = new CfnInternetGateway(this, `${this.vpcResourceId}IGW`, {});
+  private createInternetGateway(props: VpcBuilderProps): CfnInternetGateway {
+    const igw = new CfnInternetGateway(this, `${this.vpcResourceId}IGW`, {
+      tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-igw` }],
+    });
 
     new CfnVPCGatewayAttachment(this, `${this.vpcResourceId}IGWAttachment`, {
       vpcId: this.vpc.ref,
@@ -113,21 +120,24 @@ export class VpcBuilder extends Construct {
     return igw;
   }
 
-  private createNATGateway(): CfnNatGateway {
+  private createNATGateway(props: VpcBuilderProps): CfnNatGateway {
     const natEip = new CfnEIP(this, `${this.vpcResourceId}NatEip`, {
       domain: 'vpc',
+      tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-nat-eip` }],
     });
 
     return new CfnNatGateway(this, `${this.vpcResourceId}NatGateway`, {
       subnetId: this.publicSubnets[0].ref,
       allocationId: natEip.attrAllocationId,
+      tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-nat-gateway` }],
     });
   }
 
   // ---- NACLs ----
-  private configureDatabaseNACL(): void {
+  private configureDatabaseNACL(props: VpcBuilderProps): void {
     const databaseNACL = new CfnNetworkAcl(this, `${this.vpcResourceId}DatabaseNACL`, {
       vpcId: this.vpc.ref,
+      tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-database-nacl` }],
     });
 
     this.databaseSubnets.forEach((subnet, idx) => {
@@ -206,9 +216,10 @@ export class VpcBuilder extends Construct {
     });
   }
 
-  private configurePrivateNACL(): void {
+  private configurePrivateNACL(props: VpcBuilderProps): void {
     const privateNACL = new CfnNetworkAcl(this, `${this.vpcResourceId}PrivateNACL`, {
       vpcId: this.vpc.ref,
+      tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-private-nacl` }],
     });
 
     this.privateSubnets.forEach((subnet, idx) => {
@@ -290,9 +301,10 @@ export class VpcBuilder extends Construct {
     });
   }
 
-  private configurePublicNACL(): void {
+  private configurePublicNACL(props: VpcBuilderProps): void {
     const publicNACL = new CfnNetworkAcl(this, `${this.vpcResourceId}PublicNACL`, {
       vpcId: this.vpc.ref,
+      tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-public-nacl` }],
     });
 
     this.publicSubnets.forEach((subnet, idx) => {
@@ -444,10 +456,11 @@ export class VpcBuilder extends Construct {
   }
 
   // ---- Route Tables ----
-  private configurePublicRouteTable(igwId: string): void {
+  private configurePublicRouteTable(igwId: string, props: VpcBuilderProps): void {
     // Create route table for public subnets
     const publicRouteTable = new CfnRouteTable(this, `${this.vpcResourceId}PublicRouteTable`, {
       vpcId: this.vpc.ref,
+      tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-public-route-table` }],
     });
 
     // Associate public subnets with this route table
@@ -466,10 +479,11 @@ export class VpcBuilder extends Construct {
     });
   }
 
-  private configurePrivateRouteTable(): void {
+  private configurePrivateRouteTable(props: VpcBuilderProps): void {
     // Create route table for private subnets
     const privateRouteTable = new CfnRouteTable(this, `${this.vpcResourceId}PrivateRouteTable`, {
       vpcId: this.vpc.ref,
+      tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-private-route-table` }],
     });
 
     // Associate private subnets with this route table
@@ -488,10 +502,11 @@ export class VpcBuilder extends Construct {
     });
   }
 
-  private configureDatabaseRouteTable(): void {
+  private configureDatabaseRouteTable(props: VpcBuilderProps): void {
     // Create route table for database subnets
     const databaseRouteTable = new CfnRouteTable(this, `${this.vpcResourceId}DatabaseRouteTable`, {
       vpcId: this.vpc.ref,
+      tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-database-route-table` }],
     });
 
     // Associate database subnets with this route table
