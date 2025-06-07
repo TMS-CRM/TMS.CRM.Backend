@@ -62,17 +62,30 @@ async function determineTenantUuid(event: PreAuthenticationTriggerEvent): Promis
 function formatResponse(payload: { event: PreAuthenticationTriggerEvent; tenantUuid: string }): PreAuthenticationTriggerEvent {
   logger.info('Start - formatResponse');
 
+  // // Add the tenantId as a custom claim
+  // payload.event.response = {
+  //   claimsAndScopeOverrideDetails: {
+  //     idTokenGeneration: {},
+  //     accessTokenGeneration: {
+  //       claimsToAddOrOverride: {
+  //         'custom:tenantUuid': payload.tenantUuid,
+  //       },
+  //     },
+  //   },
+  // };
+
+  logger.info(`tenantUuid: ${payload.tenantUuid}`);
+
   // Add the tenantId as a custom claim
   payload.event.response = {
-    claimsAndScopeOverrideDetails: {
-      idTokenGeneration: {},
-      accessTokenGeneration: {
-        claimsToAddOrOverride: {
-          'custom:tenantUuid': payload.tenantUuid,
-        },
+    claimsOverrideDetails: {
+      claimsToAddOrOverride: {
+        'custom:tenantUuid': payload.tenantUuid,
       },
     },
   };
+
+  logger.info(`payload.event: ${JSON.stringify(payload.event)}`);
 
   return payload.event;
 }
