@@ -58,13 +58,21 @@ describe('API - Auth - PreAuthentication', () => {
 
     const result = await handler(event);
 
+    // expect(result.response).toEqual({
+    //   claimsAndScopeOverrideDetails: {
+    //     idTokenGeneration: {},
+    //     accessTokenGeneration: {
+    //       claimsToAddOrOverride: {
+    //         'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+    //       },
+    //     },
+    //   },
+    // });
+
     expect(result.response).toEqual({
-      claimsAndScopeOverrideDetails: {
-        idTokenGeneration: {},
-        accessTokenGeneration: {
-          claimsToAddOrOverride: {
-            'custom:tenantUuid': tenantsGlobal[0].external_uuid,
-          },
+      claimsOverrideDetails: {
+        claimsToAddOrOverride: {
+          'custom:tenantUuid': tenantsGlobal[0].external_uuid,
         },
       },
     });
