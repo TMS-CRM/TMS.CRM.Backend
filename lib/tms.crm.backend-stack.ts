@@ -2,7 +2,6 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import * as cdk from 'aws-cdk-lib';
 import { CfnParameter } from 'aws-cdk-lib';
-import type { CfnApi } from 'aws-cdk-lib/aws-apigatewayv2';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { Vpc } from 'aws-cdk-lib/aws-ec2';
@@ -38,10 +37,9 @@ export class TmsCrmBackendStack extends cdk.Stack {
       azs: ['a', 'b'],
     });
 
-    // Wrap as IVpc
-    const vpc = Vpc.fromVpcAttributes(this, 'WrappedVpc', {
+    const vpc = Vpc.fromVpcAttributes(this, 'VPC', {
       vpcId: vpcBuilder.vpc.ref,
-      availabilityZones: ['ap-southeast-2a', 'ap-southeast-2b'], // Set manually or infer
+      availabilityZones: ['ap-southeast-2a', 'ap-southeast-2b'],
       privateSubnetIds: vpcBuilder.privateSubnets.map((s) => s.ref),
       isolatedSubnetIds: vpcBuilder.databaseSubnets.map((s) => s.ref),
       isolatedSubnetIpv4CidrBlocks: vpcBuilder.databaseSubnets.map((s) => s.ref),
@@ -88,10 +86,9 @@ export class TmsCrmBackendStack extends cdk.Stack {
     const userPoolClient = new UserPoolClient(this, `${serviceNameUppercase}UserPoolClient`, {
       userPool: cognitoUserPool,
       generateSecret: false,
+      refreshTokenValidity: cdk.Duration.days(365),
       authFlows: {
-        adminUserPassword: true,
-        userPassword: true,
-        userSrp: true,
+        adminUserPassword: true, // Required for ADMIN_NO_SRP_AUTH
       },
     });
 
@@ -292,6 +289,20 @@ export class TmsCrmBackendStack extends cdk.Stack {
       PolicyActions: [],
     }).role;
 
+    const roleApiAuthDefinePassword = new RoleBuilder(this, 'RoleApiAuthDefinePassword', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    }).role;
+
+    const roleApiAuthRefreshToken = new RoleBuilder(this, 'RoleApiAuthRefreshToken', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    }).role;
+
     const roleSupportCreateTenant = new RoleBuilder(this, 'RoleSupportCreateTenant', {
       ServicePrincipal: 'lambda.amazonaws.com',
       ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
@@ -342,6 +353,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
         roleApiAuthSignIn,
         roleApiAuthSignOut,
         roleApiAuthSwitchTenant,
+        roleApiAuthDefinePassword,
+        roleApiAuthRefreshToken,
         roleCognitoPreTokenGeneration,
         roleKnexMigration,
         roleSupportCreateTenant,
@@ -351,8 +364,21 @@ export class TmsCrmBackendStack extends cdk.Stack {
     });
 
     new PermissionGrantor(this, `${serviceNameUppercase}PermissionGrantorCognitoAccess`, {
-      RolesToGrant: [roleApiPostUser, roleApiAuthSignIn, roleApiAuthSignOut, roleApiAuthSwitchTenant, roleSupportCreateTenant],
-      PolicyActions: ['cognito-idp:AdminInitiateAuth', 'cognito-idp:GlobalSignOut', 'cognito-idp:AdminCreateUser'],
+      RolesToGrant: [
+        roleApiPostUser,
+        roleApiAuthSignIn,
+        roleApiAuthSignOut,
+        roleApiAuthSwitchTenant,
+        roleApiAuthDefinePassword,
+        roleApiAuthRefreshToken,
+        roleSupportCreateTenant,
+      ],
+      PolicyActions: [
+        'cognito-idp:AdminInitiateAuth',
+        'cognito-idp:GlobalSignOut',
+        'cognito-idp:AdminCreateUser',
+        'cognito-idp:AdminRespondToAuthChallenge',
+      ],
       PolicyResources: [cognitoUserPool.userPoolArn],
     });
 
@@ -699,6 +725,34 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpc,
     }).lambda;
 
+    const lambdaApiAuthDefinePassword = new LambdaBuilder(this, `${serviceNameUppercase}ApiAuthDefinePassword`, {
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'auth', 'definePassword.ts'),
+      LambdaName: `${serviceNameKebabCase}-api-auth-define-password`,
+      LambdaRole: roleApiAuthDefinePassword,
+      LambdaEnv: {
+        DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
+        LOG_LEVEL: 'info',
+        USER_POOL_ID: cognitoUserPool.userPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+      },
+      Dependencies: ['knex', 'pg', 'winston'],
+      Vpc: vpc,
+    }).lambda;
+
+    const lambdaApiAuthRefreshToken = new LambdaBuilder(this, `${serviceNameUppercase}ApiAuthRefreshToken`, {
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'auth', 'refreshToken.ts'),
+      LambdaName: `${serviceNameKebabCase}-api-auth-refresh-token`,
+      LambdaRole: roleApiAuthRefreshToken,
+      LambdaEnv: {
+        DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
+        LOG_LEVEL: 'info',
+        USER_POOL_ID: cognitoUserPool.userPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+      },
+      Dependencies: ['knex', 'pg', 'winston'],
+      Vpc: vpc,
+    }).lambda;
+
     new LambdaBuilder(this, `${serviceNameUppercase}SupportCreateTenant`, {
       LambdaPath: join(__dirname, '..', 'lambdas', 'support', 'createTenant.ts'),
       LambdaName: `${serviceNameKebabCase}-support-create-tenant`,
@@ -757,23 +811,20 @@ export class TmsCrmBackendStack extends cdk.Stack {
     });
 
     // ApiGateway
-    const corsConfig: CfnApi.CorsProperty = {
-      allowHeaders: ['origin', 'Accept', 'Authorization', 'Content-Type', 'X-Requested-With', 'X-Modified-On'],
-      allowMethods: ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE'],
-      allowOrigins: ['*'],
-      maxAge: 300,
-    };
-
     const certificateApi = new acm.Certificate(this, 'CertificateApi', {
       domainName: paramUrlTmsCrmApi.valueAsString,
       validation: acm.CertificateValidation.fromDns(),
     });
 
-    // ApiGateway
     const api = new ApiBuilder(this, `${serviceNameUppercase}Api`, {
       ApiName: `${serviceNameKebabCase}-api`,
       ApiProtocol: 'HTTP',
-      ApiCors: corsConfig,
+      ApiCors: {
+        allowHeaders: ['origin', 'Accept', 'Authorization', 'Content-Type', 'X-Requested-With', 'X-Modified-On'],
+        allowMethods: ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE'],
+        allowOrigins: ['*'],
+        maxAge: 300,
+      },
       Domain: {
         domainName: paramUrlTmsCrmApi.valueAsString,
         certificate: certificateApi,
@@ -797,6 +848,22 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Route: '/auth/sign-in',
       Integration: api.createIntegration(`${serviceNameUppercase}ApiAuthSignInIntegration`, {
         Lambda: lambdaApiAuthSignIn,
+      }),
+    });
+
+    api.addRoute(`${serviceNameUppercase}ApiAuthDefinePassword`, {
+      Method: 'POST',
+      Route: '/auth/define-password',
+      Integration: api.createIntegration(`${serviceNameUppercase}ApiAuthDefinePasswordIntegration`, {
+        Lambda: lambdaApiAuthDefinePassword,
+      }),
+    });
+
+    api.addRoute(`${serviceNameUppercase}ApiAuthRefreshToken`, {
+      Method: 'POST',
+      Route: '/auth/refresh-token',
+      Integration: api.createIntegration(`${serviceNameUppercase}ApiAuthRefreshTokenIntegration`, {
+        Lambda: lambdaApiAuthRefreshToken,
       }),
     });
 

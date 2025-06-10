@@ -1,9 +1,9 @@
-import { AdminInitiateAuthCommand, type AuthenticationResultType } from '@aws-sdk/client-cognito-identity-provider';
+import { AdminInitiateAuthCommand, AuthFlowType, type AuthenticationResultType } from '@aws-sdk/client-cognito-identity-provider';
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { getCognitoClient } from '../../../lib/aws/cognito.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { toHttpErrorResponse } from '../../../lib/utils/response.js';
-import type { SwitchTenantResponsePayload } from '../../../models/api/payloads/switchTenant.js';
+import type { SwitchTenantResponsePayload } from '../../../models/api/payloads/auth/switchTenant.js';
 import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
@@ -68,19 +68,20 @@ async function authenticateUser(payload: { preferredTenantUuid: string; refreshT
 
   const { preferredTenantUuid, refreshToken } = payload;
 
-  const authCommand = new AdminInitiateAuthCommand({
-    UserPoolId: USER_POOL_ID,
-    ClientId: USER_POOL_CLIENT_ID,
-    AuthFlow: 'REFRESH_TOKEN_AUTH',
-    AuthParameters: {
-      REFRESH_TOKEN: refreshToken,
-    },
-    ClientMetadata: {
-      preferredTenantUuid,
-    },
-  });
+  const response = await getCognitoClient().send(
+    new AdminInitiateAuthCommand({
+      UserPoolId: USER_POOL_ID,
+      ClientId: USER_POOL_CLIENT_ID,
+      AuthFlow: AuthFlowType.REFRESH_TOKEN_AUTH,
+      AuthParameters: {
+        REFRESH_TOKEN: refreshToken,
+      },
+      ClientMetadata: {
+        preferredTenantUuid,
+      },
+    }),
+  );
 
-  const response = await getCognitoClient().send(authCommand);
   if (!response.AuthenticationResult) {
     throw new BadRequestError('Authentication failed');
   }
@@ -94,7 +95,6 @@ function formatResponseData(authenticationResult: AuthenticationResultType): Fet
   const responsePayload: SwitchTenantResponsePayload = {
     accessToken: authenticationResult.AccessToken!,
     idToken: authenticationResult.IdToken!,
-    refreshToken: authenticationResult.RefreshToken!,
   };
 
   return new FetchSuccess<SwitchTenantResponsePayload>('User has been authenticated in the new tenant', responsePayload);

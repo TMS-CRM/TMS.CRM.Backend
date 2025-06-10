@@ -1,15 +1,13 @@
-import { handler } from '../../../../lambdas/api/auth/switchTenant.js';
+import { handler } from '../../../../lambdas/api/auth/refreshToken.js';
 import { getCognitoClient } from '../../../../lib/aws/cognito.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import type { UserDatabase } from '../../../../models/entities/user.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { userTableName } from '../../../../repositories/userRepository.js';
-import { userTenantTableName } from '../../../../repositories/userTenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
-import { UserTenantDatabaseBuilder } from '../../../builders/userTenantDatabaseBuilder.js';
 
 // Mock the getCognitoClient function
 vi.mock('../../../../lib/aws/cognito.js', () => ({
@@ -29,34 +27,23 @@ const mockSend = vi.fn().mockResolvedValue({
   send: mockSend,
 });
 
-describe('API - Auth - Switch Tenant', () => {
+describe('API - Auth - Refresh token', () => {
   const tenantsGlobal: TenantDatabase[] = [];
   const usersGlobal: UserDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName)
-      .insert([
-        TenantDatabaseBuilder.make().withName('Tenant 1').build(),
-        TenantDatabaseBuilder.make().withName('Tenant 2').build(),
-        TenantDatabaseBuilder.make().withName('Tenant 3').build(),
-      ])
-      .returning('*');
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
 
     tenantsGlobal.push(...tenant);
 
     const user = await knexClient(userTableName)
-      .insert([UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe7@example.com').build()])
+      .insert([UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe10@example.com').build()])
       .returning('*');
 
     usersGlobal.push(...user);
-
-    await knexClient(userTenantTableName).insert([
-      UserTenantDatabaseBuilder.make().withUserId(usersGlobal[0].id).withTenantId(tenantsGlobal[0].id).build(),
-      UserTenantDatabaseBuilder.make().withUserId(usersGlobal[0].id).withTenantId(tenantsGlobal[1].id).build(),
-    ]);
   });
 
-  it('Success - Should switch the user to a new tenant', async () => {
+  it('Success - Should refresh the token', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims(
         {
@@ -65,8 +52,8 @@ describe('API - Auth - Switch Tenant', () => {
         },
         true,
       )
-      .withPathParameters({
-        tenantUuid: tenantsGlobal[1].external_uuid,
+      .withBody({
+        refreshToken: 'refreshToken',
       })
       .build();
 
@@ -78,12 +65,12 @@ describe('API - Auth - Switch Tenant', () => {
     expect(res.body).toBeDefined();
 
     const parsedBody = JSON.parse(res.body!);
-    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.type).toBe('PersistSuccess');
     expect(parsedBody.data.accessToken).toBeDefined();
     expect(parsedBody.data.idToken).toBeDefined();
   });
 
-  it('Error - Should return a 400 error if the path parameter is missing', async () => {
+  it('Error - Should return a 400 error if the body is missing required fields', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims(
         {
@@ -92,6 +79,7 @@ describe('API - Auth - Switch Tenant', () => {
         },
         true,
       )
+      .withBody({})
       .build();
 
     // Run the handler
@@ -103,32 +91,6 @@ describe('API - Auth - Switch Tenant', () => {
 
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('BadRequestError');
-    expect(parsedBody.message).toBe('Missing path parameters: tenantUuid');
-  });
-
-  it('Error - Should return a 400 error if the user does not have access to the Tenant', async () => {
-    const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims(
-        {
-          'custom:tenantUuid': tenantsGlobal[0].external_uuid,
-          sub: usersGlobal[0].cognito_uuid,
-        },
-        true,
-      )
-      .withPathParameters({
-        tenantUuid: tenantsGlobal[2].external_uuid,
-      })
-      .build();
-
-    // Run the handler
-    const res = await handler(event);
-
-    // Validate the API response
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toBeDefined();
-
-    const parsedBody = JSON.parse(res.body!);
-    expect(parsedBody.type).toBe('BadRequestError');
-    expect(parsedBody.message).toBe('User does not have access to this tenant');
+    expect(parsedBody.message).toBe('Missing fields: refreshToken');
   });
 });

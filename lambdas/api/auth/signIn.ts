@@ -1,11 +1,11 @@
-import { AdminInitiateAuthCommand, type AuthenticationResultType } from '@aws-sdk/client-cognito-identity-provider';
+import { AdminInitiateAuthCommand, AuthFlowType, type AuthenticationResultType, ChallengeNameType } from '@aws-sdk/client-cognito-identity-provider';
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { getCognitoClient } from '../../../lib/aws/cognito.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { toHttpErrorResponse } from '../../../lib/utils/response.js';
-import type { SignInRequestPayload, SignInResponsePayload } from '../../../models/api/payloads/signIn.js';
-import { signInRequestSchema } from '../../../models/api/payloads/signIn.js';
-import { BadRequestError } from '../../../models/api/responses/errors.js';
+import type { SignInForbiddenResponsePayload, SignInRequestPayload, SignInResponsePayload } from '../../../models/api/payloads/auth/signIn.js';
+import { signInRequestSchema } from '../../../models/api/payloads/auth/signIn.js';
+import { BadRequestError, ForbiddenError } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
 
@@ -38,19 +38,26 @@ async function authenticateUser(validatedRequest: ValidatedApiRequest<SignInRequ
 
   const { email, password } = validatedRequest.body!;
 
-  const authCommand = new AdminInitiateAuthCommand({
-    UserPoolId: USER_POOL_ID,
-    ClientId: USER_POOL_CLIENT_ID,
-    AuthFlow: 'ADMIN_NO_SRP_AUTH', // For direct authentication with email and password.
-    AuthParameters: {
-      USERNAME: email,
-      PASSWORD: password,
-    },
-  });
+  const response = await getCognitoClient().send(
+    new AdminInitiateAuthCommand({
+      UserPoolId: USER_POOL_ID,
+      ClientId: USER_POOL_CLIENT_ID,
+      AuthFlow: AuthFlowType.ADMIN_NO_SRP_AUTH, // For direct authentication with email and password.
+      AuthParameters: {
+        USERNAME: email,
+        PASSWORD: password,
+      },
+    }),
+  );
 
-  const response = await getCognitoClient().send(authCommand);
+  if (response.ChallengeName === ChallengeNameType.NEW_PASSWORD_REQUIRED) {
+    logger.info(`New password required for user ${email}`);
 
-  logger.info(`response: ${JSON.stringify(response)}`);
+    throw new ForbiddenError<SignInForbiddenResponsePayload>('New password required', {
+      email: email,
+      session: response.Session!,
+    });
+  }
 
   if (!response.AuthenticationResult) {
     throw new BadRequestError('Authentication failed');

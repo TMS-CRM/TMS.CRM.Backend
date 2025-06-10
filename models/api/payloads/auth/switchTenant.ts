@@ -2,5 +2,4 @@
 export type SwitchTenantResponsePayload = {
   accessToken: string;
   idToken: string;
-  refreshToken: string;
 };
