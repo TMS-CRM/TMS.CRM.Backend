@@ -54,7 +54,7 @@ describe('API - Customer - PUT', () => {
 
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withPathParameters({
         uuid: customersGlobal[0].external_uuid,
@@ -108,7 +108,7 @@ describe('API - Customer - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -137,7 +137,7 @@ describe('API - Customer - PUT', () => {
       .withPathParameters({ uuid: customersGlobal[0].external_uuid })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -171,7 +171,7 @@ describe('API - Customer - PUT', () => {
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 

@@ -37,7 +37,7 @@ describe('API - Task - GET', () => {
         uuid: tasksGlobal[0].external_uuid,
       })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -62,7 +62,7 @@ describe('API - Task - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -83,7 +83,7 @@ describe('API - Task - GET', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 

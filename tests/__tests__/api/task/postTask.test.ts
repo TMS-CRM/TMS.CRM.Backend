@@ -24,7 +24,7 @@ describe('API - Task - POST', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -63,7 +63,7 @@ describe('API - Task - POST', () => {
         completed: false,
       })
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 

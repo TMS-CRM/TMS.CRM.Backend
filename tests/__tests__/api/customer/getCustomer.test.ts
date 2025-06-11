@@ -53,7 +53,7 @@ describe('API - Customer - GET', () => {
   it('Success - Should get a customer', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withPathParameters({
         uuid: customersGlobal[0].external_uuid,
@@ -87,7 +87,7 @@ describe('API - Customer - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 
@@ -107,7 +107,7 @@ describe('API - Customer - GET', () => {
     // Event with a random uuid on the path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withPathParameters({ uuid: randomUUID() })
       .build();

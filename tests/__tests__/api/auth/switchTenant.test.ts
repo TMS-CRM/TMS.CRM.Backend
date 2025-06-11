@@ -60,7 +60,7 @@ describe('API - Auth - Switch Tenant', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims(
         {
-          'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+          tenantUuid: tenantsGlobal[0].external_uuid,
           sub: usersGlobal[0].cognito_uuid,
         },
         true,
@@ -87,7 +87,7 @@ describe('API - Auth - Switch Tenant', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims(
         {
-          'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+          tenantUuid: tenantsGlobal[0].external_uuid,
           sub: usersGlobal[0].cognito_uuid,
         },
         true,
@@ -110,7 +110,7 @@ describe('API - Auth - Switch Tenant', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims(
         {
-          'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+          tenantUuid: tenantsGlobal[0].external_uuid,
           sub: usersGlobal[0].cognito_uuid,
         },
         true,

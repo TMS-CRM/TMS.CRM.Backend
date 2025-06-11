@@ -39,7 +39,7 @@ describe('API - Auth - Sign out', () => {
   it('Success - Should sign out a user', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withHeader({
         authorization: `Bearer ${randomUUID()}`,

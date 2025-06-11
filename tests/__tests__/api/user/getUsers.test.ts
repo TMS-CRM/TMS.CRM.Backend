@@ -55,7 +55,7 @@ describe('API - User - GET', () => {
   it('Success - Should get users with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -80,7 +80,7 @@ describe('API - User - GET', () => {
   it('Success - Should get users with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -105,7 +105,7 @@ describe('API - User - GET', () => {
   it('Success - Should return 0 users if the tenant has no users', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[2].external_uuid,
+        tenantUuid: tenantsGlobal[2].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -131,7 +131,7 @@ describe('API - User - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 

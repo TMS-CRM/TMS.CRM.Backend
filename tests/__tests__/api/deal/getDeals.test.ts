@@ -191,7 +191,7 @@ describe('API - Deals - GET', () => {
   it('Success - Should get deals with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -216,7 +216,7 @@ describe('API - Deals - GET', () => {
   it('Success - Should get deals with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -240,7 +240,7 @@ describe('API - Deals - GET', () => {
   it('Success - Should return 0 deals if the tenant has no deals', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[1].external_uuid,
+        tenantUuid: tenantsGlobal[1].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -266,7 +266,7 @@ describe('API - Deals - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 

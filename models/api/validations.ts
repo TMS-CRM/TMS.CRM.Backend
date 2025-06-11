@@ -47,7 +47,7 @@ export class ValidatedApiRequest<T, Q = null> {
       return null;
     }
 
-    const tenantUuid = params.request.requestContext?.authorizer?.jwt?.claims['custom:tenantUuid'];
+    const tenantUuid = params.request.requestContext?.authorizer?.jwt?.claims?.tenantUuid;
     if (!tenantUuid || typeof tenantUuid !== 'string') {
       throw new BadRequestError('Tenant uuid not found in token');
     }

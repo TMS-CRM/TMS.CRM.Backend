@@ -213,7 +213,7 @@ describe('API - Activities - GET', () => {
   it('Success - Should get activities with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -238,7 +238,7 @@ describe('API - Activities - GET', () => {
   it('Success - Should get activities with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -263,7 +263,7 @@ describe('API - Activities - GET', () => {
   it('Success - Should return 0 activities if the tenant has no activities', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[2].external_uuid,
+        tenantUuid: tenantsGlobal[2].external_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -289,7 +289,7 @@ describe('API - Activities - GET', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .build();
 

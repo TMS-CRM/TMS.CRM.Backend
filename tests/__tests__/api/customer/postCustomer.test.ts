@@ -29,7 +29,7 @@ describe('API - Customer - POST', () => {
 
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withBody(payload)
       .build();
@@ -76,7 +76,7 @@ describe('API - Customer - POST', () => {
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+        tenantUuid: tenantsGlobal[0].external_uuid,
       })
       .withBody({
         firstName: 'John',
