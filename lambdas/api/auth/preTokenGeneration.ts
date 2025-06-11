@@ -26,7 +26,8 @@ export async function handler(event: PreTokenGenerationTriggerEvent): Promise<Pr
 async function determineTenantUuid(event: PreTokenGenerationTriggerEvent): Promise<{ event: PreTokenGenerationTriggerEvent; tenantUuid: string }> {
   logger.info('Start - determineTenantUuid');
 
-  // If a preferred tenant uuid is provided (from the switchTenant lambda), use it
+  // Check if a preferred tenant uuid is provided
+  // This is used when the user switches tenants or refreshes the token
   const preferredTenantUuid = event.request.clientMetadata?.preferredTenantUuid;
   if (preferredTenantUuid) {
     return {

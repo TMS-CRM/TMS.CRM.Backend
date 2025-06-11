@@ -100,12 +100,12 @@ export class ApiBuilder extends Construct {
   }
 
   public createAuthorizer(constructName: string, props: ApiAuthorizerProps): CfnAuthorizer {
-    let AuthorizerUri: string | undefined;
+    let authorizerUri: string | undefined;
 
     // For a custom lambda authorizer, an authorizerUri is required
     if (props.Type === 'REQUEST' && props.Lambda && props.Region) {
       // Lambda
-      AuthorizerUri = Fn.sub('arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${functionArn}/invocations', {
+      authorizerUri = Fn.sub('arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${functionArn}/invocations', {
         region: props.Region,
         functionArn: props.Lambda?.functionArn,
       });
@@ -121,7 +121,7 @@ export class ApiBuilder extends Construct {
       authorizerPayloadFormatVersion: props.PayloadVersion,
       enableSimpleResponses: props.SimpleResponse,
       authorizerResultTtlInSeconds: props.CacheTtl,
-      authorizerUri: AuthorizerUri,
+      authorizerUri: authorizerUri,
       identitySource: props.IdentitySource,
       jwtConfiguration: props.JwtConfiguration,
     });

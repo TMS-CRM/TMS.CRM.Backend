@@ -21,3 +21,9 @@ export type SignInResponsePayload = {
   idToken: string;
   refreshToken: string;
 };
+
+// Sign in forbidden response payload
+export type SignInForbiddenResponsePayload = {
+  email: string;
+  session: string;
+};
