@@ -6,6 +6,7 @@ import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { CfnUserPool, CfnUserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { Vpc } from 'aws-cdk-lib/aws-ec2';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Code, LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import type { Construct } from 'constructs';
@@ -92,6 +93,12 @@ export class TmsCrmBackendStack extends cdk.Stack {
       generateSecret: false,
       refreshTokenValidity: 365,
       explicitAuthFlows: ['ALLOW_ADMIN_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
+    });
+
+    lambdaCognitoPreTokenGeneration.addPermission('AllowCognitoInvoke', {
+      principal: new iam.ServicePrincipal('cognito-idp.amazonaws.com'),
+      action: 'lambda:InvokeFunction',
+      sourceArn: `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${cognitoUserPool.attrUserPoolId}`,
     });
 
     // Roles
