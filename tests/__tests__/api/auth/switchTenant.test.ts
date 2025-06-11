@@ -65,7 +65,7 @@ describe('API - Auth - Switch Tenant', () => {
         },
         true,
       )
-      .withPathParameters({
+      .withBody({
         tenantUuid: tenantsGlobal[1].external_uuid,
       })
       .build();
@@ -83,7 +83,7 @@ describe('API - Auth - Switch Tenant', () => {
     expect(parsedBody.data.idToken).toBeDefined();
   });
 
-  it('Error - Should return a 400 error if the path parameter is missing', async () => {
+  it('Error - Should return a 400 error if the body is missing', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withAuthorizerClaims(
         {
@@ -103,7 +103,7 @@ describe('API - Auth - Switch Tenant', () => {
 
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('BadRequestError');
-    expect(parsedBody.message).toBe('Missing path parameters: tenantUuid');
+    expect(parsedBody.message).toBe('Request body not found');
   });
 
   it('Error - Should return a 400 error if the user does not have access to the Tenant', async () => {
@@ -115,7 +115,7 @@ describe('API - Auth - Switch Tenant', () => {
         },
         true,
       )
-      .withPathParameters({
+      .withBody({
         tenantUuid: tenantsGlobal[2].external_uuid,
       })
       .build();
