@@ -3,7 +3,7 @@ import { fileURLToPath } from 'url';
 import * as cdk from 'aws-cdk-lib';
 import { CfnParameter } from 'aws-cdk-lib';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
-import { CfnUserPool, CfnUserPoolClient } from 'aws-cdk-lib/aws-cognito';
+import { CfnUserPool, CfnUserPoolClient, LambdaVersion } from 'aws-cdk-lib/aws-cognito';
 import { Vpc } from 'aws-cdk-lib/aws-ec2';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -82,7 +82,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       lambdaConfig: {
         preTokenGenerationConfig: {
           lambdaArn: lambdaCognitoPreTokenGeneration.functionArn,
-          lambdaVersion: 'V3_0', // Allows for custom claims to be added to the token
+          lambdaVersion: LambdaVersion.V3_0, // Allows for custom claims to be added to the token
         },
       },
     });

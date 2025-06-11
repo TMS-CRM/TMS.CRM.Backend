@@ -1,4 +1,4 @@
-import type { PreTokenGenerationTriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/pre-token-generation.js';
+import type { PreTokenGenerationV2TriggerEvent } from 'aws-lambda';
 import { logger } from '../../../lib/utils/logger.js';
 import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { selectTenantById } from '../../../repositories/tenantRepository.js';
@@ -11,7 +11,7 @@ import { selectUserTenantsByUserId } from '../../../repositories/userTenantRepos
  *
  * @see https://aws.amazon.com/blogs/security/how-to-customize-access-tokens-in-amazon-cognito-user-pools/
  */
-export async function handler(event: PreTokenGenerationTriggerEvent): Promise<PreTokenGenerationTriggerEvent> {
+export async function handler(event: PreTokenGenerationV2TriggerEvent): Promise<PreTokenGenerationV2TriggerEvent> {
   logger.info('Request received: ', event);
 
   return determineTenantUuid(event)
@@ -22,7 +22,9 @@ export async function handler(event: PreTokenGenerationTriggerEvent): Promise<Pr
     });
 }
 
-async function determineTenantUuid(event: PreTokenGenerationTriggerEvent): Promise<{ event: PreTokenGenerationTriggerEvent; tenantUuid: string }> {
+async function determineTenantUuid(
+  event: PreTokenGenerationV2TriggerEvent,
+): Promise<{ event: PreTokenGenerationV2TriggerEvent; tenantUuid: string }> {
   logger.info('Start - determineTenantUuid');
 
   // Check if a preferred tenant uuid is provided
@@ -59,12 +61,18 @@ async function determineTenantUuid(event: PreTokenGenerationTriggerEvent): Promi
   };
 }
 
-function formatResponse(payload: { event: PreTokenGenerationTriggerEvent; tenantUuid: string }): PreTokenGenerationTriggerEvent {
+function formatResponse(payload: { event: PreTokenGenerationV2TriggerEvent; tenantUuid: string }): PreTokenGenerationV2TriggerEvent {
   logger.info('Start - formatResponse');
 
   // Add the tenantId as a custom claim
-  payload.event.response.claimsOverrideDetails.claimsToAddOrOverride = {
-    'custom:tenantUuid': payload.tenantUuid,
+  payload.event.response.claimsAndScopeOverrideDetails = {
+    ...payload.event.response.claimsAndScopeOverrideDetails,
+    accessTokenGeneration: {
+      ...payload.event.response.claimsAndScopeOverrideDetails.accessTokenGeneration,
+      claimsToAddOrOverride: {
+        tenantUuid: payload.tenantUuid,
+      },
+    },
   };
 
   return payload.event;
