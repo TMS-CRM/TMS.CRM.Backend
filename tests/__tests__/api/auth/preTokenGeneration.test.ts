@@ -1,4 +1,4 @@
-import type { PreTokenGenerationTriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/pre-token-generation.js';
+import type { PreTokenGenerationV2TriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/pre-token-generation-v2.js';
 import { handler } from '../../../../lambdas/api/auth/preTokenGeneration.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
@@ -38,7 +38,7 @@ describe('API - Auth - PreTokenGeneration', () => {
   });
 
   it('Success - Should add tenantUuid to claims', async () => {
-    const event: PreTokenGenerationTriggerEvent = {
+    const event: PreTokenGenerationV2TriggerEvent = {
       version: '1',
       region: 'us-east-1',
       userPoolId: 'us-east-1_example',
@@ -57,29 +57,22 @@ describe('API - Auth - PreTokenGeneration', () => {
         },
       },
       response: {
-        claimsOverrideDetails: {
-          claimsToAddOrOverride: {},
+        claimsAndScopeOverrideDetails: {
+          accessTokenGeneration: {
+            claimsToAddOrOverride: {},
+          },
         },
       },
     };
 
     const result = await handler(event);
 
-    // expect(result.response).toEqual({
-    //   claimsAndScopeOverrideDetails: {
-    //     idTokenGeneration: {},
-    //     accessTokenGeneration: {
-    //       claimsToAddOrOverride: {
-    //         'custom:tenantUuid': tenantsGlobal[0].external_uuid,
-    //       },
-    //     },
-    //   },
-    // });
-
     expect(result.response).toEqual({
-      claimsOverrideDetails: {
-        claimsToAddOrOverride: {
-          'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      claimsAndScopeOverrideDetails: {
+        accessTokenGeneration: {
+          claimsToAddOrOverride: {
+            tenantUuid: tenantsGlobal[0].external_uuid,
+          },
         },
       },
     });
