@@ -11,7 +11,6 @@ import { selectUserTenantsByUserId } from '../../../repositories/userTenantRepos
  *
  * @see https://aws.amazon.com/blogs/security/how-to-customize-access-tokens-in-amazon-cognito-user-pools/
  */
-
 export async function handler(event: PreTokenGenerationTriggerEvent): Promise<PreTokenGenerationTriggerEvent> {
   logger.info('Request received: ', event);
 
@@ -63,18 +62,10 @@ async function determineTenantUuid(event: PreTokenGenerationTriggerEvent): Promi
 function formatResponse(payload: { event: PreTokenGenerationTriggerEvent; tenantUuid: string }): PreTokenGenerationTriggerEvent {
   logger.info('Start - formatResponse');
 
-  logger.info(`tenantUuid: ${payload.tenantUuid}`);
-
   // Add the tenantId as a custom claim
-  payload.event.response = {
-    claimsOverrideDetails: {
-      claimsToAddOrOverride: {
-        'custom:tenantUuid': payload.tenantUuid,
-      },
-    },
+  payload.event.response.claimsOverrideDetails.claimsToAddOrOverride = {
+    'custom:tenantUuid': payload.tenantUuid,
   };
-
-  logger.info(`payload.event: ${JSON.stringify(payload.event)}`);
 
   return payload.event;
 }
