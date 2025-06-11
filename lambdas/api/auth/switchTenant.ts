@@ -3,7 +3,11 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructured
 import { getCognitoClient } from '../../../lib/aws/cognito.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { toHttpErrorResponse } from '../../../lib/utils/response.js';
-import type { SwitchTenantResponsePayload } from '../../../models/api/payloads/auth/switchTenant.js';
+import {
+  type SwitchTenantRequestPayload,
+  type SwitchTenantResponsePayload,
+  switchTenantRequestSchema,
+} from '../../../models/api/payloads/auth/switchTenant.js';
 import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
@@ -26,20 +30,22 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<null>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<SwitchTenantRequestPayload>> {
   logger.info('Start - validateRequest');
 
   return new ValidatedApiRequest({
     request,
     expectedAuthenticated: true,
-    expectedPathParameter: 'tenantUuid',
+    expectedBodySchema: switchTenantRequestSchema,
   });
 }
 
-async function validatePreferredTenant(validatedRequest: ValidatedApiRequest<null>): Promise<{ preferredTenantUuid: string; refreshToken: string }> {
+async function validatePreferredTenant(
+  validatedRequest: ValidatedApiRequest<SwitchTenantRequestPayload>,
+): Promise<{ preferredTenantUuid: string; refreshToken: string }> {
   logger.info('Start - validatePreferredTenant');
 
-  const preferredTenantUuid = validatedRequest.pathParameter!;
+  const preferredTenantUuid = validatedRequest.body!.tenantUuid;
   const tenant = await selectTenantByExternalUuid(preferredTenantUuid);
   if (!tenant) {
     throw new BadRequestError('Tenant not found');
