@@ -77,11 +77,11 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     const cognitoUserPool = new CfnUserPool(this, `${serviceNameUppercase}UserPool`, {
       userPoolName: `${serviceNameUppercase}UserPool`,
-      usernameAttributes: ['email'], // equivalent to signInAliases.email = true in L2
+      usernameAttributes: ['email'],
       lambdaConfig: {
         preTokenGenerationConfig: {
           lambdaArn: lambdaCognitoPreTokenGeneration.functionArn,
-          lambdaVersion: 'V3',
+          lambdaVersion: 'V3_0', // Allows for custom claims to be added to the token
         },
       },
     });
