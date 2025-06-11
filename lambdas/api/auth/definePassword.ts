@@ -3,8 +3,11 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructured
 import { getCognitoClient } from '../../../lib/aws/cognito.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { toHttpErrorResponse } from '../../../lib/utils/response.js';
-import type { DefinePasswordRequestPayload, DefinePasswordResponsePayload } from '../../../models/api/payloads/auth/definePassword.js';
-import { signInRequestSchema } from '../../../models/api/payloads/auth/signIn.js';
+import {
+  type DefinePasswordRequestPayload,
+  type DefinePasswordResponsePayload,
+  definePasswordRequestSchema,
+} from '../../../models/api/payloads/auth/definePassword.js';
 import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
@@ -29,7 +32,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   return new ValidatedApiRequest<DefinePasswordRequestPayload>({
     request,
     expectedAuthenticated: false,
-    expectedBodySchema: signInRequestSchema,
+    expectedBodySchema: definePasswordRequestSchema,
   });
 }
 
