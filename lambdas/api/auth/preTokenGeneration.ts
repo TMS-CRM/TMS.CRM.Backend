@@ -68,7 +68,7 @@ function formatResponse(payload: { event: PreTokenGenerationV2TriggerEvent; tena
   payload.event.response.claimsAndScopeOverrideDetails = {
     ...payload.event.response.claimsAndScopeOverrideDetails,
     accessTokenGeneration: {
-      ...(payload.event.response.claimsAndScopeOverrideDetails.accessTokenGeneration ?? {}),
+      ...(payload.event.response.claimsAndScopeOverrideDetails?.accessTokenGeneration ?? {}),
       claimsToAddOrOverride: {
         tenantUuid: payload.tenantUuid,
       },
