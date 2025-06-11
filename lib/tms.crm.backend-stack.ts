@@ -3,7 +3,7 @@ import { fileURLToPath } from 'url';
 import * as cdk from 'aws-cdk-lib';
 import { CfnParameter } from 'aws-cdk-lib';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
-import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
+import { CfnUserPool, CfnUserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { Vpc } from 'aws-cdk-lib/aws-ec2';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Code, LayerVersion } from 'aws-cdk-lib/aws-lambda';
@@ -75,21 +75,23 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpc,
     }).lambda;
 
-    const cognitoUserPool = new UserPool(this, `${serviceNameUppercase}UserPool`, {
+    const cognitoUserPool = new CfnUserPool(this, `${serviceNameUppercase}UserPool`, {
       userPoolName: `${serviceNameUppercase}UserPool`,
-      signInAliases: { email: true },
-      lambdaTriggers: {
-        preTokenGeneration: lambdaCognitoPreTokenGeneration,
+      usernameAttributes: ['email'], // equivalent to signInAliases.email = true in L2
+      lambdaConfig: {
+        preTokenGenerationConfig: {
+          lambdaArn: lambdaCognitoPreTokenGeneration.functionArn,
+          lambdaVersion: 'V3',
+        },
       },
     });
 
-    const userPoolClient = new UserPoolClient(this, `${serviceNameUppercase}UserPoolClient`, {
-      userPool: cognitoUserPool,
+    const userPoolClient = new CfnUserPoolClient(this, `${serviceNameUppercase}UserPoolClient`, {
+      clientName: `${serviceNameUppercase}UserPoolClient`,
+      userPoolId: cognitoUserPool.attrUserPoolId,
       generateSecret: false,
-      refreshTokenValidity: cdk.Duration.days(365),
-      authFlows: {
-        adminUserPassword: true, // Required for ADMIN_NO_SRP_AUTH
-      },
+      refreshTokenValidity: 365,
+      explicitAuthFlows: ['ALLOW_ADMIN_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
     });
 
     // Roles
@@ -250,7 +252,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
     const roleApiPostUser = new RoleBuilder(this, 'RoleApiPostUser', {
       ServicePrincipal: 'lambda.amazonaws.com',
       ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
-      PolicyResources: [cognitoUserPool.userPoolArn],
+      PolicyResources: [cognitoUserPool.attrArn],
       PolicyActions: ['cognito-idp:AdminCreateUser', 'cognito-idp:AdminSetUserPassword'],
     }).role;
 
@@ -379,7 +381,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
         'cognito-idp:AdminCreateUser',
         'cognito-idp:AdminRespondToAuthChallenge',
       ],
-      PolicyResources: [cognitoUserPool.userPoolArn],
+      PolicyResources: [cognitoUserPool.attrArn],
     });
 
     // Lambdas
@@ -654,8 +656,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
-        USER_POOL_ID: cognitoUserPool.userPoolId,
-        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+        USER_POOL_ID: cognitoUserPool.attrUserPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.attrClientId,
       },
       Dependencies: ['knex', 'pg', 'winston', '@aws-sdk/client-cognito-identity-provider'],
       Vpc: vpc,
@@ -692,8 +694,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
-        USER_POOL_ID: cognitoUserPool.userPoolId,
-        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+        USER_POOL_ID: cognitoUserPool.attrUserPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.attrClientId,
       },
       Dependencies: ['knex', 'pg', 'winston'],
       Vpc: vpc,
@@ -718,8 +720,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
-        USER_POOL_ID: cognitoUserPool.userPoolId,
-        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+        USER_POOL_ID: cognitoUserPool.attrUserPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.attrClientId,
       },
       Dependencies: ['knex', 'pg', 'winston'],
       Vpc: vpc,
@@ -732,8 +734,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
-        USER_POOL_ID: cognitoUserPool.userPoolId,
-        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+        USER_POOL_ID: cognitoUserPool.attrUserPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.attrClientId,
       },
       Dependencies: ['knex', 'pg', 'winston'],
       Vpc: vpc,
@@ -746,8 +748,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
-        USER_POOL_ID: cognitoUserPool.userPoolId,
-        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+        USER_POOL_ID: cognitoUserPool.attrUserPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.attrClientId,
       },
       Dependencies: ['knex', 'pg', 'winston'],
       Vpc: vpc,
@@ -760,8 +762,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
-        USER_POOL_ID: cognitoUserPool.userPoolId,
-        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+        USER_POOL_ID: cognitoUserPool.attrUserPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.attrClientId,
       },
       Dependencies: ['knex', 'pg', 'winston'],
       Vpc: vpc,
@@ -838,8 +840,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Type: 'JWT',
       IdentitySource: ['$request.header.Authorization'],
       JwtConfiguration: {
-        audience: [userPoolClient.userPoolClientId],
-        issuer: `https://cognito-idp.${this.region}.amazonaws.com/${cognitoUserPool.userPoolId}`,
+        audience: [userPoolClient.attrClientId],
+        issuer: `https://cognito-idp.${this.region}.amazonaws.com/${cognitoUserPool.attrUserPoolId}`,
       },
     });
 
