@@ -21,7 +21,6 @@ describe('API - User - DELETE', () => {
     const user = await knexClient(userTableName)
       .insert(UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe1@example.com').build())
       .returning('*');
-
     usersGlobal.push(...user);
   });
 
@@ -30,8 +29,9 @@ describe('API - User - DELETE', () => {
       .withPathParameters({
         uuid: usersGlobal[0].external_uuid,
       })
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -52,8 +52,9 @@ describe('API - User - DELETE', () => {
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -73,8 +74,9 @@ describe('API - User - DELETE', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 

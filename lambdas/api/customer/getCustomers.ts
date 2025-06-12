@@ -26,7 +26,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 
   return new ValidatedApiRequest<null, GetCustomerListFilter>({
     request,
-    expectedAuthenticated: true,
+    expectAccessToken: true,
     expectedQueryParameters: [
       { name: 'limit', dataType: QueryParamDataType.number, required: true },
       { name: 'offset', dataType: QueryParamDataType.number, required: true },

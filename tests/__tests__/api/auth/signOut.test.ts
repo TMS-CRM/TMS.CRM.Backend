@@ -38,10 +38,11 @@ describe('API - Auth - Sign out', () => {
 
   it('Success - Should sign out a user', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
-      .withHeader({
+      .withHeaders({
         authorization: `Bearer ${randomUUID()}`,
       })
       .build();

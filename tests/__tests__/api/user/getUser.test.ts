@@ -15,7 +15,6 @@ describe('API - User - GET', () => {
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
-
     tenantsGlobal.push(...tenant);
 
     const user = await knexClient(userTableName)
@@ -24,7 +23,6 @@ describe('API - User - GET', () => {
         UserDatabaseBuilder.make().withFirstName('Jane').withLastName('Paul').withEmail('jane.paul1@example.com').build(),
       ])
       .returning('*');
-
     usersGlobal.push(...user);
   });
 
@@ -33,8 +31,9 @@ describe('API - User - GET', () => {
       .withPathParameters({
         uuid: usersGlobal[0].external_uuid,
       })
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -58,8 +57,9 @@ describe('API - User - GET', () => {
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -79,8 +79,9 @@ describe('API - User - GET', () => {
     // Event with a random uuid on the path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 

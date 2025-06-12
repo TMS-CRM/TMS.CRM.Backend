@@ -4,22 +4,31 @@ import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { activityTableName } from '../../../../repositories/activityRepository.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { userTableName } from '../../../../repositories/userRepository.js';
 import { ActivityDatabaseBuilder } from '../../../builders/activityDatabaseBuilder.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
 describe('API - Activities - GET', () => {
+  const usersGlobal: UserDatabase[] = [];
   const tenantsGlobal: TenantDatabase[] = [];
   const dealsGlobal: DealDatabase[] = [];
   const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
+    const user = await knexClient(userTableName)
+      .insert(UserDatabaseBuilder.make().withFirstName('Test').withLastName('User').withEmail('get.activity@example.com').build())
+      .returning('*');
+    usersGlobal.push(...user);
+
     const tenants = await knexClient(tenantTableName)
       .insert([
         TenantDatabaseBuilder.make().withName('Tenant 1').build(),
@@ -212,8 +221,9 @@ describe('API - Activities - GET', () => {
 
   it('Success - Should get activities with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -237,8 +247,9 @@ describe('API - Activities - GET', () => {
 
   it('Success - Should get activities with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -262,8 +273,9 @@ describe('API - Activities - GET', () => {
 
   it('Success - Should return 0 activities if the tenant has no activities', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[2].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -288,8 +300,9 @@ describe('API - Activities - GET', () => {
   it('Error - Should return a 400 error if the query parameters are missing', async () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 

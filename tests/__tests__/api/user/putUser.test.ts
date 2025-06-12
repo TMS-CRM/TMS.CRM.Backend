@@ -18,8 +18,7 @@ describe('API - User - PUT', () => {
   beforeAll(async () => {
     const user = await knexClient(userTableName)
       .insert(UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe4@example.com').build())
-      .returning(['id', 'external_uuid', 'first_name', 'last_name']);
-
+      .returning('*');
     usersGlobal.push(...user);
 
     const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
@@ -38,8 +37,9 @@ describe('API - User - PUT', () => {
         uuid: usersGlobal[0].external_uuid,
       })
       .withBody(payload)
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -75,8 +75,9 @@ describe('API - User - PUT', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -101,8 +102,9 @@ describe('API - User - PUT', () => {
 
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withBody(payload)
       .withPathParameters({
@@ -133,8 +135,9 @@ describe('API - User - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 

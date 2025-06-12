@@ -22,7 +22,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 
   return new ValidatedApiRequest<null>({
     request,
-    expectedAuthenticated: true,
+    expectAccessToken: true,
     expectedPathParameter: 'uuid',
   });
 }

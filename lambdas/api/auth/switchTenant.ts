@@ -35,7 +35,8 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 
   return new ValidatedApiRequest({
     request,
-    expectedAuthenticated: true,
+    expectAccessToken: true,
+    expectRefreshToken: true,
     expectedBodySchema: switchTenantRequestSchema,
   });
 }

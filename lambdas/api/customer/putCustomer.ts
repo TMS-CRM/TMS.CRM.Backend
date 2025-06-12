@@ -25,7 +25,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 
   return new ValidatedApiRequest<PutCustomerRequestPayload>({
     request,
-    expectedAuthenticated: true,
+    expectAccessToken: true,
     expectedBodySchema: putCustomerRequestSchema,
     expectedPathParameter: 'uuid',
   });

@@ -1,5 +1,5 @@
-import { randomUUID } from 'crypto';
 import type { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda';
+import { createFakeJwt } from '../utils/utils.js';
 
 export class APIGatewayProxyEventBuilder {
   private event: APIGatewayProxyEventV2WithJWTAuthorizer;
@@ -15,9 +15,7 @@ export class APIGatewayProxyEventBuilder {
           principalId: 'principalId',
           integrationLatency: 100,
           jwt: {
-            claims: {
-              sub: randomUUID(),
-            },
+            claims: {},
             scopes: [],
           },
         },
@@ -76,20 +74,25 @@ export class APIGatewayProxyEventBuilder {
     return this;
   }
 
-  withHeader(headers: { [key: string]: any }): this {
-    this.event.headers = headers;
+  withHeaders(headers: { [key: string]: string }, override?: boolean): this {
+    if (override) {
+      this.event.headers = headers;
+    } else {
+      this.event.headers = {
+        ...this.event.headers,
+        ...headers,
+      };
+    }
     return this;
   }
 
-  withAuthorizerClaims(claims: { [key: string]: string | number | boolean | string[] }, override?: boolean): this {
-    if (override) {
-      this.event.requestContext.authorizer.jwt.claims = claims;
-    } else {
-      this.event.requestContext.authorizer.jwt.claims = {
-        ...this.event.requestContext.authorizer.jwt.claims,
-        ...claims,
-      };
-    }
+  withUserAndTenant(ids: { userCognitoUuid: string; tenantUuid: string }): this {
+    this.event.headers.authorization = `Bearer ${createFakeJwt(ids.tenantUuid, ids.userCognitoUuid)}`;
+    this.event.requestContext.authorizer.jwt.claims = {
+      sub: ids.userCognitoUuid,
+      tenantUuid: ids.tenantUuid,
+    };
+
     return this;
   }
 }

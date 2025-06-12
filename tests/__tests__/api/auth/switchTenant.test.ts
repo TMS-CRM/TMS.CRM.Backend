@@ -58,15 +58,15 @@ describe('API - Auth - Switch Tenant', () => {
 
   it('Success - Should switch the user to a new tenant', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims(
-        {
-          tenantUuid: tenantsGlobal[0].external_uuid,
-          sub: usersGlobal[0].cognito_uuid,
-        },
-        true,
-      )
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
+      })
       .withBody({
         tenantUuid: tenantsGlobal[1].external_uuid,
+      })
+      .withHeaders({
+        'refresh-token': 'mockRefreshToken',
       })
       .build();
 
@@ -85,13 +85,13 @@ describe('API - Auth - Switch Tenant', () => {
 
   it('Error - Should return a 400 error if the body is missing', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims(
-        {
-          tenantUuid: tenantsGlobal[0].external_uuid,
-          sub: usersGlobal[0].cognito_uuid,
-        },
-        true,
-      )
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
+      })
+      .withHeaders({
+        'refresh-token': 'mockRefreshToken',
+      })
       .build();
 
     // Run the handler
@@ -108,15 +108,15 @@ describe('API - Auth - Switch Tenant', () => {
 
   it('Error - Should return a 400 error if the user does not have access to the Tenant', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims(
-        {
-          tenantUuid: tenantsGlobal[0].external_uuid,
-          sub: usersGlobal[0].cognito_uuid,
-        },
-        true,
-      )
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
+      })
       .withBody({
         tenantUuid: tenantsGlobal[2].external_uuid,
+      })
+      .withHeaders({
+        'refresh-token': 'mockRefreshToken',
       })
       .build();
 

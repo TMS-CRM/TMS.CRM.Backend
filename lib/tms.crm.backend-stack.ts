@@ -829,7 +829,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       ApiName: `${serviceNameKebabCase}-api`,
       ApiProtocol: 'HTTP',
       ApiCors: {
-        allowHeaders: ['origin', 'Accept', 'Authorization', 'Content-Type', 'X-Requested-With', 'X-Modified-On'],
+        allowHeaders: ['origin', 'Accept', 'Authorization', 'Content-Type', 'X-Requested-With', 'X-Modified-On', 'refresh-token'],
         allowMethods: ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE'],
         allowOrigins: ['*'],
         maxAge: 300,

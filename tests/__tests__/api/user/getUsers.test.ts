@@ -2,6 +2,7 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/user/getUsers.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { userTableName } from '../../../../repositories/userRepository.js';
 import { userTenantTableName } from '../../../../repositories/userTenantRepository.js';
@@ -11,9 +12,15 @@ import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 import { UserTenantDatabaseBuilder } from '../../../builders/userTenantDatabaseBuilder.js';
 
 describe('API - User - GET', () => {
+  const usersGlobal: UserDatabase[] = [];
   const tenantsGlobal: TenantDatabase[] = [];
 
   beforeAll(async () => {
+    const user = await knexClient(userTableName)
+      .insert(UserDatabaseBuilder.make().withFirstName('Test').withLastName('User').withEmail('get2.user@example.com').build())
+      .returning('*');
+    usersGlobal.push(...user);
+
     const tenant = await knexClient(tenantTableName)
       .insert([
         TenantDatabaseBuilder.make().withName('Tenant 1').build(),
@@ -54,8 +61,9 @@ describe('API - User - GET', () => {
 
   it('Success - Should get users with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -79,8 +87,9 @@ describe('API - User - GET', () => {
 
   it('Success - Should get users with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -104,8 +113,9 @@ describe('API - User - GET', () => {
 
   it('Success - Should return 0 users if the tenant has no users', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[2].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -130,8 +140,9 @@ describe('API - User - GET', () => {
   it('Error - Should return a 400 error if the query parameters are missing', async () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
+      .withUserAndTenant({
         tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 

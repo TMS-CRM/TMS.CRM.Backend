@@ -45,15 +45,12 @@ describe('API - Auth - Refresh token', () => {
 
   it('Success - Should refresh the token', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims(
-        {
-          tenantUuid: tenantsGlobal[0].external_uuid,
-          sub: usersGlobal[0].cognito_uuid,
-        },
-        true,
-      )
-      .withBody({
-        refreshToken: 'refreshToken',
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
+      })
+      .withHeaders({
+        'refresh-token': 'test-refresh-token',
       })
       .build();
 
@@ -70,16 +67,12 @@ describe('API - Auth - Refresh token', () => {
     expect(parsedBody.data.idToken).toBeDefined();
   });
 
-  it('Error - Should return a 400 error if the body is missing required fields', async () => {
+  it('Error - Should return a 400 error if the refresh token is missing', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims(
-        {
-          tenantUuid: tenantsGlobal[0].external_uuid,
-          sub: usersGlobal[0].cognito_uuid,
-        },
-        true,
-      )
-      .withBody({})
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
+      })
       .build();
 
     // Run the handler
@@ -91,6 +84,6 @@ describe('API - Auth - Refresh token', () => {
 
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('BadRequestError');
-    expect(parsedBody.message).toBe('Missing fields: refreshToken');
+    expect(parsedBody.message).toBe('Refresh token not found');
   });
 });
