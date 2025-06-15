@@ -5,17 +5,26 @@ import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { PutTaskRequestPayload } from '../../../../models/api/payloads/task.js';
 import type { TaskDatabase } from '../../../../models/entities/task.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { selectTaskByExternalUuid, taskTableName } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { userTableName } from '../../../../repositories/userRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TaskDatabaseBuilder } from '../../../builders/taskDatabaseBuilder.js';
 import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
 describe('API - Task - PUT', () => {
+  const usersGlobal: UserDatabase[] = [];
   const tenantsGlobal: TenantDatabase[] = [];
   const tasksGlobal: TaskDatabase[] = [];
 
   beforeAll(async () => {
+    const user = await knexClient(userTableName)
+      .insert(UserDatabaseBuilder.make().withFirstName('Test').withLastName('User').withEmail('put.task@example.com').build())
+      .returning('*');
+    usersGlobal.push(...user);
+
     const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
@@ -45,8 +54,9 @@ describe('API - Task - PUT', () => {
         uuid: tasksGlobal[0].external_uuid,
       })
       .withBody(payload)
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -85,8 +95,9 @@ describe('API - Task - PUT', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -112,8 +123,9 @@ describe('API - Task - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: tasksGlobal[0].external_uuid })
       .withBody(payload)
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -140,8 +152,9 @@ describe('API - Task - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 

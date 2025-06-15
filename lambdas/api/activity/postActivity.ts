@@ -30,7 +30,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 
   return new ValidatedApiRequest<PostActivityRequestPayload>({
     request,
-    expectedAuthenticated: true,
+    expectAccessToken: true,
     expectedBodySchema: postActivityRequestSchema,
   });
 }

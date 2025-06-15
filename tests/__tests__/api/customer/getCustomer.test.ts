@@ -3,19 +3,27 @@ import { handler } from '../../../../lambdas/api/customer/getCustomer.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { userTableName } from '../../../../repositories/userRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
 describe('API - Customer - GET', () => {
+  const usersGlobal: UserDatabase[] = [];
   const tenantsGlobal: TenantDatabase[] = [];
   const customersGlobal: CustomerDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
+    const user = await knexClient(userTableName)
+      .insert(UserDatabaseBuilder.make().withFirstName('Test').withLastName('User').withEmail('get.customer@example.com').build())
+      .returning('*');
+    usersGlobal.push(...user);
 
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
     const customer = await knexClient(customerTableName)
@@ -52,8 +60,9 @@ describe('API - Customer - GET', () => {
 
   it('Success - Should get a customer', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withPathParameters({
         uuid: customersGlobal[0].external_uuid,
@@ -86,8 +95,9 @@ describe('API - Customer - GET', () => {
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -106,8 +116,9 @@ describe('API - Customer - GET', () => {
   it('Error - Should return a 400 error if the customer does not exist', async () => {
     // Event with a random uuid on the path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withPathParameters({ uuid: randomUUID() })
       .build();

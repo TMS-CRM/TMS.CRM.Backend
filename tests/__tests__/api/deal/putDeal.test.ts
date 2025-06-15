@@ -6,20 +6,29 @@ import type { PutDealRequestPayload } from '../../../../models/api/payloads/deal
 import type { CustomerDatabase } from '../../../../models/entities/customer.js';
 import { type DealDatabase, DealProgress, RoomAccess } from '../../../../models/entities/deal.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { customerTableName } from '../../../../repositories/customerRepository.js';
 import { dealTableName, selectDealByExternalUuid } from '../../../../repositories/dealRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { userTableName } from '../../../../repositories/userRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { CustomerDatabaseBuilder } from '../../../builders/customerDatabaseBuilder.js';
 import { DealDatabaseBuilder } from '../../../builders/dealDatabaseBuilder.js';
 import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
 describe('API - Deal - PUT', () => {
+  const usersGlobal: UserDatabase[] = [];
   const tenantsGlobal: TenantDatabase[] = [];
   const customersGlobal: CustomerDatabase[] = [];
   const dealsGlobal: DealDatabase[] = [];
 
-  beforeEach(async () => {
+  beforeAll(async () => {
+    const user = await knexClient(userTableName)
+      .insert(UserDatabaseBuilder.make().withFirstName('Test').withLastName('User').withEmail('put.deal@example.com').build())
+      .returning('*');
+    usersGlobal.push(...user);
+
     const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
@@ -88,8 +97,9 @@ describe('API - Deal - PUT', () => {
         uuid: dealsGlobal[0].external_uuid,
       })
       .withBody(payload)
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -150,8 +160,9 @@ describe('API - Deal - PUT', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -187,8 +198,9 @@ describe('API - Deal - PUT', () => {
         uuid: dealsGlobal[0].external_uuid,
       })
       .withBody(payload)
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -225,8 +237,9 @@ describe('API - Deal - PUT', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
       .withBody(payload)
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 

@@ -4,19 +4,27 @@ import { handler } from '../../../../lambdas/api/task/deleteTask.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TaskDatabase } from '../../../../models/entities/task.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { selectTaskByExternalUuid, taskTableName } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { userTableName } from '../../../../repositories/userRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TaskDatabaseBuilder } from '../../../builders/taskDatabaseBuilder.js';
 import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
 describe('API - Task - DELETE', () => {
+  const usersGlobal: UserDatabase[] = [];
   const tenantsGlobal: TenantDatabase[] = [];
   const tasksGlobal: TaskDatabase[] = [];
 
   beforeAll(async () => {
-    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
+    const user = await knexClient(userTableName)
+      .insert(UserDatabaseBuilder.make().withFirstName('Test').withLastName('User').withEmail('delete.task@example.com').build())
+      .returning('*');
+    usersGlobal.push(...user);
 
+    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
 
     const task = await knexClient(taskTableName)
@@ -38,8 +46,9 @@ describe('API - Task - DELETE', () => {
       .withPathParameters({
         uuid: tasksGlobal[0].external_uuid,
       })
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -60,8 +69,9 @@ describe('API - Task - DELETE', () => {
 
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -81,8 +91,9 @@ describe('API - Task - DELETE', () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
       .withPathParameters({ uuid: randomUUID() })
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 

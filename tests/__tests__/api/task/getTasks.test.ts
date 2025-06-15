@@ -2,16 +2,25 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handler } from '../../../../lambdas/api/task/getTasks.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { taskTableName } from '../../../../repositories/taskRepository.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
+import { userTableName } from '../../../../repositories/userRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TaskDatabaseBuilder } from '../../../builders/taskDatabaseBuilder.js';
 import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
 describe('API - Tasks - GET', () => {
+  const usersGlobal: UserDatabase[] = [];
   const tenantsGlobal: TenantDatabase[] = [];
 
   beforeAll(async () => {
+    const user = await knexClient(userTableName)
+      .insert(UserDatabaseBuilder.make().withFirstName('Test').withLastName('User').withEmail('get2.task@example.com').build())
+      .returning('*');
+    usersGlobal.push(...user);
+
     const tenants = await knexClient(tenantTableName)
       .insert([
         TenantDatabaseBuilder.make().withName('Tenant 1').build(),
@@ -103,8 +112,9 @@ describe('API - Tasks - GET', () => {
 
   it('Success - Should get tasks with pagination', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -128,8 +138,9 @@ describe('API - Tasks - GET', () => {
 
   it('Success - Should get tasks with pagination using offset', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -153,8 +164,9 @@ describe('API - Tasks - GET', () => {
 
   it('Success - Should return 0 tasks if the tenant has no tasks', async () => {
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[2].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[2].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .withQueryStringParameters({
         limit: '5',
@@ -179,8 +191,9 @@ describe('API - Tasks - GET', () => {
   it('Error - Should return a 400 error if the query parameters are missing', async () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 

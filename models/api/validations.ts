@@ -1,10 +1,12 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda';
+import { decodeJwt } from 'jose';
 import { BadRequestError } from './responses/errors.js';
 import { validateAndParseBody, validateAndParsePathParams, validateAndParseQueryParams } from '../../lib/utils/apiValidations.js';
 
 export interface ValidatedApiRequestParams {
   request: APIGatewayProxyEventV2WithJWTAuthorizer;
-  expectedAuthenticated: boolean;
+  expectAccessToken: boolean;
+  expectRefreshToken?: boolean;
   expectedPathParameter?: string;
   expectedQueryParameters?: ExpectedQueryParam[];
   expectedBodySchema?: Record<string, unknown>;
@@ -20,21 +22,49 @@ export class ValidatedApiRequest<T, Q = null> {
   refreshToken: string | null;
 
   constructor(params: ValidatedApiRequestParams) {
+    this.accessToken = this.setAccessToken(params);
+    this.refreshToken = this.setRefreshToken(params);
     this.userCognitoUuid = this.setUserCognitoUuid(params);
     this.tenantUuid = this.setTenantUuid(params);
-    this.accessToken = params.request.headers.authorization?.replace('Bearer ', '') ?? null;
-    this.refreshToken = params.request.headers.refreshToken ?? null;
     this.pathParameter = this.setPathParameter(params);
     this.queryParameters = this.setQueryParameters(params);
     this.body = this.setBody(params);
   }
 
-  private setUserCognitoUuid(params: ValidatedApiRequestParams): string | null {
-    if (!params.expectedAuthenticated) {
+  private setAccessToken(params: ValidatedApiRequestParams): string | null {
+    if (!params.expectAccessToken) {
       return null;
     }
 
-    const userCognitoUuid = params.request.requestContext?.authorizer?.jwt?.claims?.sub;
+    const accessToken = params.request.headers.authorization?.replace('Bearer ', '');
+    if (!accessToken) {
+      throw new BadRequestError('Access token not found');
+    }
+
+    return accessToken;
+  }
+
+  private setRefreshToken(params: ValidatedApiRequestParams): string | null {
+    if (!params.expectRefreshToken) {
+      return null;
+    }
+
+    const refreshToken = params.request.headers['refresh-token'];
+    if (!refreshToken) {
+      throw new BadRequestError('Refresh token not found');
+    }
+
+    return refreshToken;
+  }
+
+  private setUserCognitoUuid(params: ValidatedApiRequestParams): string | null {
+    if (!params.expectAccessToken) {
+      return null;
+    }
+
+    // Retrieve the user cognito uuid from the request context (available for authenticated requests) or from the decoded access token
+    // There are exceptions where we don't authenticate the request, but we still need the access token to be present (refresh-token)
+    const userCognitoUuid = params.request.requestContext?.authorizer?.jwt?.claims?.sub ?? decodeJwt(this.accessToken!).sub;
     if (!userCognitoUuid || typeof userCognitoUuid !== 'string') {
       throw new BadRequestError('User uuid not found in token');
     }
@@ -43,11 +73,13 @@ export class ValidatedApiRequest<T, Q = null> {
   }
 
   private setTenantUuid(params: ValidatedApiRequestParams): string | null {
-    if (!params.expectedAuthenticated) {
+    if (!params.expectAccessToken) {
       return null;
     }
 
-    const tenantUuid = params.request.requestContext?.authorizer?.jwt?.claims['custom:tenantUuid'];
+    // Retrieve the tenant uuid from the request context (available for authenticated requests) or from the decoded access token
+    // There are exceptions where we don't authenticate the request, but we still need the access token to be present (refresh-token)
+    const tenantUuid = params.request.requestContext?.authorizer?.jwt?.claims?.tenantUuid ?? decodeJwt(this.accessToken!).tenantUuid;
     if (!tenantUuid || typeof tenantUuid !== 'string') {
       throw new BadRequestError('Tenant uuid not found in token');
     }

@@ -3,7 +3,6 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructured
 import { getCognitoClient } from '../../../lib/aws/cognito.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { toHttpErrorResponse } from '../../../lib/utils/response.js';
-import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
 
@@ -23,20 +22,16 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 
   return new ValidatedApiRequest({
     request,
-    expectedAuthenticated: true,
+    expectAccessToken: true,
   });
 }
 
 async function signOutUser(validatedRequest: ValidatedApiRequest<null>): Promise<void> {
   logger.info('Start - signOutUser');
 
-  if (!validatedRequest.accessToken) {
-    throw new BadRequestError('Access token not found');
-  }
-
   // Sign out the current access token
   const signOutCommand = new GlobalSignOutCommand({
-    AccessToken: validatedRequest.accessToken,
+    AccessToken: validatedRequest.accessToken!,
   });
 
   await getCognitoClient().send(signOutCommand);

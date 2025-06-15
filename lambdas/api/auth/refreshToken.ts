@@ -3,11 +3,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructured
 import { getCognitoClient } from '../../../lib/aws/cognito.js';
 import { logger } from '../../../lib/utils/logger.js';
 import { toHttpErrorResponse } from '../../../lib/utils/response.js';
-import {
-  type RefreshTokenRequestPayload,
-  type RefreshTokenResponsePayload,
-  refreshTokenRequestSchema,
-} from '../../../models/api/payloads/auth/refreshToken.js';
+import { type RefreshTokenResponsePayload } from '../../../models/api/payloads/auth/refreshToken.js';
 import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
@@ -26,20 +22,18 @@ export async function handler(request: APIGatewayProxyEventV2WithJWTAuthorizer):
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<RefreshTokenRequestPayload>> {
+async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<ValidatedApiRequest<null>> {
   logger.info('Start - validateRequest');
 
-  return new ValidatedApiRequest<RefreshTokenRequestPayload>({
+  return new ValidatedApiRequest<null>({
     request,
-    expectedAuthenticated: true,
-    expectedBodySchema: refreshTokenRequestSchema,
+    expectAccessToken: true,
+    expectRefreshToken: true,
   });
 }
 
-async function refreshToken(validatedRequest: ValidatedApiRequest<RefreshTokenRequestPayload>): Promise<AuthenticationResultType> {
+async function refreshToken(validatedRequest: ValidatedApiRequest<null>): Promise<AuthenticationResultType> {
   logger.info('Start - refreshTokens');
-
-  const { refreshToken } = validatedRequest.body!;
 
   const response = await getCognitoClient().send(
     new AdminInitiateAuthCommand({
@@ -47,7 +41,7 @@ async function refreshToken(validatedRequest: ValidatedApiRequest<RefreshTokenRe
       ClientId: USER_POOL_CLIENT_ID,
       AuthFlow: AuthFlowType.REFRESH_TOKEN_AUTH,
       AuthParameters: {
-        REFRESH_TOKEN: refreshToken,
+        REFRESH_TOKEN: validatedRequest.refreshToken!,
       },
       ClientMetadata: {
         preferredTenantUuid: validatedRequest.tenantUuid!, // Keep the current tenant

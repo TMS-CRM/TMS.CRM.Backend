@@ -2,11 +2,13 @@ import { handler } from '../../../../lambdas/api/user/postUser.js';
 import { setupCognitoUser } from '../../../../lib/aws/cognito.js';
 import { knexClient } from '../../../../lib/utils/knexClient.js';
 import type { TenantDatabase } from '../../../../models/entities/tenant.js';
+import type { UserDatabase } from '../../../../models/entities/user.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
-import { selectUserByExternalUuid } from '../../../../repositories/userRepository.js';
+import { selectUserByExternalUuid, userTableName } from '../../../../repositories/userRepository.js';
 import { selectUserTenantsByUserId } from '../../../../repositories/userTenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
+import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
 // Mock the setupCognitoUser function
 vi.mock('../../../../lib/aws/cognito.js', () => ({
@@ -17,9 +19,15 @@ vi.mock('../../../../lib/aws/cognito.js', () => ({
 const mockSetupCognitoUser = setupCognitoUser as ReturnType<typeof vi.fn>;
 
 describe('API - User - POST', () => {
+  const usersGlobal: UserDatabase[] = [];
   const tenantsGlobal: TenantDatabase[] = [];
 
   beforeAll(async () => {
+    const user = await knexClient(userTableName)
+      .insert(UserDatabaseBuilder.make().withFirstName('Test').withLastName('User').withEmail('post.user@example.com').build())
+      .returning('*');
+    usersGlobal.push(...user);
+
     const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
     tenantsGlobal.push(...tenant);
   });
@@ -33,8 +41,9 @@ describe('API - User - POST', () => {
 
     const event = APIGatewayProxyEventBuilder.make()
       .withBody(payload)
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 
@@ -72,8 +81,9 @@ describe('API - User - POST', () => {
       .withBody({
         firstName: 'John',
       })
-      .withAuthorizerClaims({
-        'custom:tenantUuid': tenantsGlobal[0].external_uuid,
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
       })
       .build();
 

@@ -31,7 +31,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 
   return new ValidatedApiRequest<DefinePasswordRequestPayload>({
     request,
-    expectedAuthenticated: false,
+    expectAccessToken: false,
     expectedBodySchema: definePasswordRequestSchema,
   });
 }
