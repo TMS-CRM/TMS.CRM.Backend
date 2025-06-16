@@ -2,6 +2,7 @@ export interface UserTenantDatabase {
   id: number;
   user_id: number;
   tenant_id: number;
+  authentication_requested_on: string | null;
   created_on: string;
   modified_on: string | null;
   deleted_on: string | null;
@@ -11,6 +12,7 @@ export class UserTenant {
   public id: number;
   public userId: number;
   public tenantId: number;
+  public authenticationRequestedOn: string | null;
   public createdOn: string;
   public modifiedOn: string | null;
   public deletedOn: string | null;
@@ -19,6 +21,7 @@ export class UserTenant {
     this.id = data.id;
     this.userId = data.user_id;
     this.tenantId = data.tenant_id;
+    this.authenticationRequestedOn = data.authentication_requested_on;
     this.createdOn = data.created_on;
     this.modifiedOn = data.modified_on;
     this.deletedOn = data.deleted_on;

@@ -3,7 +3,7 @@ import { logger } from '../../../lib/utils/logger.js';
 import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { selectTenantById } from '../../../repositories/tenantRepository.js';
 import { selectUserByCognitoUuid } from '../../../repositories/userRepository.js';
-import { selectUserTenantsByUserId } from '../../../repositories/userTenantRepository.js';
+import { selectUserMostRecentTenant } from '../../../repositories/userTenantRepository.js';
 
 /**
  * This lambda function is triggered before the token generation process.
@@ -27,30 +27,18 @@ async function determineTenantUuid(
 ): Promise<{ event: PreTokenGenerationV2TriggerEvent; tenantUuid: string }> {
   logger.info('Start - determineTenantUuid');
 
-  // Check if a preferred tenant uuid is provided
-  // This is used when the user switches tenants or refreshes the token
-  const preferredTenantUuid = event.request.clientMetadata?.preferredTenantUuid;
-  if (preferredTenantUuid) {
-    return {
-      event,
-      tenantUuid: preferredTenantUuid,
-    };
-  }
-
-  // If no preferred tenant uuid is provided, use the first available tenant for the user
   const userCognitoId = event.request.userAttributes.sub;
-
   const user = await selectUserByCognitoUuid(userCognitoId);
   if (!user) {
     throw new BadRequestError('User not found');
   }
 
-  const userTenants = await selectUserTenantsByUserId(user.id);
-  if (!userTenants?.length) {
-    throw new BadRequestError('User has no tenants');
-  }
+  // TEMP: Since we can't inject a preferred tenant uuid into the token generation process,
+  // we need to use the most recent tenant that the user has requested to authenticate with.
+  // This can lead to race conditions if the user refreshes the token in multiple devices at the same time.
+  const userMostRecentTenant = await selectUserMostRecentTenant(user.id);
 
-  const tenant = await selectTenantById(userTenants[0].tenantId);
+  const tenant = await selectTenantById(userMostRecentTenant!.tenantId);
   if (!tenant) {
     throw new BadRequestError('Tenant not found');
   }

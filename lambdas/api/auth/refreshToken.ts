@@ -7,6 +7,9 @@ import { type RefreshTokenResponsePayload } from '../../../models/api/payloads/a
 import { BadRequestError } from '../../../models/api/responses/errors.js';
 import { HttpOkResponse, PersistSuccess } from '../../../models/api/responses/success.js';
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
+import { selectTenantByExternalUuid } from '../../../repositories/tenantRepository.js';
+import { selectUserByCognitoUuid } from '../../../repositories/userRepository.js';
+import { selectUserTenant, updateUserTenant } from '../../../repositories/userTenantRepository.js';
 
 const USER_POOL_ID = process.env.USER_POOL_ID;
 const USER_POOL_CLIENT_ID = process.env.USER_POOL_CLIENT_ID;
@@ -35,6 +38,24 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
 async function refreshToken(validatedRequest: ValidatedApiRequest<null>): Promise<AuthenticationResultType> {
   logger.info('Start - refreshTokens');
 
+  const tenant = await selectTenantByExternalUuid(validatedRequest.tenantUuid!);
+  if (!tenant) {
+    throw new BadRequestError('Tenant not found');
+  }
+
+  const user = await selectUserByCognitoUuid(validatedRequest.userCognitoUuid!);
+  if (!user) {
+    throw new BadRequestError('User not found');
+  }
+
+  const userTenant = await selectUserTenant(user.id, tenant.id);
+  if (!userTenant) {
+    throw new BadRequestError('User does not have access to this tenant');
+  }
+
+  // Set the tenant as the most recent tenant that the user has requested to authenticate with
+  await updateUserTenant(userTenant.id, { authentication_requested_on: new Date().toISOString() });
+
   const response = await getCognitoClient().send(
     new AdminInitiateAuthCommand({
       UserPoolId: USER_POOL_ID,
@@ -43,9 +64,7 @@ async function refreshToken(validatedRequest: ValidatedApiRequest<null>): Promis
       AuthParameters: {
         REFRESH_TOKEN: validatedRequest.refreshToken!,
       },
-      ClientMetadata: {
-        preferredTenantUuid: validatedRequest.tenantUuid!, // Keep the current tenant
-      },
+      // ClientMetadata is ignored on REFRESH_TOKEN_AUTH (can't pass a preferred tenant uuid)
     }),
   );
 

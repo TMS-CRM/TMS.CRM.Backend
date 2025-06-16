@@ -27,6 +27,7 @@ export async function up(knex) {
       table.increments('id').primary();
       table.integer('user_id').references('id').inTable('user').onDelete('CASCADE');
       table.integer('tenant_id').references('id').inTable('tenant').onDelete('CASCADE');
+      table.timestamp('authentication_requested_on');
       table.timestamp('created_on').defaultTo(knex.fn.now()).notNullable();
       table.timestamp('modified_on');
       table.timestamp('deleted_on');
