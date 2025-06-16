@@ -20,6 +20,11 @@ export class UserTenantDatabaseBuilder {
     return this;
   }
 
+  withAuthenticationRequestedOn(value: string): this {
+    this.userTenantDatabase.authentication_requested_on = value;
+    return this;
+  }
+
   build(): UserTenantDatabase {
     return this.userTenantDatabase;
   }

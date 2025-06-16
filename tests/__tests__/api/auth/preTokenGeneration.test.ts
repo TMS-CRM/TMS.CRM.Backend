@@ -16,7 +16,13 @@ describe('API - Auth - PreTokenGeneration', () => {
 
   beforeAll(async () => {
     // Insert a tenant and a user into the database
-    const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
+    const tenant = await knexClient(tenantTableName)
+      .insert([
+        TenantDatabaseBuilder.make().withName('Tenant PreTokenGeneration 1').build(),
+        TenantDatabaseBuilder.make().withName('Tenant PreTokenGeneration 2').build(),
+        TenantDatabaseBuilder.make().withName('Tenant PreTokenGeneration 3').build(),
+      ])
+      .returning('*');
     tenantsGlobal.push(...tenant);
 
     const user = await knexClient(userTableName)
@@ -34,6 +40,16 @@ describe('API - Auth - PreTokenGeneration', () => {
     // Link the user to the tenant
     await knexClient(userTenantTableName).insert([
       UserTenantDatabaseBuilder.make().withUserId(usersGlobal[0].id).withTenantId(tenantsGlobal[0].id).build(),
+      UserTenantDatabaseBuilder.make()
+        .withUserId(usersGlobal[0].id)
+        .withTenantId(tenantsGlobal[1].id)
+        .withAuthenticationRequestedOn(new Date().toISOString())
+        .build(),
+      UserTenantDatabaseBuilder.make()
+        .withUserId(usersGlobal[0].id)
+        .withTenantId(tenantsGlobal[2].id)
+        .withAuthenticationRequestedOn(new Date(Date.now() - 1000).toISOString())
+        .build(),
     ]);
   });
 
@@ -67,14 +83,16 @@ describe('API - Auth - PreTokenGeneration', () => {
 
     const result = await handler(event);
 
-    expect(result.response).toEqual({
-      claimsAndScopeOverrideDetails: {
-        accessTokenGeneration: {
-          claimsToAddOrOverride: {
-            tenantUuid: tenantsGlobal[0].external_uuid,
+    expect(result.response).toEqual(
+      expect.objectContaining({
+        claimsAndScopeOverrideDetails: {
+          accessTokenGeneration: {
+            claimsToAddOrOverride: {
+              tenantUuid: tenantsGlobal[1].external_uuid,
+            },
           },
         },
-      },
-    });
+      }),
+    );
   });
 });

@@ -32,9 +32,15 @@ export async function selectUserTenant(userId: number, tenantId: number): Promis
 }
 
 export async function selectUserMostRecentTenant(userId: number): Promise<UserTenant | null> {
-  const query = knexClient(userTenantTableName).select('*').where('user_id', userId).orderBy('authentication_requested_on', 'desc').limit(1);
-  const records = (await query) as UserTenantDatabase[];
-  return records.length > 0 ? new UserTenant(records[0]) : null;
+  const query = knexClient(userTenantTableName)
+    .select('*')
+    .where('user_id', userId)
+    .whereNull('deleted_on')
+    .orderByRaw('authentication_requested_on DESC NULLS LAST, id DESC')
+    .first();
+
+  const record = (await query) as UserTenantDatabase;
+  return record ? new UserTenant(record) : null;
 }
 
 export async function updateUserTenant(userTenantId: number, userTenant: Partial<UserTenantDatabase>, transaction?: Knex.Transaction): Promise<void> {
