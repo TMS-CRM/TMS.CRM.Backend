@@ -5,9 +5,11 @@ import type { TenantDatabase } from '../../../../models/entities/tenant.js';
 import type { UserDatabase } from '../../../../models/entities/user.js';
 import { tenantTableName } from '../../../../repositories/tenantRepository.js';
 import { userTableName } from '../../../../repositories/userRepository.js';
+import { userTenantTableName } from '../../../../repositories/userTenantRepository.js';
 import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEventBuilder.js';
 import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
+import { UserTenantDatabaseBuilder } from '../../../builders/userTenantDatabaseBuilder.js';
 
 // Mock the getCognitoClient function
 vi.mock('../../../../lib/aws/cognito.js', () => ({
@@ -33,14 +35,16 @@ describe('API - Auth - Refresh token', () => {
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
-
     tenantsGlobal.push(...tenant);
 
     const user = await knexClient(userTableName)
       .insert([UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe10@example.com').build()])
       .returning('*');
-
     usersGlobal.push(...user);
+
+    await knexClient(userTenantTableName).insert(
+      UserTenantDatabaseBuilder.make().withUserId(usersGlobal[0].id).withTenantId(tenantsGlobal[0].id).build(),
+    );
   });
 
   it('Success - Should refresh the token', async () => {

@@ -22,3 +22,30 @@ export async function selectUserTenantsByUserId(userId: number): Promise<UserTen
 
   return records.length > 0 ? records.map((record) => new UserTenant(record)) : null;
 }
+
+/** Get the most recent UserTenant record by UserId and TenantId */
+export async function selectUserTenant(userId: number, tenantId: number): Promise<UserTenant | null> {
+  const query = knexClient(userTenantTableName).select('*').where('user_id', userId).andWhere('tenant_id', tenantId).whereNull('deleted_on').first();
+  const record = (await query) as UserTenantDatabase;
+
+  return record ? new UserTenant(record) : null;
+}
+
+export async function selectUserMostRecentTenant(userId: number): Promise<UserTenant | null> {
+  const query = knexClient(userTenantTableName)
+    .select('*')
+    .where('user_id', userId)
+    .whereNull('deleted_on')
+    .orderByRaw('authentication_requested_on DESC NULLS LAST, id DESC')
+    .first();
+
+  const record = (await query) as UserTenantDatabase;
+  return record ? new UserTenant(record) : null;
+}
+
+export async function updateUserTenant(userTenantId: number, userTenant: Partial<UserTenantDatabase>, transaction?: Knex.Transaction): Promise<void> {
+  const queryContext = transaction ? transaction(userTenantTableName) : knexClient(userTenantTableName);
+  await queryContext.update(userTenant).where('id', userTenantId);
+
+  logger.info(`Successfully updated UserTenant. Id: ${userTenantId}`);
+}

@@ -13,7 +13,7 @@ import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/succ
 import { ValidatedApiRequest } from '../../../models/api/validations.js';
 import { selectTenantByExternalUuid } from '../../../repositories/tenantRepository.js';
 import { selectUserByCognitoUuid } from '../../../repositories/userRepository.js';
-import { selectUserTenantsByUserId } from '../../../repositories/userTenantRepository.js';
+import { selectUserTenant, updateUserTenant } from '../../../repositories/userTenantRepository.js';
 
 const USER_POOL_ID = process.env.USER_POOL_ID;
 const USER_POOL_CLIENT_ID = process.env.USER_POOL_CLIENT_ID;
@@ -41,9 +41,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
   });
 }
 
-async function validatePreferredTenant(
-  validatedRequest: ValidatedApiRequest<SwitchTenantRequestPayload>,
-): Promise<{ preferredTenantUuid: string; refreshToken: string }> {
+async function validatePreferredTenant(validatedRequest: ValidatedApiRequest<SwitchTenantRequestPayload>): Promise<string> {
   logger.info('Start - validatePreferredTenant');
 
   const preferredTenantUuid = validatedRequest.body!.tenantUuid;
@@ -57,23 +55,19 @@ async function validatePreferredTenant(
     throw new BadRequestError('User not found');
   }
 
-  const userTenants = await selectUserTenantsByUserId(user.id);
-  if (!userTenants?.length) {
+  const userTenant = await selectUserTenant(user.id, tenant.id);
+  if (!userTenant) {
     throw new BadRequestError('User does not have access to this tenant');
   }
 
-  const userPreferredTenant = userTenants.find((userTenant) => userTenant.tenantId === tenant.id);
-  if (!userPreferredTenant) {
-    throw new BadRequestError('User does not have access to this tenant');
-  }
+  // Set the tenant as the most recent tenant that the user has requested to authenticate with
+  await updateUserTenant(userTenant.id, { authentication_requested_on: new Date().toISOString() });
 
-  return { preferredTenantUuid, refreshToken: validatedRequest.refreshToken! };
+  return validatedRequest.refreshToken!;
 }
 
-async function authenticateUser(payload: { preferredTenantUuid: string; refreshToken: string }): Promise<AuthenticationResultType> {
+async function authenticateUser(refreshToken: string): Promise<AuthenticationResultType> {
   logger.info('Start - authenticateUser');
-
-  const { preferredTenantUuid, refreshToken } = payload;
 
   const response = await getCognitoClient().send(
     new AdminInitiateAuthCommand({
@@ -83,9 +77,7 @@ async function authenticateUser(payload: { preferredTenantUuid: string; refreshT
       AuthParameters: {
         REFRESH_TOKEN: refreshToken,
       },
-      ClientMetadata: {
-        preferredTenantUuid,
-      },
+      // ClientMetadata is ignored on REFRESH_TOKEN_AUTH (can't pass a preferred tenant uuid)
     }),
   );
 
