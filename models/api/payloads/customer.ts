@@ -29,7 +29,6 @@ export const postCustomerRequestSchema = {
     city: { type: 'string' },
     state: { type: 'string' },
     zipCode: { type: 'string' },
-    imageUrl: { type: 'string', nullable: true },
   },
   required: ['firstName', 'lastName', 'email', 'phone', 'street', 'city', 'state', 'zipCode'],
   additionalProperties: false,
@@ -46,19 +45,18 @@ export const putCustomerRequestSchema = {
     city: { type: 'string' },
     state: { type: 'string' },
     zipCode: { type: 'string' },
-    imageUrl: { type: 'string', nullable: true },
   },
   required: ['firstName', 'lastName', 'email', 'phone', 'street', 'city', 'state', 'zipCode'],
   additionalProperties: false,
 };
 
 // POST customer payloads
-export type PostCustomerRequestPayload = Omit<PublicCustomer, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'>;
+export type PostCustomerRequestPayload = Omit<PublicCustomer, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn' | 'imageUrl'>;
 
 export type PostCustomerResponsePayload = PublicCustomer;
 
 // PUT customer payloads
-export type PutCustomerRequestPayload = Omit<PublicCustomer, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'>;
+export type PutCustomerRequestPayload = Omit<PublicCustomer, 'uuid' | 'createdOn' | 'modifiedOn' | 'deletedOn' | 'imageUrl'>;
 
 export type PutCustomerResponsePayload = PublicCustomer;
 

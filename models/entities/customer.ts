@@ -65,7 +65,6 @@ export class Customer {
       city: payload.city,
       state: payload.state,
       zip_code: payload.zipCode,
-      image_url: payload.imageUrl,
     };
   }
 
@@ -80,7 +79,6 @@ export class Customer {
       city: payload.city,
       state: payload.state,
       zip_code: payload.zipCode,
-      image_url: payload.imageUrl,
       modified_on: new Date().toISOString(),
     };
   }

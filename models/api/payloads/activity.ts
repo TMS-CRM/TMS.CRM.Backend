@@ -19,7 +19,6 @@ export const postActivityRequestSchema = {
     dealUuid: { type: 'string' },
     description: { type: 'string' },
     date: { type: 'string', format: 'date-time' },
-    imageUrl: { type: 'string', nullable: true },
   },
   required: ['dealUuid', 'description', 'date'],
   additionalProperties: false,
@@ -31,7 +30,6 @@ export const putActivityRequestSchema = {
   properties: {
     description: { type: 'string' },
     date: { type: 'string', format: 'date-time' },
-    imageUrl: { type: 'string', nullable: true },
   },
   required: ['description', 'date'],
   additionalProperties: false,
@@ -43,7 +41,7 @@ export type PostActivityRequestPayload = Omit<PublicActivity, 'uuid' | 'createdO
 export type PostActivityResponsePayload = PublicActivity;
 
 // PUT activity payloads
-export type PutActivityRequestPayload = Omit<PublicActivity, 'uuid' | 'dealUuid' | 'createdOn' | 'modifiedOn' | 'deletedOn'>;
+export type PutActivityRequestPayload = Omit<PublicActivity, 'uuid' | 'dealUuid' | 'createdOn' | 'modifiedOn' | 'deletedOn' | 'imageUrl'>;
 
 export type PutActivityResponsePayload = PublicActivity;
 
@@ -56,4 +54,5 @@ export type GetActivityListResponsePayload = PaginatedResponse<PublicActivity>;
 export interface GetActivityListFilter {
   limit: number;
   offset: number;
+  dealUuid?: string;
 }

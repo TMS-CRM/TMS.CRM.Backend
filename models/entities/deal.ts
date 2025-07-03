@@ -106,7 +106,6 @@ export class Deal {
     return {
       tenant_id: tenantId,
       customer_id: customerId,
-      image_url: payload.imageUrl,
       street: payload.street,
       city: payload.city,
       state: payload.state,
@@ -124,7 +123,6 @@ export class Deal {
   /** Convert the PutDealRequestPayload to a Partial<DealDatabase> */
   public static update(payload: PutDealRequestPayload): Partial<DealDatabase> {
     return {
-      image_url: payload.imageUrl,
       street: payload.street,
       city: payload.city,
       state: payload.state,

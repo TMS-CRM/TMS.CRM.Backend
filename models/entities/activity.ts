@@ -60,7 +60,6 @@ export class Activity {
     return {
       description: payload.description,
       date: payload.date,
-      image_url: payload.imageUrl,
       modified_on: new Date().toISOString(),
     };
   }

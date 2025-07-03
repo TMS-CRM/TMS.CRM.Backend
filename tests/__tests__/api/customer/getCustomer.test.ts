@@ -87,7 +87,6 @@ describe('API - Customer - GET', () => {
     expect(parsedBody.data.city).toBe(customersGlobal[0].city);
     expect(parsedBody.data.state).toBe(customersGlobal[0].state);
     expect(parsedBody.data.zipCode).toBe(customersGlobal[0].zip_code);
-    expect(parsedBody.data.imageUrl).toBe(customersGlobal[0].image_url);
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeDefined();
   });

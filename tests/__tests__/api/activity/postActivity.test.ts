@@ -74,7 +74,6 @@ describe('API - Activity - POST', () => {
   it('Success - Should create a activity', async () => {
     const payload = {
       description: 'This is a test activity',
-      imageUrl: 'https://www.google.com',
       date: new Date().toISOString(),
       dealUuid: dealsGlobal[0].external_uuid,
     };
@@ -98,7 +97,6 @@ describe('API - Activity - POST', () => {
     expect(parsedBody.type).toBe('PersistSuccess');
     expect(parsedBody.data.dealUuid).toBe(payload.dealUuid);
     expect(parsedBody.data.description).toBe(payload.description);
-    expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
     expect(parsedBody.data.date).toBe(payload.date);
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeNull();
@@ -109,7 +107,6 @@ describe('API - Activity - POST', () => {
     expect(activity?.tenantId).toBe(tenantsGlobal[0].id);
     expect(activity?.deal.id).toBe(dealsGlobal[0].id);
     expect(activity?.description).toBe(payload.description);
-    expect(activity?.imageUrl).toBe(payload.imageUrl);
     expect(new Date(activity!.date).getTime()).toBeCloseTo(new Date(payload.date).getTime());
     expect(activity?.createdOn).toBeDefined();
     expect(activity?.modifiedOn).toBeNull();
@@ -119,7 +116,6 @@ describe('API - Activity - POST', () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withBody({
         description: 'This is a test activity',
-        imageUrl: 'https://www.google.com',
         dealUuid: dealsGlobal[0].external_uuid,
       })
       .withUserAndTenant({

@@ -46,7 +46,6 @@ export const postDealRequestSchema = {
     progress: { type: 'string', enum: Object.values(DealProgress) },
     roomAccess: { type: 'string', enum: Object.values(RoomAccess) },
     specialInstructions: { type: 'string', nullable: true },
-    imageUrl: { type: 'string', nullable: true },
   },
   required: [
     'customerUuid',
@@ -80,7 +79,6 @@ export const putDealRequestSchema = {
     progress: { type: 'string', enum: Object.values(DealProgress) },
     roomAccess: { type: 'string', enum: Object.values(RoomAccess) },
     specialInstructions: { type: 'string', nullable: true },
-    imageUrl: { type: 'string', nullable: true },
   },
   required: [
     'customerUuid',
@@ -95,20 +93,19 @@ export const putDealRequestSchema = {
     'progress',
     'roomAccess',
     'specialInstructions',
-    'imageUrl',
   ],
   additionalProperties: false,
 };
 
 // POST deal payloads
-export type PostDealRequestPayload = Omit<PublicDeal, 'uuid' | 'customer' | 'createdOn' | 'modifiedOn' | 'deletedOn'> & {
+export type PostDealRequestPayload = Omit<PublicDeal, 'uuid' | 'customer' | 'createdOn' | 'modifiedOn' | 'deletedOn' | 'imageUrl'> & {
   customerUuid: string;
 };
 
 export type PostDealResponsePayload = PublicDeal;
 
 // PUT deal payloads
-export type PutDealRequestPayload = Omit<PublicDeal, 'uuid' | 'customer' | 'createdOn' | 'modifiedOn' | 'deletedOn'> & {
+export type PutDealRequestPayload = Omit<PublicDeal, 'uuid' | 'customer' | 'createdOn' | 'modifiedOn' | 'deletedOn' | 'imageUrl'> & {
   customerUuid: string;
 };
 

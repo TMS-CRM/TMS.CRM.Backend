@@ -121,7 +121,6 @@ describe('API - Activity - GET', () => {
     expect(parsedBody.data.uuid).toBe(activitiesGlobal[0].external_uuid);
     expect(parsedBody.data.description).toBe(activitiesGlobal[0].description);
     expect(new Date(parsedBody.data.date).getTime()).toBeCloseTo(new Date(activitiesGlobal[0].date).getTime());
-    expect(parsedBody.data.imageUrl).toBe(activitiesGlobal[0].image_url);
     expect(parsedBody.data.uuid).toBeDefined();
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeDefined();
