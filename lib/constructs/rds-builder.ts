@@ -1,6 +1,5 @@
 import { Tags } from 'aws-cdk-lib';
 import {
-  AmazonLinuxCpuType,
   AmazonLinuxGeneration,
   AmazonLinuxImage,
   Instance,
@@ -82,10 +81,9 @@ export class RdsBuilder extends Construct {
         subnetType: SubnetType.PRIVATE_ISOLATED,
       },
       securityGroup: securityGroupEC2,
-      instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MICRO),
+      instanceType: InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MICRO),
       machineImage: new AmazonLinuxImage({
         generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
-        cpuType: AmazonLinuxCpuType.ARM_64,
       }),
       role: roleSsmManagedInstance.role,
     });
