@@ -41,11 +41,20 @@ export async function selectActivityByExternalUuid(externalUuid: string): Promis
   return records.length > 0 ? new Activity(records[0]) : null;
 }
 
-export async function selectActivities(limit: number, offset: number, tenantId: number): Promise<PaginatedResponse<Activity>> {
+export async function selectActivities(
+  tenantId: number,
+  limit: number,
+  offset: number,
+  dealUuid: string | null,
+): Promise<PaginatedResponse<Activity>> {
   const baseQuery = knexClient(activityTableName)
     .innerJoin(dealTableName, `${activityTableName}.deal_id`, '=', `${dealTableName}.id`)
     .where(`${activityTableName}.tenant_id`, tenantId)
     .whereNull(`${activityTableName}.deleted_on`);
+
+  if (dealUuid) {
+    baseQuery.where(`${dealTableName}.external_uuid`, dealUuid);
+  }
 
   // Get the activities
   const activities = (await baseQuery

@@ -94,7 +94,6 @@ describe('API - Activity - PUT', () => {
   it('Success - Should update a activity', async () => {
     const payload: PutActivityRequestPayload = {
       description: 'This is a test activity',
-      imageUrl: activitiesGlobal[0].image_url,
       date: activitiesGlobal[0].date,
     };
 
@@ -120,7 +119,6 @@ describe('API - Activity - PUT', () => {
     expect(parsedBody.type).toBe('PersistSuccess');
     expect(parsedBody.data.dealUuid).toBe(dealsGlobal[0].external_uuid);
     expect(parsedBody.data.description).toBe(payload.description);
-    expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
     expect(new Date(parsedBody.data.date).getTime()).toBeCloseTo(new Date(activitiesGlobal[0].date).getTime());
     expect(parsedBody.data.uuid).toBeDefined();
     expect(parsedBody.data.createdOn).toBeDefined();
@@ -135,7 +133,6 @@ describe('API - Activity - PUT', () => {
   it('Error - Should return a 400 error if the path parameter is missing', async () => {
     const payload: PutActivityRequestPayload = {
       description: 'This is a test activity',
-      imageUrl: activitiesGlobal[0].image_url,
       date: activitiesGlobal[0].date,
     };
 
@@ -163,7 +160,6 @@ describe('API - Activity - PUT', () => {
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
     // Payload missing the description
     const payload: Partial<PutActivityRequestPayload> = {
-      imageUrl: activitiesGlobal[0].image_url,
       date: activitiesGlobal[0].date,
     };
 
@@ -194,7 +190,6 @@ describe('API - Activity - PUT', () => {
   it('Error - Should return a 400 error if the activity does not exist', async () => {
     const payload: PutActivityRequestPayload = {
       description: 'This is a test activity',
-      imageUrl: 'https://www.google.com',
       date: new Date().toISOString(),
     };
 

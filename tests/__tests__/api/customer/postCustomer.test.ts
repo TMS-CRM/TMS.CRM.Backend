@@ -33,7 +33,6 @@ describe('API - Customer - POST', () => {
       city: 'Anytown',
       state: 'CA',
       zipCode: '12345',
-      imageUrl: 'https://example.com/profile.jpg',
     };
 
     const event = APIGatewayProxyEventBuilder.make()
@@ -62,7 +61,6 @@ describe('API - Customer - POST', () => {
     expect(parsedBody.data.city).toBe(payload.city);
     expect(parsedBody.data.state).toBe(payload.state);
     expect(parsedBody.data.zipCode).toBe(payload.zipCode);
-    expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeNull();
 
@@ -78,7 +76,6 @@ describe('API - Customer - POST', () => {
     expect(customer?.city).toBe(payload.city);
     expect(customer?.state).toBe(payload.state);
     expect(customer?.zipCode).toBe(payload.zipCode);
-    expect(customer?.imageUrl).toBe(payload.imageUrl);
     expect(customer?.createdOn).toBeDefined();
     expect(customer?.modifiedOn).toBeNull();
   });

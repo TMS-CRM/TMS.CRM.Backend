@@ -94,7 +94,6 @@ describe('API - Deal - GET', () => {
 
     const responseData = parsedBody.data;
     expect(responseData.customer.uuid).toBe(customersGlobal[0].external_uuid);
-    expect(responseData.customer.imageUrl).toBe(customersGlobal[0].image_url);
     expect(responseData.customer.firstName).toBe(customersGlobal[0].first_name);
     expect(responseData.customer.lastName).toBe(customersGlobal[0].last_name);
     expect(responseData.customer.email).toBe(customersGlobal[0].email);
@@ -103,7 +102,6 @@ describe('API - Deal - GET', () => {
     expect(responseData.city).toBe(dealsGlobal[0].city);
     expect(responseData.state).toBe(dealsGlobal[0].state);
     expect(responseData.zipCode).toBe(dealsGlobal[0].zip_code);
-    expect(responseData.imageUrl).toBe(dealsGlobal[0].image_url);
     expect(responseData.roomArea).toBe(dealsGlobal[0].room_area);
     expect(responseData.price).toBe(dealsGlobal[0].price);
     expect(responseData.numberOfPeople).toBe(dealsGlobal[0].number_of_people);

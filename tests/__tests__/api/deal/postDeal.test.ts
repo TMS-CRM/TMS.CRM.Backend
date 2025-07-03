@@ -60,7 +60,6 @@ describe('API - Deal - POST', () => {
       progress: DealProgress.InProgress,
       specialInstructions: 'Handle with care',
       roomAccess: RoomAccess.KeysInLockbox,
-      imageUrl: 'https://example.com/image.jpg',
     };
 
     const event = APIGatewayProxyEventBuilder.make()
@@ -81,7 +80,6 @@ describe('API - Deal - POST', () => {
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('PersistSuccess');
     expect(parsedBody.data.customer.uuid).toBe(customersGlobal[0].external_uuid);
-    expect(parsedBody.data.customer.imageUrl).toBe(customersGlobal[0].image_url);
     expect(parsedBody.data.customer.firstName).toBe(customersGlobal[0].first_name);
     expect(parsedBody.data.customer.lastName).toBe(customersGlobal[0].last_name);
     expect(parsedBody.data.customer.email).toBe(customersGlobal[0].email);
@@ -97,7 +95,6 @@ describe('API - Deal - POST', () => {
     expect(parsedBody.data.progress).toBe(DealProgress.InProgress);
     expect(parsedBody.data.specialInstructions).toBe('Handle with care');
     expect(parsedBody.data.roomAccess).toBe(RoomAccess.KeysInLockbox);
-    expect(parsedBody.data.imageUrl).toBe('https://example.com/image.jpg');
     expect(parsedBody.data.uuid).toBeDefined();
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeNull();

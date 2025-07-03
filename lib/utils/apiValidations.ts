@@ -174,6 +174,10 @@ function parseQueryParam(
         return enumType[value] as boolean;
       }
 
+      case QueryParamDataType.string: {
+        return value;
+      }
+
       default:
         throw new BadRequestError(`Unsupported type for parameter: ${paramName}`);
     }

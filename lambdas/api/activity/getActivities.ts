@@ -30,6 +30,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
     expectedQueryParameters: [
       { name: 'limit', dataType: QueryParamDataType.number, required: true },
       { name: 'offset', dataType: QueryParamDataType.number, required: true },
+      { name: 'dealUuid', dataType: QueryParamDataType.string, required: false },
     ],
   });
 }
@@ -42,9 +43,9 @@ export async function queryRecords(validatedRequest: ValidatedApiRequest<null, G
     throw new BadRequestError('Tenant does not exist');
   }
 
-  const { limit, offset } = validatedRequest.queryParameters!;
+  const { limit, offset, dealUuid } = validatedRequest.queryParameters!;
 
-  const queryResult: PaginatedResponse<Activity> = await selectActivities(limit, offset, tenant.id);
+  const queryResult: PaginatedResponse<Activity> = await selectActivities(tenant.id, limit, offset, dealUuid ?? null);
 
   return queryResult;
 }

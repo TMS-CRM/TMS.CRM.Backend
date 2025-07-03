@@ -197,7 +197,7 @@ describe('API - Activities - GET', () => {
 
         ActivityDatabaseBuilder.make()
           .withTenantId(tenantsGlobal[0].id)
-          .withDealId(dealsGlobal[0].id)
+          .withDealId(dealsGlobal[1].id)
           .withDescription('Project completed successfully')
           .withDate(new Date().toISOString())
           .withImageUrl('http://example.com/image9.jpg')
@@ -269,6 +269,33 @@ describe('API - Activities - GET', () => {
     expect(parsedBody.data.items).toBeDefined();
     expect(parsedBody.data.items.length).toBe(4);
     expect(parsedBody.data.total).toBe(9);
+  });
+
+  it('Success - Should get activities filtering by dealUuid', async () => {
+    const event = APIGatewayProxyEventBuilder.make()
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
+      })
+      .withQueryStringParameters({
+        limit: '5',
+        offset: '0',
+        dealUuid: dealsGlobal[1].external_uuid,
+      })
+      .build();
+
+    // Run the handler
+    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+
+    // Validate the API response
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toBeDefined();
+
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(1);
+    expect(parsedBody.data.total).toBe(1);
   });
 
   it('Success - Should return 0 activities if the tenant has no activities', async () => {

@@ -89,7 +89,6 @@ describe('API - Deal - PUT', () => {
       progress: dealsGlobal[0].progress,
       specialInstructions: dealsGlobal[0].special_instructions,
       roomAccess: dealsGlobal[0].room_access,
-      imageUrl: dealsGlobal[0].image_url,
     };
 
     const event = APIGatewayProxyEventBuilder.make()
@@ -113,7 +112,6 @@ describe('API - Deal - PUT', () => {
     const parsedBody = JSON.parse(res.body!);
     expect(parsedBody.type).toBe('PersistSuccess');
     expect(parsedBody.data.customer.uuid).toBe(customersGlobal[0].external_uuid);
-    expect(parsedBody.data.customer.imageUrl).toBe(customersGlobal[0].image_url);
     expect(parsedBody.data.customer.firstName).toBe(customersGlobal[0].first_name);
     expect(parsedBody.data.customer.lastName).toBe(customersGlobal[0].last_name);
     expect(parsedBody.data.customer.email).toBe(customersGlobal[0].email);
@@ -129,7 +127,6 @@ describe('API - Deal - PUT', () => {
     expect(parsedBody.data.progress).toBe(payload.progress);
     expect(parsedBody.data.specialInstructions).toBe(payload.specialInstructions);
     expect(parsedBody.data.roomAccess).toBe(payload.roomAccess);
-    expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
     expect(parsedBody.data.uuid).toBeDefined();
     expect(parsedBody.data.createdOn).toBeDefined();
     expect(parsedBody.data.modifiedOn).toBeDefined();
@@ -154,7 +151,6 @@ describe('API - Deal - PUT', () => {
       progress: DealProgress.InProgress,
       specialInstructions: dealsGlobal[0].special_instructions,
       roomAccess: RoomAccess.KeysWithDoorman,
-      imageUrl: dealsGlobal[0].image_url,
     };
 
     // Event missing the uuid path parameter
@@ -189,7 +185,6 @@ describe('API - Deal - PUT', () => {
       appointmentDate: dealsGlobal[0].appointment_date,
       progress: DealProgress.InProgress,
       roomAccess: RoomAccess.KeysWithDoorman,
-      imageUrl: dealsGlobal[0].image_url,
     };
 
     // Event missing the uuid path parameters
@@ -230,7 +225,6 @@ describe('API - Deal - PUT', () => {
       progress: DealProgress.InProgress,
       specialInstructions: 'Special instructions',
       roomAccess: RoomAccess.KeysWithDoorman,
-      imageUrl: 'https://example.com/deal.jpg',
     };
 
     // Event missing the uuid path parameter

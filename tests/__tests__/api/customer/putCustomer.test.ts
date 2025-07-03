@@ -58,7 +58,6 @@ describe('API - Customer - PUT', () => {
       city: customersGlobal[0].city,
       state: customersGlobal[0].state,
       zipCode: customersGlobal[0].zip_code,
-      imageUrl: String(customersGlobal[0].image_url),
     };
 
     const event = APIGatewayProxyEventBuilder.make()
@@ -89,7 +88,6 @@ describe('API - Customer - PUT', () => {
     expect(parsedBody.data.city).toBe(payload.city);
     expect(parsedBody.data.state).toBe(payload.state);
     expect(parsedBody.data.zipCode).toBe(payload.zipCode);
-    expect(parsedBody.data.imageUrl).toBe(payload.imageUrl);
 
     expect(parsedBody.data.uuid).toBeDefined();
     expect(parsedBody.data.createdOn).toBeDefined();
@@ -111,7 +109,6 @@ describe('API - Customer - PUT', () => {
       city: customersGlobal[0].city,
       state: customersGlobal[0].state,
       zipCode: customersGlobal[0].zip_code,
-      imageUrl: String(customersGlobal[0].image_url),
     };
 
     // Event missing the uuid path parameter
@@ -140,7 +137,6 @@ describe('API - Customer - PUT', () => {
     const payload: Partial<PutCustomerRequestPayload> = {
       firstName: customersGlobal[0].first_name,
       lastName: customersGlobal[0].last_name,
-      imageUrl: String(customersGlobal[0].image_url),
     };
 
     // Event missing the uuid path parameter
@@ -175,7 +171,6 @@ describe('API - Customer - PUT', () => {
       city: 'Rome',
       state: 'ROM',
       zipCode: '00100',
-      imageUrl: 'https://example.com/marcus.jpg',
     };
 
     // Event missing the uuid path parameter
