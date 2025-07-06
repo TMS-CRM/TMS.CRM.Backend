@@ -1,4 +1,5 @@
 import type { PaginatedResponse } from '../responses/pagination.js';
+import type { SortOrder } from '../validations.js';
 
 /** The exposed Task object */
 export interface PublicTask {
@@ -54,4 +55,13 @@ export type GetTaskListResponsePayload = PaginatedResponse<PublicTask>;
 export interface GetTaskListFilter {
   limit: number;
   offset: number;
+  sortBy?: TaskSortBy;
+  order?: SortOrder;
+  completed?: boolean;
+}
+
+// Map the sortBy field to the database field name
+export enum TaskSortBy {
+  createdOn = 'created_on',
+  dueDate = 'due_date',
 }

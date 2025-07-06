@@ -1,6 +1,7 @@
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
+import { SortOrder } from '../models/api/validations.js';
 import { Customer, type CustomerDatabase } from '../models/entities/customer.js';
 
 export const customerTableName = 'customer';
@@ -35,7 +36,12 @@ export async function selectCustomers(limit: number, offset: number, tenantId: n
   const baseQuery = knexClient(customerTableName).where(`${customerTableName}.tenant_id`, tenantId).whereNull(`${customerTableName}.deleted_on`);
 
   // Get the customers
-  const customers = (await baseQuery.clone().limit(limit).offset(offset).select('*')) as CustomerDatabase[];
+  const customers = (await baseQuery
+    .clone()
+    .orderBy(`${customerTableName}.created_on`, SortOrder.desc)
+    .limit(limit)
+    .offset(offset)
+    .select('*')) as CustomerDatabase[];
 
   // Get the total number of customers
   const total = (await baseQuery.clone().count('*'))[0]['count'];

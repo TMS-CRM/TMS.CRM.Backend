@@ -1,6 +1,7 @@
 import type { integer } from 'aws-sdk/clients/cloudfront.js';
 import { DealProgress, RoomAccess } from '../../entities/deal.js';
 import type { PaginatedResponse } from '../responses/pagination.js';
+import type { SortOrder } from '../validations.js';
 
 /** The exposed Deal object */
 export interface PublicDeal {
@@ -120,4 +121,22 @@ export type GetDealListResponsePayload = PaginatedResponse<PublicDeal>;
 export interface GetDealListFilter {
   limit: number;
   offset: number;
+  sortBy?: DealSortBy;
+  order?: SortOrder;
+
+  /** ISO 8601 UTC date string to filter deals starting from this time */
+  from?: string;
+
+  /** ISO 8601 UTC date string to filter deals up to this time */
+  to?: string;
+
+  /** Deal progress to filter deals by */
+  progress?: DealProgress[];
+}
+
+// Map the sortBy field to the database field name
+export enum DealSortBy {
+  createdOn = 'created_on',
+  modifiedOn = 'modified_on',
+  appointmentDate = 'appointment_date',
 }

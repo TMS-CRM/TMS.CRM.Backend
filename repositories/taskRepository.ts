@@ -1,6 +1,8 @@
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
+import { type GetTaskListFilter, TaskSortBy } from '../models/api/payloads/task.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
+import { SortOrder } from '../models/api/validations.js';
 import { Task, type TaskDatabase } from '../models/entities/task.js';
 
 export const taskTableName = 'task';
@@ -30,12 +32,24 @@ export async function selectTaskByExternalUuid(externalUuid: string): Promise<Ta
   return records.length > 0 ? new Task(records[0]) : null;
 }
 
-export async function selectTasks(limit: number, offset: number, tenantId: number | null): Promise<PaginatedResponse<Task>> {
+export async function selectTasks(tenantId: number | null, filters: GetTaskListFilter): Promise<PaginatedResponse<Task>> {
+  const sortByColumn = filters.sortBy ?? TaskSortBy.createdOn;
+  const sortOrder = filters.order ?? SortOrder.desc;
+
   // Base query without deleted task
   const baseQuery = knexClient(taskTableName).where(`${taskTableName}.tenant_id`, tenantId).whereNull(`${taskTableName}.deleted_on`);
 
+  if (filters.completed !== undefined) {
+    baseQuery.where(`${taskTableName}.completed`, filters.completed);
+  }
+
   // Get the tasks
-  const tasks = (await baseQuery.clone().limit(limit).offset(offset).select('*')) as TaskDatabase[];
+  const tasks = (await baseQuery
+    .clone()
+    .orderBy(`${taskTableName}.${sortByColumn}`, sortOrder)
+    .limit(filters.limit)
+    .offset(filters.offset)
+    .select('*')) as TaskDatabase[];
 
   // Get the total number of tasks
   const total = (await baseQuery.clone().count('*'))[0]['count'];

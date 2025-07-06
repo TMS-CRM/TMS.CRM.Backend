@@ -122,6 +122,11 @@ export enum QueryParamDataType {
   enum,
 }
 
+export enum SortOrder {
+  asc = 'asc',
+  desc = 'desc',
+}
+
 export interface ExpectedQueryParam {
   name: string;
   required: boolean;

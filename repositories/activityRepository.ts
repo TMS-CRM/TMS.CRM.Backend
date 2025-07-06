@@ -2,6 +2,7 @@ import { dealTableName } from './dealRepository.js';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
+import { SortOrder } from '../models/api/validations.js';
 import { Activity, type ActivityDatabase, type ExtendedActivityDatabase } from '../models/entities/activity.js';
 
 export const activityTableName = 'activity';
@@ -59,6 +60,7 @@ export async function selectActivities(
   // Get the activities
   const activities = (await baseQuery
     .clone()
+    .orderBy(`${activityTableName}.created_on`, SortOrder.desc)
     .limit(limit)
     .offset(offset)
     .select(`${activityTableName}.*`, `${dealTableName}.external_uuid as deal_external_uuid`)) as ExtendedActivityDatabase[];

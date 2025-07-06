@@ -248,6 +248,33 @@ describe('API - Deals - GET', () => {
     expect(parsedBody.data.total).toBe(7); // Total number of deals should still be 6
   });
 
+  it('Success - Should get InProgress and Pending deals', async () => {
+    const event = APIGatewayProxyEventBuilder.make()
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
+      })
+      .withQueryStringParameters({
+        limit: '10',
+        offset: '0',
+        progress: [DealProgress.InProgress, DealProgress.Pending].join(','),
+      })
+      .build();
+
+    // Run the handler
+    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+
+    // Validate the API response
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toBeDefined();
+
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(5);
+    expect(parsedBody.data.total).toBe(5);
+  });
+
   it('Success - Should return 0 deals if the tenant has no deals', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withUserAndTenant({

@@ -144,6 +144,10 @@ function parseQueryParam(
       }
 
       case QueryParamDataType.date: {
+        if (value === 'now') {
+          return new Date().toISOString();
+        }
+
         const parsedDate = new Date(value);
         if (Number.isNaN(parsedDate.getTime())) {
           throw new BadRequestError(invalidQueryParamMessage(paramName));

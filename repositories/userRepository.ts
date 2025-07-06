@@ -3,6 +3,7 @@ import { userTenantTableName } from './userTenantRepository.js';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
+import { SortOrder } from '../models/api/validations.js';
 import { User, type UserDatabase } from '../models/entities/user.js';
 
 export const userTableName = 'user';
@@ -61,7 +62,12 @@ export async function selectUsers(limit: number, offset: number, tenantId: numbe
   }
 
   // Get the users
-  const users = (await baseQuery.clone().limit(limit).offset(offset).select('*')) as UserDatabase[];
+  const users = (await baseQuery
+    .clone()
+    .orderBy(`${userTableName}.created_on`, SortOrder.desc)
+    .limit(limit)
+    .offset(offset)
+    .select('*')) as UserDatabase[];
 
   // Get the total number of users
   const total = (await baseQuery.clone().count('*'))[0]['count'];
