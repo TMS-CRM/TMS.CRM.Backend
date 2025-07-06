@@ -53,7 +53,8 @@ export class TmsCrmBackendStack extends cdk.Stack {
       Vpc: vpc,
       MinCapacity: 0.5,
       MaxCapacity: 2,
-      EnableReaderInstance: false,
+      shouldCreateReaderInstance: false,
+      shouldCreateEC2: false,
     });
 
     // Cognito
