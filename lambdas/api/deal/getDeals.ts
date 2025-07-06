@@ -1,12 +1,12 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { logger } from '../../../lib/utils/logger.js';
 import { toHttpErrorResponse } from '../../../lib/utils/response.js';
-import type { GetDealListFilter, GetDealListResponsePayload, PublicDeal } from '../../../models/api/payloads/deal.js';
+import { DealSortBy, type GetDealListFilter, type GetDealListResponsePayload, type PublicDeal } from '../../../models/api/payloads/deal.js';
 import { BadRequestError } from '../../../models/api/responses/errors.js';
 import type { PaginatedResponse } from '../../../models/api/responses/pagination.js';
 import { FetchSuccess, HttpOkResponse } from '../../../models/api/responses/success.js';
-import { QueryParamDataType, ValidatedApiRequest } from '../../../models/api/validations.js';
-import type { Deal } from '../../../models/entities/deal.js';
+import { QueryParamDataType, SortOrder, ValidatedApiRequest } from '../../../models/api/validations.js';
+import { type Deal } from '../../../models/entities/deal.js';
 import { selectDeals } from '../../../repositories/dealRepository.js';
 import { selectTenantByExternalUuid } from '../../../repositories/tenantRepository.js';
 
@@ -30,6 +30,11 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
     expectedQueryParameters: [
       { name: 'limit', dataType: QueryParamDataType.number, required: true },
       { name: 'offset', dataType: QueryParamDataType.number, required: true },
+      { name: 'sortBy', dataType: QueryParamDataType.enum, required: false, enumType: DealSortBy },
+      { name: 'order', dataType: QueryParamDataType.enum, required: false, enumType: SortOrder },
+      { name: 'from', dataType: QueryParamDataType.date, required: false },
+      { name: 'to', dataType: QueryParamDataType.date, required: false },
+      { name: 'progress', dataType: QueryParamDataType.array, required: false },
     ],
   });
 }
@@ -42,8 +47,7 @@ export async function queryRecords(validatedRequest: ValidatedApiRequest<null, G
     throw new BadRequestError('Tenant does not exist');
   }
 
-  const { limit, offset } = validatedRequest.queryParameters!;
-  const queryResult: PaginatedResponse<Deal> = await selectDeals(limit, offset, tenant.id);
+  const queryResult: PaginatedResponse<Deal> = await selectDeals(tenant.id, validatedRequest.queryParameters!);
 
   return queryResult;
 }

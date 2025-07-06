@@ -162,6 +162,32 @@ describe('API - Tasks - GET', () => {
     expect(parsedBody.data.total).toBe(9); // Total number of customers should still be 9
   });
 
+  it('Success - Should get uncompleted tasks', async () => {
+    const event = APIGatewayProxyEventBuilder.make()
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
+      })
+      .withQueryStringParameters({
+        limit: '5',
+        offset: '0',
+        completed: 'false',
+      })
+      .build();
+
+    // Run the handler
+    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+
+    // Validate the API response
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toBeDefined();
+
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(4);
+  });
+
   it('Success - Should return 0 tasks if the tenant has no tasks', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withUserAndTenant({

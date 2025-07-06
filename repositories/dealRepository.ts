@@ -1,7 +1,9 @@
 import { customerTableName } from './customerRepository.js';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
+import { DealSortBy, type GetDealListFilter } from '../models/api/payloads/deal.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
+import { SortOrder } from '../models/api/validations.js';
 import { Deal, type DealDatabase, type ExtendedDealDatabase } from '../models/entities/deal.js';
 
 export const dealTableName = 'deal';
@@ -55,7 +57,10 @@ export async function selectDealByExternalUuid(externalUuid: string): Promise<De
   return records.length > 0 ? new Deal(records[0]) : null;
 }
 
-export async function selectDeals(limit: number, offset: number, tenantId: number): Promise<PaginatedResponse<Deal>> {
+export async function selectDeals(tenantId: number, filters: GetDealListFilter): Promise<PaginatedResponse<Deal>> {
+  const sortByColumn = filters.sortBy ?? DealSortBy.createdOn;
+  const sortOrder = filters.order ?? SortOrder.desc;
+
   // Base query without deleted deals
   const baseQuery = knexClient(dealTableName)
     .whereNull(`${dealTableName}.deleted_on`)
@@ -63,11 +68,21 @@ export async function selectDeals(limit: number, offset: number, tenantId: numbe
     .where(`${dealTableName}.tenant_id`, tenantId)
     .whereNull(`${dealTableName}.deleted_on`);
 
+  if (filters.from) {
+    baseQuery.where(`${dealTableName}.appointment_date`, '>=', filters.from);
+  }
+
+  if (filters.to) {
+    baseQuery.where(`${dealTableName}.appointment_date`, '<=', filters.to);
+  }
+
+  if (filters.progress) {
+    baseQuery.whereIn(`${dealTableName}.progress`, filters.progress);
+  }
+
   // Get the deals
   const deals = (await baseQuery
     .clone()
-    .limit(limit)
-    .offset(offset)
     .select(
       `${dealTableName}.*`,
       `${customerTableName}.external_uuid as customer_external_uuid`,
@@ -76,7 +91,10 @@ export async function selectDeals(limit: number, offset: number, tenantId: numbe
       `${customerTableName}.last_name as customer_last_name`,
       `${customerTableName}.email as customer_email`,
       `${customerTableName}.phone as customer_phone`,
-    )) as ExtendedDealDatabase[];
+    )
+    .orderBy(`${dealTableName}.${sortByColumn}`, sortOrder)
+    .limit(filters.limit)
+    .offset(filters.offset)) as ExtendedDealDatabase[];
 
   // Get the total number of deals
   const total = (await baseQuery.clone().count('*'))[0]['count'];
