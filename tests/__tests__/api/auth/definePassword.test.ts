@@ -33,13 +33,11 @@ describe('API - Auth - Define password', () => {
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
-
     tenantsGlobal.push(...tenant);
 
     const user = await knexClient(userTableName)
       .insert([UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe9@example.com').build()])
       .returning('*');
-
     usersGlobal.push(...user);
   });
 

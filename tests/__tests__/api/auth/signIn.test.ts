@@ -34,13 +34,11 @@ describe('API - Auth - Sign In', () => {
 
   beforeAll(async () => {
     const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
-
     tenantsGlobal.push(...tenant);
 
     const user = await knexClient(userTableName)
       .insert([UserDatabaseBuilder.make().withFirstName('John').withLastName('Doe').withEmail('john.doe6@example.com').build()])
       .returning('*');
-
     usersGlobal.push(...user);
   });
 

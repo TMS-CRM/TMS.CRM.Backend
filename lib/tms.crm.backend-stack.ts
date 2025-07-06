@@ -250,6 +250,13 @@ export class TmsCrmBackendStack extends cdk.Stack {
       PolicyActions: [],
     }).role;
 
+    const roleApiGetUserTenants = new RoleBuilder(this, 'RoleApiGetUserTenants', {
+      ServicePrincipal: 'lambda.amazonaws.com',
+      ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
+      PolicyResources: [],
+      PolicyActions: [],
+    }).role;
+
     const roleApiGetUsers = new RoleBuilder(this, 'RoleApiGetUsers', {
       ServicePrincipal: 'lambda.amazonaws.com',
       ManagedPolicyNames: ['service-role/AWSLambdaBasicExecutionRole', 'service-role/AWSLambdaVPCAccessExecutionRole'],
@@ -356,6 +363,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
         roleApiPutTask,
         roleApiDeleteTask,
         roleApiGetUser,
+        roleApiGetUserTenants,
         roleApiGetUsers,
         roleApiPostUser,
         roleApiPutUser,
@@ -637,6 +645,18 @@ export class TmsCrmBackendStack extends cdk.Stack {
       LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'getUser.ts'),
       LambdaName: `${serviceNameKebabCase}-api-get-user`,
       LambdaRole: roleApiGetUser,
+      LambdaEnv: {
+        DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
+        LOG_LEVEL: 'info',
+      },
+      Dependencies: ['knex', 'pg', 'winston'],
+      Vpc: vpc,
+    }).lambda;
+
+    const lambdaApiGetUserTenants = new LambdaBuilder(this, `${serviceNameUppercase}ApiGetUserTenants`, {
+      LambdaPath: join(__dirname, '..', 'lambdas', 'api', 'user', 'getUserTenants.ts'),
+      LambdaName: `${serviceNameKebabCase}-api-get-user-tenants`,
+      LambdaRole: roleApiGetUserTenants,
       LambdaEnv: {
         DATABASE_SECRET_ARN: rdsInstance.rdsSecretArn,
         LOG_LEVEL: 'info',
@@ -1104,6 +1124,16 @@ export class TmsCrmBackendStack extends cdk.Stack {
       AuthorizationType: 'JWT',
       Integration: api.createIntegration(`${serviceNameUppercase}ApiGetUserIntegration`, {
         Lambda: lambdaApiGetUser,
+      }),
+    });
+
+    api.addRoute(`${serviceNameUppercase}ApiGetUserTenants`, {
+      Method: 'GET',
+      Route: '/users/{uuid}/tenants',
+      Authorizer: cognitoAuthorizer,
+      AuthorizationType: 'JWT',
+      Integration: api.createIntegration(`${serviceNameUppercase}ApiGetUserTenantsIntegration`, {
+        Lambda: lambdaApiGetUserTenants,
       }),
     });
 

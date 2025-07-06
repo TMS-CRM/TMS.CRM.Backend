@@ -1,3 +1,4 @@
+import type { PublicTenant } from './tenant.js';
 import type { PaginatedResponse } from '../responses/pagination.js';
 
 /** The exposed User object */
@@ -55,3 +56,6 @@ export interface GetUserListFilter {
   limit: number;
   offset: number;
 }
+
+// GET user tenants payloads
+export type GetUserTenantsResponsePayload = PublicTenant[];

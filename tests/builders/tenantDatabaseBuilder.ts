@@ -16,6 +16,11 @@ export class TenantDatabaseBuilder {
     return this;
   }
 
+  withDeletedOn(value: string): this {
+    this.tenantDatabase.deleted_on = value;
+    return this;
+  }
+
   build(): TenantDatabase {
     return this.tenantDatabase;
   }

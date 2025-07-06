@@ -1,6 +1,8 @@
 import type { Knex } from 'knex';
+import { tenantTableName } from './tenantRepository.js';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
+import { Tenant, type TenantDatabase } from '../models/entities/tenant.js';
 import { UserTenant, type UserTenantDatabase } from '../models/entities/userTenant.js';
 
 export const userTenantTableName = 'user_tenant';
@@ -41,6 +43,19 @@ export async function selectUserMostRecentTenant(userId: number): Promise<UserTe
 
   const record = (await query) as UserTenantDatabase;
   return record ? new UserTenant(record) : null;
+}
+
+export async function selectUserTenants(userId: number): Promise<Tenant[]> {
+  const query = knexClient(userTenantTableName)
+    .select(`${tenantTableName}.external_uuid`, `${tenantTableName}.name`, `${tenantTableName}.created_on`, `${tenantTableName}.modified_on`)
+    .where(`${userTenantTableName}.user_id`, userId)
+    .whereNull(`${userTenantTableName}.deleted_on`)
+    .whereNull(`${tenantTableName}.deleted_on`)
+    .innerJoin(tenantTableName, `${userTenantTableName}.tenant_id`, `${tenantTableName}.id`);
+
+  const records = (await query) as TenantDatabase[];
+
+  return records.map((record) => new Tenant(record));
 }
 
 export async function updateUserTenant(userTenantId: number, userTenant: Partial<UserTenantDatabase>, transaction?: Knex.Transaction): Promise<void> {
