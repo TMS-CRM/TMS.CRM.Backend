@@ -24,7 +24,7 @@ export async function handler(event: PreTokenGenerationV2TriggerEvent): Promise<
 
 async function determineTenantUuid(
   event: PreTokenGenerationV2TriggerEvent,
-): Promise<{ event: PreTokenGenerationV2TriggerEvent; tenantUuid: string }> {
+): Promise<{ event: PreTokenGenerationV2TriggerEvent; tenantUuid: string; userUuid: string }> {
   logger.info('Start - determineTenantUuid');
 
   const userCognitoId = event.request.userAttributes.sub;
@@ -46,10 +46,15 @@ async function determineTenantUuid(
   return {
     event,
     tenantUuid: tenant.externalUuid,
+    userUuid: user.externalUuid,
   };
 }
 
-function formatResponse(payload: { event: PreTokenGenerationV2TriggerEvent; tenantUuid: string }): PreTokenGenerationV2TriggerEvent {
+function formatResponse(payload: {
+  event: PreTokenGenerationV2TriggerEvent;
+  tenantUuid: string;
+  userUuid: string;
+}): PreTokenGenerationV2TriggerEvent {
   logger.info('Start - formatResponse');
 
   // Add the tenantId as a custom claim
@@ -59,6 +64,7 @@ function formatResponse(payload: { event: PreTokenGenerationV2TriggerEvent; tena
       ...(payload.event.response.claimsAndScopeOverrideDetails?.accessTokenGeneration ?? {}),
       claimsToAddOrOverride: {
         tenantUuid: payload.tenantUuid,
+        userUuid: payload.userUuid,
       },
     },
   };

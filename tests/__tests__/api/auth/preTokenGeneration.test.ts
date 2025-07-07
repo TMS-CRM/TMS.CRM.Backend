@@ -89,6 +89,7 @@ describe('API - Auth - PreTokenGeneration', () => {
           accessTokenGeneration: {
             claimsToAddOrOverride: {
               tenantUuid: tenantsGlobal[1].external_uuid,
+              userUuid: usersGlobal[0].external_uuid,
             },
           },
         },
