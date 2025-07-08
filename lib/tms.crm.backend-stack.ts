@@ -31,12 +31,26 @@ export class TmsCrmBackendStack extends cdk.Stack {
       description: 'The URL for the TMS CRM API',
     });
 
+    const paramShouldCreateEC2ForRDSAccess =
+      new CfnParameter(this, 'ShouldCreateEC2ForRDSAccess', {
+        type: 'String',
+        description: 'Whether to create an EC2 instance to access the RDS instance',
+        default: 'false',
+      }).valueAsString === 'true';
+
+    const paramShouldCreateNATGateway =
+      new CfnParameter(this, 'ShouldCreateNATGateway', {
+        type: 'String',
+        description: 'Whether to create a NAT Gateway for outbound internet access',
+        default: 'false',
+      }).valueAsString === 'true';
+
     // Create secure VPC
     const vpcBuilder = new VpcBuilder(this, `${serviceNameUppercase}VPC`, {
       serviceNameUppercase: serviceNameUppercase,
       serviceNameKebabCase: serviceNameKebabCase,
       azs: ['a', 'b'],
-      createNATGateway: true,
+      createNATGateway: paramShouldCreateNATGateway,
     });
 
     const vpc = Vpc.fromVpcAttributes(this, 'VPC', {
@@ -55,7 +69,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       MinCapacity: 0.5,
       MaxCapacity: 2,
       shouldCreateReaderInstance: false,
-      shouldCreateEC2: false,
+      shouldCreateEC2: paramShouldCreateEC2ForRDSAccess,
     });
 
     // Cognito
