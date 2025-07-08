@@ -38,19 +38,19 @@ export class TmsCrmBackendStack extends cdk.Stack {
         default: 'false',
       }).valueAsString == 'true';
 
-    const paramShouldCreateNATGateway =
-      new CfnParameter(this, 'ShouldCreateNATGateway', {
-        type: 'String',
-        description: 'Whether to create a NAT Gateway for outbound internet access',
-        default: 'false',
-      }).valueAsString == 'true';
+    // const paramShouldCreateNATGateway =
+    //   new CfnParameter(this, 'ShouldCreateNATGateway', {
+    //     type: 'String',
+    //     description: 'Whether to create a NAT Gateway for outbound internet access',
+    //     default: 'false',
+    //   }).valueAsString == 'true';
 
     // Create secure VPC
     const vpcBuilder = new VpcBuilder(this, `${serviceNameUppercase}VPC`, {
       serviceNameUppercase: serviceNameUppercase,
       serviceNameKebabCase: serviceNameKebabCase,
       azs: ['a', 'b'],
-      createNATGateway: paramShouldCreateNATGateway,
+      createNATGateway: true,
     });
 
     const vpc = Vpc.fromVpcAttributes(this, 'VPC', {
