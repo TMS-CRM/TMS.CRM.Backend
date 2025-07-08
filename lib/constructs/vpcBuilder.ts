@@ -18,6 +18,7 @@ export interface VpcBuilderProps {
   serviceNameUppercase: string;
   serviceNameKebabCase: string;
   azs: string[];
+  createNATGateway: boolean;
 }
 
 /**
@@ -35,7 +36,7 @@ export class VpcBuilder extends Construct {
   public readonly publicSubnets: CfnSubnet[] = [];
   public readonly privateSubnets: CfnSubnet[] = [];
   public readonly databaseSubnets: CfnSubnet[] = [];
-  public readonly natGateway: CfnNatGateway;
+  public readonly natGateway: CfnNatGateway | null = null;
 
   private readonly vpcResourceId: string;
   private readonly ephemeralPortFrom = 32768;
@@ -53,7 +54,10 @@ export class VpcBuilder extends Construct {
     this.createSubnets(props);
 
     const igw = this.createInternetGateway(props);
-    this.natGateway = this.createNATGateway(props);
+
+    if (props.createNATGateway) {
+      this.natGateway = this.createNATGateway(props);
+    }
 
     this.configureDatabaseNACL(props);
     this.configurePrivateNACL(props);
@@ -498,12 +502,14 @@ export class VpcBuilder extends Construct {
       });
     });
 
-    // Create a default route to the NAT Gateway for outbound internet access
-    new CfnRoute(this, `${this.vpcResourceId}PrivateRouteTableDefaultRoute`, {
-      routeTableId: privateRouteTable.ref,
-      destinationCidrBlock: '0.0.0.0/0',
-      natGatewayId: this.natGateway.ref,
-    });
+    if (props.createNATGateway && this.natGateway) {
+      // Create a default route to the NAT Gateway for outbound internet access
+      new CfnRoute(this, `${this.vpcResourceId}PrivateRouteTableDefaultRoute`, {
+        routeTableId: privateRouteTable.ref,
+        destinationCidrBlock: '0.0.0.0/0',
+        natGatewayId: this.natGateway.ref,
+      });
+    }
   }
 
   private configureDatabaseRouteTable(props: VpcBuilderProps): void {
@@ -521,11 +527,13 @@ export class VpcBuilder extends Construct {
       });
     });
 
-    // Create a default route to the NAT Gateway for outbound internet access
-    new CfnRoute(this, `${this.vpcResourceId}DatabaseRouteTableDefaultRoute`, {
-      routeTableId: databaseRouteTable.ref,
-      destinationCidrBlock: '0.0.0.0/0',
-      natGatewayId: this.natGateway.ref,
-    });
+    if (props.createNATGateway && this.natGateway) {
+      // Create a default route to the NAT Gateway for outbound internet access
+      new CfnRoute(this, `${this.vpcResourceId}DatabaseRouteTableDefaultRoute`, {
+        routeTableId: databaseRouteTable.ref,
+        destinationCidrBlock: '0.0.0.0/0',
+        natGatewayId: this.natGateway.ref,
+      });
+    }
   }
 }

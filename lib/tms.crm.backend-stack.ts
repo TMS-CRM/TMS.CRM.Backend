@@ -25,6 +25,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
 
     const serviceNameUppercase = 'TMSCRM';
     const serviceNameKebabCase = 'tms-crm';
+    const shouldCreateEC2ForRDSAccess = false;
 
     const paramUrlTmsCrmApi = new CfnParameter(this, 'UrlTmsCrmApi', {
       type: 'String',
@@ -36,6 +37,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       serviceNameUppercase: serviceNameUppercase,
       serviceNameKebabCase: serviceNameKebabCase,
       azs: ['a', 'b'],
+      createNATGateway: shouldCreateEC2ForRDSAccess,
     });
 
     const vpc = Vpc.fromVpcAttributes(this, 'VPC', {
@@ -54,7 +56,7 @@ export class TmsCrmBackendStack extends cdk.Stack {
       MinCapacity: 0.5,
       MaxCapacity: 2,
       shouldCreateReaderInstance: false,
-      shouldCreateEC2: false,
+      shouldCreateEC2: shouldCreateEC2ForRDSAccess,
     });
 
     // Cognito
