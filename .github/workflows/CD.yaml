@@ -41,7 +41,12 @@ jobs:
           fi
 
       - name: Deploy to Dev
-        run: npm run cdk:deploy -- --require-approval never --parameters UrlTmsCrmApi=${{ vars.TMS_CRM_API_DOMAIN }}
+        run: |
+          npm run cdk:deploy -- \
+            --require-approval never \
+            --parameters UrlTmsCrmApi=${{ vars.TMS_CRM_API_DOMAIN }} \
+            --parameters ShouldCreateEC2ForRDSAccess=${{ vars.SHOULD_CREATE_EC2_FOR_RDS_ACCESS }} \
+            --parameters ShouldCreateNATGateway=${{ vars.SHOULD_CREATE_NAT_GATEWAY }}
 
   deploy-to-prod:
     needs: deploy-to-dev
