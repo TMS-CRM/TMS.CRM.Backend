@@ -36,14 +36,14 @@ export class TmsCrmBackendStack extends cdk.Stack {
         type: 'String',
         description: 'Whether to create an EC2 instance to access the RDS instance',
         default: 'false',
-      }).valueAsString === 'true';
+      }).valueAsString == 'true';
 
     const paramShouldCreateNATGateway =
       new CfnParameter(this, 'ShouldCreateNATGateway', {
         type: 'String',
         description: 'Whether to create a NAT Gateway for outbound internet access',
         default: 'false',
-      }).valueAsString === 'true';
+      }).valueAsString == 'true';
 
     // Create secure VPC
     const vpcBuilder = new VpcBuilder(this, `${serviceNameUppercase}VPC`, {
