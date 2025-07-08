@@ -1,3 +1,4 @@
+import { CfnCondition, type CfnParameter, Fn } from 'aws-cdk-lib';
 import {
   CfnEIP,
   CfnInternetGateway,
@@ -18,7 +19,7 @@ export interface VpcBuilderProps {
   serviceNameUppercase: string;
   serviceNameKebabCase: string;
   azs: string[];
-  createNATGateway: boolean;
+  paramShouldCreateNATGateway: CfnParameter;
 }
 
 /**
@@ -36,7 +37,8 @@ export class VpcBuilder extends Construct {
   public readonly publicSubnets: CfnSubnet[] = [];
   public readonly privateSubnets: CfnSubnet[] = [];
   public readonly databaseSubnets: CfnSubnet[] = [];
-  public readonly natGateway: CfnNatGateway | null = null;
+  public readonly natGateway: CfnNatGateway;
+  public readonly createNatCondition: CfnCondition;
 
   private readonly vpcResourceId: string;
   private readonly ephemeralPortFrom = 32768;
@@ -48,6 +50,10 @@ export class VpcBuilder extends Construct {
   constructor(scope: Construct, id: string, props: VpcBuilderProps) {
     super(scope, id);
 
+    this.createNatCondition = new CfnCondition(this, 'ShouldCreateNATGatewayCondition', {
+      expression: Fn.conditionEquals(props.paramShouldCreateNATGateway.value, 'true'),
+    });
+
     this.vpcResourceId = `${props.serviceNameUppercase}VPC`;
     this.vpc = this.createVpc(props);
 
@@ -55,9 +61,7 @@ export class VpcBuilder extends Construct {
 
     const igw = this.createInternetGateway(props);
 
-    if (props.createNATGateway) {
-      this.natGateway = this.createNATGateway(props);
-    }
+    this.natGateway = this.createNATGateway(props);
 
     this.configureDatabaseNACL(props);
     this.configurePrivateNACL(props);
@@ -133,12 +137,16 @@ export class VpcBuilder extends Construct {
       domain: 'vpc',
       tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-nat-eip` }],
     });
+    natEip.cfnOptions.condition = this.createNatCondition;
 
-    return new CfnNatGateway(this, `${this.vpcResourceId}NatGateway`, {
+    const natGateway = new CfnNatGateway(this, `${this.vpcResourceId}NatGateway`, {
       subnetId: this.publicSubnets[0].ref,
       allocationId: natEip.attrAllocationId,
       tags: [{ key: 'Name', value: `${props.serviceNameKebabCase}-nat-gateway` }],
     });
+    natGateway.cfnOptions.condition = this.createNatCondition;
+
+    return natGateway;
   }
 
   // ---- NACLs ----
@@ -502,14 +510,13 @@ export class VpcBuilder extends Construct {
       });
     });
 
-    if (props.createNATGateway && this.natGateway) {
-      // Create a default route to the NAT Gateway for outbound internet access
-      new CfnRoute(this, `${this.vpcResourceId}PrivateRouteTableDefaultRoute`, {
-        routeTableId: privateRouteTable.ref,
-        destinationCidrBlock: '0.0.0.0/0',
-        natGatewayId: this.natGateway.ref,
-      });
-    }
+    // Create a default route to the NAT Gateway for outbound internet access
+    const route = new CfnRoute(this, `${this.vpcResourceId}PrivateRouteTableDefaultRoute`, {
+      routeTableId: privateRouteTable.ref,
+      destinationCidrBlock: '0.0.0.0/0',
+      natGatewayId: this.natGateway.ref,
+    });
+    route.cfnOptions.condition = this.createNatCondition;
   }
 
   private configureDatabaseRouteTable(props: VpcBuilderProps): void {
@@ -527,13 +534,12 @@ export class VpcBuilder extends Construct {
       });
     });
 
-    if (props.createNATGateway && this.natGateway) {
-      // Create a default route to the NAT Gateway for outbound internet access
-      new CfnRoute(this, `${this.vpcResourceId}DatabaseRouteTableDefaultRoute`, {
-        routeTableId: databaseRouteTable.ref,
-        destinationCidrBlock: '0.0.0.0/0',
-        natGatewayId: this.natGateway.ref,
-      });
-    }
+    // Create a default route to the NAT Gateway for outbound internet access
+    const route = new CfnRoute(this, `${this.vpcResourceId}DatabaseRouteTableDefaultRoute`, {
+      routeTableId: databaseRouteTable.ref,
+      destinationCidrBlock: '0.0.0.0/0',
+      natGatewayId: this.natGateway.ref,
+    });
+    route.cfnOptions.condition = this.createNatCondition;
   }
 }
