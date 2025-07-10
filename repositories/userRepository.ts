@@ -2,6 +2,7 @@ import type { Knex } from 'knex';
 import { userTenantTableName } from './userTenantRepository.js';
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
+import type { GetUserListFilter } from '../models/api/payloads/user.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
 import { SortOrder } from '../models/api/validations.js';
 import { User, type UserDatabase } from '../models/entities/user.js';
@@ -50,7 +51,7 @@ export async function selectUserByEmail(email: string): Promise<User | null> {
   return records.length > 0 ? new User(records[0]) : null;
 }
 
-export async function selectUsers(limit: number, offset: number, tenantId: number | null): Promise<PaginatedResponse<User>> {
+export async function selectUsers(tenantId: number, filters: GetUserListFilter): Promise<PaginatedResponse<User>> {
   // Base query without deleted users
   const baseQuery = knexClient(userTableName).whereNull(`${userTableName}.deleted_on`);
 
@@ -61,12 +62,20 @@ export async function selectUsers(limit: number, offset: number, tenantId: numbe
       .where(`${userTenantTableName}.tenant_id`, tenantId);
   }
 
+  if (filters.search) {
+    const searchTerm = `%${filters.search.toLowerCase()}%`;
+
+    baseQuery.andWhere(function () {
+      this.whereRaw(`LOWER(first_name || ' ' || last_name) LIKE ?`, [searchTerm]).orWhereRaw(`LOWER(email) LIKE ?`, [searchTerm]);
+    });
+  }
+
   // Get the users
   const users = (await baseQuery
     .clone()
     .orderBy(`${userTableName}.created_on`, SortOrder.desc)
-    .limit(limit)
-    .offset(offset)
+    .limit(filters.limit)
+    .offset(filters.offset)
     .select('*')) as UserDatabase[];
 
   // Get the total number of users

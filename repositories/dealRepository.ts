@@ -80,6 +80,20 @@ export async function selectDeals(tenantId: number, filters: GetDealListFilter):
     baseQuery.whereIn(`${dealTableName}.progress`, filters.progress);
   }
 
+  if (filters.search) {
+    const searchTerm = `%${filters.search.toLowerCase()}%`;
+
+    baseQuery.andWhere(function () {
+      this.whereILike(`${dealTableName}.street`, searchTerm)
+        .orWhereILike(`${dealTableName}.city`, searchTerm)
+        .orWhereILike(`${dealTableName}.state`, searchTerm)
+        .orWhereILike(`${dealTableName}.zip_code`, searchTerm)
+        .orWhereRaw(`LOWER(${customerTableName}.first_name || ' ' || ${customerTableName}.last_name) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(${customerTableName}.email) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(${customerTableName}.phone) LIKE ?`, [searchTerm]);
+    });
+  }
+
   // Get the deals
   const deals = (await baseQuery
     .clone()

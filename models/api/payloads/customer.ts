@@ -69,4 +69,5 @@ export type GetCustomerListResponsePayload = PaginatedResponse<PublicCustomer>;
 export interface GetCustomerListFilter {
   limit: number;
   offset: number;
+  search?: string;
 }
