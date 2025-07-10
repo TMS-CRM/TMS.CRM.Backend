@@ -30,6 +30,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
     expectedQueryParameters: [
       { name: 'limit', dataType: QueryParamDataType.number, required: true },
       { name: 'offset', dataType: QueryParamDataType.number, required: true },
+      { name: 'search', dataType: QueryParamDataType.string, required: false },
     ],
   });
 }
@@ -43,7 +44,7 @@ export async function queryRecords(validatedRequest: ValidatedApiRequest<null, G
   }
 
   const { limit, offset } = validatedRequest.queryParameters!;
-  const queryResult: PaginatedResponse<User> = await selectUsers(limit, offset, tenant.id);
+  const queryResult: PaginatedResponse<User> = await selectUsers(tenant.id, validatedRequest.queryParameters!);
 
   return queryResult;
 }

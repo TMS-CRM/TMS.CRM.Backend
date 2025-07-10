@@ -55,6 +55,7 @@ export type GetUserListResponsePayload = PaginatedResponse<PublicUser>;
 export interface GetUserListFilter {
   limit: number;
   offset: number;
+  search?: string;
 }
 
 // GET user tenants payloads
