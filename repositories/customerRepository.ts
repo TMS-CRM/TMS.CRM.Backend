@@ -1,5 +1,6 @@
 import { knexClient } from '../lib/utils/knexClient.js';
 import { logger } from '../lib/utils/logger.js';
+import type { GetCustomerListFilter } from '../models/api/payloads/customer.js';
 import type { PaginatedResponse } from '../models/api/responses/pagination.js';
 import { SortOrder } from '../models/api/validations.js';
 import { Customer, type CustomerDatabase } from '../models/entities/customer.js';
@@ -31,16 +32,24 @@ export async function selectCustomerByExternalUuid(externalUuid: string): Promis
   return records.length > 0 ? new Customer(records[0]) : null;
 }
 
-export async function selectCustomers(limit: number, offset: number, tenantId: number | null): Promise<PaginatedResponse<Customer>> {
+export async function selectCustomers(tenantId: number, filters: GetCustomerListFilter): Promise<PaginatedResponse<Customer>> {
   // Base query without deleted customers
   const baseQuery = knexClient(customerTableName).where(`${customerTableName}.tenant_id`, tenantId).whereNull(`${customerTableName}.deleted_on`);
+
+  if (filters.search) {
+    baseQuery.andWhere((qb) => {
+      qb.whereRaw(`LOWER(CONCAT(first_name, ' ', last_name)) ILIKE ?`, [`%${filters.search!.toLowerCase()}%`])
+        .orWhereILike('email', `%${filters.search}%`)
+        .orWhereILike('phone', `%${filters.search}%`);
+    });
+  }
 
   // Get the customers
   const customers = (await baseQuery
     .clone()
     .orderBy(`${customerTableName}.created_on`, SortOrder.desc)
-    .limit(limit)
-    .offset(offset)
+    .limit(filters.limit)
+    .offset(filters.offset)
     .select('*')) as CustomerDatabase[];
 
   // Get the total number of customers

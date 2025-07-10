@@ -123,6 +123,7 @@ export interface GetDealListFilter {
   offset: number;
   sortBy?: DealSortBy;
   order?: SortOrder;
+  search?: string;
 
   /** ISO 8601 UTC date string to filter deals starting from this time */
   from?: string;

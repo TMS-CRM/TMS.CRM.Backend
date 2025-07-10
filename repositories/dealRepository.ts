@@ -80,6 +80,22 @@ export async function selectDeals(tenantId: number, filters: GetDealListFilter):
     baseQuery.whereIn(`${dealTableName}.progress`, filters.progress);
   }
 
+  if (filters.search) {
+    baseQuery.andWhere((qb) => {
+      qb.whereILike('street', `%${filters.search}%`)
+        .orWhereILike('city', `%${filters.search}%`)
+        .orWhereILike('state', `%${filters.search}%`)
+        .orWhereILike('zipCode', `%${filters.search}%`)
+
+        //customer field
+        .orWhereRaw(`LOWER(CONCAT(${customerTableName}.first_name, ' ', ${customerTableName}.last_name)) ILIKE ?`, [
+          `%${filters.search!.toLowerCase()}%`,
+        ])
+        .orWhereILike(`${customerTableName}.email`, `%${filters.search}%`)
+        .orWhereILike(`${customerTableName}.phone`, `%${filters.search}%`);
+    });
+  }
+
   // Get the deals
   const deals = (await baseQuery
     .clone()

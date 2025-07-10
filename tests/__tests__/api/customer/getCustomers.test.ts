@@ -222,6 +222,33 @@ describe('API - Customers - GET', () => {
     expect(parsedBody.data.total).toBe(9); // Total number of customers should still be 9
   });
 
+  it('Success - Should get customers by search', async () => {
+    const event = APIGatewayProxyEventBuilder.make()
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
+      })
+      .withQueryStringParameters({
+        limit: '5',
+        offset: '0',
+        search: 'Emma',
+      })
+      .build();
+
+    // Run the handler
+    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+
+    // Validate the API response
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toBeDefined();
+
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(1);
+    expect(parsedBody.data.total).toBe(1);
+  });
+
   it('Success - Should return 0 customers if the tenant has no customers', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withUserAndTenant({
