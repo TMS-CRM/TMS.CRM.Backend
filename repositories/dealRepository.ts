@@ -81,18 +81,16 @@ export async function selectDeals(tenantId: number, filters: GetDealListFilter):
   }
 
   if (filters.search) {
-    baseQuery.andWhere((qb) => {
-      qb.whereILike('street', `%${filters.search}%`)
-        .orWhereILike('city', `%${filters.search}%`)
-        .orWhereILike('state', `%${filters.search}%`)
-        .orWhereILike('zipCode', `%${filters.search}%`)
+    const searchTerm = `%${filters.search.toLowerCase()}%`;
 
-        //customer field
-        .orWhereRaw(`LOWER(CONCAT(${customerTableName}.first_name, ' ', ${customerTableName}.last_name)) ILIKE ?`, [
-          `%${filters.search!.toLowerCase()}%`,
-        ])
-        .orWhereILike(`${customerTableName}.email`, `%${filters.search}%`)
-        .orWhereILike(`${customerTableName}.phone`, `%${filters.search}%`);
+    baseQuery.andWhere(function () {
+      this.whereILike(`${dealTableName}.street`, searchTerm)
+        .orWhereILike(`${dealTableName}.city`, searchTerm)
+        .orWhereILike(`${dealTableName}.state`, searchTerm)
+        .orWhereILike(`${dealTableName}.zip_code`, searchTerm)
+        .orWhereRaw(`LOWER(${customerTableName}.first_name || ' ' || ${customerTableName}.last_name) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(${customerTableName}.email) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(${customerTableName}.phone) LIKE ?`, [searchTerm]);
     });
   }
 

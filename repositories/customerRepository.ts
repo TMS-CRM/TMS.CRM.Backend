@@ -37,10 +37,12 @@ export async function selectCustomers(tenantId: number, filters: GetCustomerList
   const baseQuery = knexClient(customerTableName).where(`${customerTableName}.tenant_id`, tenantId).whereNull(`${customerTableName}.deleted_on`);
 
   if (filters.search) {
-    baseQuery.andWhere((qb) => {
-      qb.whereRaw(`LOWER(CONCAT(first_name, ' ', last_name)) ILIKE ?`, [`%${filters.search!.toLowerCase()}%`])
-        .orWhereILike('email', `%${filters.search}%`)
-        .orWhereILike('phone', `%${filters.search}%`);
+    const searchTerm = `%${filters.search.toLowerCase()}%`;
+
+    baseQuery.andWhere(function () {
+      this.whereRaw(`LOWER(first_name || ' ' || last_name) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(email) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(phone) LIKE ?`, [searchTerm]);
     });
   }
 
