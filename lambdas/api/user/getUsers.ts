@@ -43,9 +43,7 @@ export async function queryRecords(validatedRequest: ValidatedApiRequest<null, G
     throw new BadRequestError('Tenant does not exist');
   }
 
-  const { limit, offset } = validatedRequest.queryParameters!;
   const queryResult: PaginatedResponse<User> = await selectUsers(tenant.id, validatedRequest.queryParameters!);
-
   return queryResult;
 }
 

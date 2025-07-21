@@ -13,7 +13,7 @@ import type { Construct } from 'constructs';
 import { ApiBuilder } from './constructs/api-gateway-builder.js';
 import { LambdaBuilder } from './constructs/lambda-builder.js';
 import { PermissionGrantor } from './constructs/permission-grantor.js';
-import { RdsBuilder } from './constructs/rds-builder.js';
+import { RdsBuilder } from './constructs/rdsBuilder.js';
 import { RoleBuilder } from './constructs/role-builder.js';
 import { VpcBuilder } from './constructs/vpcBuilder.js';
 
@@ -31,12 +31,11 @@ export class TmsCrmBackendStack extends cdk.Stack {
       description: 'The URL for the TMS CRM API',
     });
 
-    const paramShouldCreateEC2ForRDSAccess =
-      new CfnParameter(this, 'ShouldCreateEC2ForRDSAccess', {
-        type: 'String',
-        description: 'Whether to create an EC2 instance to access the RDS instance',
-        default: 'false',
-      }).valueAsString == 'true';
+    const paramShouldCreateEC2ForRDSAccess = new CfnParameter(this, 'ShouldCreateEC2ForRDSAccess', {
+      type: 'String',
+      description: 'Whether to create an EC2 instance to access the RDS instance',
+      default: 'false',
+    });
 
     const paramShouldCreateNATGateway = new CfnParameter(this, 'ShouldCreateNATGateway', {
       type: 'String',
@@ -64,11 +63,11 @@ export class TmsCrmBackendStack extends cdk.Stack {
     const rdsInstance = new RdsBuilder(this, `${serviceNameUppercase}Rds`, {
       applicationNameUppercase: serviceNameUppercase,
       applicationNameKebabCase: serviceNameKebabCase,
-      Vpc: vpc,
-      MinCapacity: 0.5,
-      MaxCapacity: 2,
+      vpc: vpc,
+      minCapacity: 0.5,
+      maxCapacity: 2,
       shouldCreateReaderInstance: false,
-      shouldCreateEC2: paramShouldCreateEC2ForRDSAccess,
+      shouldCreateEC2Param: paramShouldCreateEC2ForRDSAccess,
     });
 
     // Cognito
