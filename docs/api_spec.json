@@ -3,7 +3,7 @@
   "info": {
     "title": "TSM.CRM API",
     "version": "1.0.0",
-    "description": "API documentation for managing users, deals, customers, tasks, and activities in TSM.CRM"
+    "description": "API documentation for managing users, tenants, deals, customers, tasks, and activities in TSM.CRM"
   },
   "paths": {
     "/users": {
@@ -151,6 +151,174 @@
           "404": {
             "description": "User not found"
           }
+        }
+      }
+    },
+    "/auth/sign-in": {
+      "post": {
+        "summary": "Sign in a user",
+        "operationId": "signIn",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User signed in successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": { "type": "string" },
+                    "refreshToken": { "type": "string" },
+                    "expiresIn": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/sign-out": {
+      "post": {
+        "summary": "Sign out a user",
+        "operationId": "signOut",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accessToken": { "type": "string" }
+                },
+                "required": ["accessToken"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User signed out successfully" }
+        }
+      }
+    },
+    "/auth/switch-tenant": {
+      "post": {
+        "summary": "Switch user tenant",
+        "operationId": "switchTenant",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": { "type": "string" },
+                  "accessToken": { "type": "string" }
+                },
+                "required": ["tenantId", "accessToken"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tenant switched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "newAccessToken": { "type": "string" },
+                    "expiresIn": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized or invalid tenant" }
+        }
+      }
+    },
+    "/auth/define-password": {
+      "post": {
+        "summary": "Define or reset user password",
+        "operationId": "definePassword",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string" },
+                  "newPassword": { "type": "string" },
+                  "confirmationCode": { "type": "string" }
+                },
+                "required": ["username", "newPassword", "confirmationCode"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password defined/reset successfully" },
+          "400": { "description": "Invalid or expired confirmation code" }
+        }
+      }
+    },
+    "/auth/refresh-token": {
+      "post": {
+        "summary": "Refresh authentication token",
+        "operationId": "refreshToken",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": { "type": "string" }
+                },
+                "required": ["refreshToken"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": { "type": "string" },
+                    "expiresIn": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid or expired refresh token" }
         }
       }
     },
@@ -791,7 +959,6 @@
           "data": { "$ref": "#/components/schemas/User" }
         }
       },
-
       "Customer": {
         "type": "object",
         "properties": {
@@ -833,7 +1000,6 @@
           "data": { "$ref": "#/components/schemas/Customer" }
         }
       },
-
       "DealCustomer": {
         "type": "object",
         "properties": {
