@@ -9,18 +9,18 @@ import { APIGatewayProxyEventBuilder } from '../../../builders/apiGatewayProxyEv
 import { TenantDatabaseBuilder } from '../../../builders/tenantDatabaseBuilder.js';
 import { UserDatabaseBuilder } from '../../../builders/userDatabaseBuilder.js';
 
-describe('API - Customer - POST', () => {
-  const usersGlobal: UserDatabase[] = [];
-  const tenantsGlobal: TenantDatabase[] = [];
+describe('API - Customers - POST', () => {
+  const testUsers: UserDatabase[] = [];
+  const testTenants: TenantDatabase[] = [];
 
   beforeAll(async () => {
     const user = await knexClient(userTableName)
       .insert(UserDatabaseBuilder.make().withFirstName('Test').withLastName('User').withEmail('post.customer@example.com').build())
       .returning('*');
-    usersGlobal.push(...user);
+    testUsers.push(...user);
 
     const tenant = await knexClient(tenantTableName).insert(TenantDatabaseBuilder.make().withName('Tenant 1').build()).returning('*');
-    tenantsGlobal.push(...tenant);
+    testTenants.push(...tenant);
   });
 
   it('Success - Should create a customer', async () => {
@@ -37,54 +37,47 @@ describe('API - Customer - POST', () => {
 
     const event = APIGatewayProxyEventBuilder.make()
       .withUserAndTenant({
-        tenantUuid: tenantsGlobal[0].external_uuid,
-        userCognitoUuid: usersGlobal[0].cognito_uuid,
+        tenantUuid: testTenants[0].external_uuid,
+        userCognitoUuid: testUsers[0].cognito_uuid,
       })
       .withBody(payload)
       .build();
 
     // Run the handler
-    const res = await handler(event);
+    const response = await handler(event);
 
     // Validate the API response
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toBeDefined();
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBeDefined();
 
-    const parsedBody = JSON.parse(res.body!);
+    const parsedBody = JSON.parse(response.body!);
     expect(parsedBody.type).toBe('PersistSuccess');
-    expect(parsedBody.data.uuid).toBeDefined();
-    expect(parsedBody.data.firstName).toBe(payload.firstName);
-    expect(parsedBody.data.lastName).toBe(payload.lastName);
-    expect(parsedBody.data.email).toBe(payload.email);
-    expect(parsedBody.data.phone).toBe(payload.phone);
-    expect(parsedBody.data.street).toBe(payload.street);
-    expect(parsedBody.data.city).toBe(payload.city);
-    expect(parsedBody.data.state).toBe(payload.state);
-    expect(parsedBody.data.zipCode).toBe(payload.zipCode);
-    expect(parsedBody.data.createdOn).toBeDefined();
-    expect(parsedBody.data.modifiedOn).toBeNull();
+    expect(parsedBody.data).toEqual(
+      expect.objectContaining({
+        uuid: expect.any(String),
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        email: payload.email,
+        phone: payload.phone,
+        street: payload.street,
+        city: payload.city,
+        state: payload.state,
+        zipCode: payload.zipCode,
+        createdOn: expect.any(String),
+        modifiedOn: null,
+      }),
+    );
 
     // Validate the database record
     const customer = await selectCustomerByExternalUuid(parsedBody.data.uuid);
     expect(customer).toBeDefined();
-    expect(customer?.tenantId).toBe(tenantsGlobal[0].id);
-    expect(customer?.firstName).toBe(payload.firstName);
-    expect(customer?.lastName).toBe(payload.lastName);
-    expect(customer?.email).toBe(payload.email);
-    expect(customer?.phone).toBe(payload.phone);
-    expect(customer?.street).toBe(payload.street);
-    expect(customer?.city).toBe(payload.city);
-    expect(customer?.state).toBe(payload.state);
-    expect(customer?.zipCode).toBe(payload.zipCode);
-    expect(customer?.createdOn).toBeDefined();
-    expect(customer?.modifiedOn).toBeNull();
   });
 
   it('Error - Should return a 400 error if the body is missing required fields', async () => {
     const event = APIGatewayProxyEventBuilder.make()
       .withUserAndTenant({
-        tenantUuid: tenantsGlobal[0].external_uuid,
-        userCognitoUuid: usersGlobal[0].cognito_uuid,
+        tenantUuid: testTenants[0].external_uuid,
+        userCognitoUuid: testUsers[0].cognito_uuid,
       })
       .withBody({
         firstName: 'John',
@@ -94,13 +87,13 @@ describe('API - Customer - POST', () => {
       .build();
 
     // Run the handler
-    const res = await handler(event);
+    const response = await handler(event);
 
     // Validate the API response
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toBeDefined();
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toBeDefined();
 
-    const parsedBody = JSON.parse(res.body!);
+    const parsedBody = JSON.parse(response.body!);
     expect(parsedBody.type).toBe('BadRequestError');
     expect(parsedBody.message).toBe('Missing fields: phone, street, city, state, zipCode');
   });

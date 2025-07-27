@@ -124,6 +124,7 @@ export interface GetDealListFilter {
   sortBy?: DealSortBy;
   order?: SortOrder;
   search?: string;
+  customerUuid?: string;
 
   /** ISO 8601 UTC date string to filter deals starting from this time */
   from?: string;
