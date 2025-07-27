@@ -31,6 +31,7 @@ async function validateRequest(request: APIGatewayProxyEventV2WithJWTAuthorizer)
       { name: 'limit', dataType: QueryParamDataType.number, required: true },
       { name: 'offset', dataType: QueryParamDataType.number, required: true },
       { name: 'search', dataType: QueryParamDataType.string, required: false },
+      { name: 'customerUuid', dataType: QueryParamDataType.string, required: false },
       { name: 'sortBy', dataType: QueryParamDataType.enum, required: false, enumType: DealSortBy },
       { name: 'order', dataType: QueryParamDataType.enum, required: false, enumType: SortOrder },
       { name: 'from', dataType: QueryParamDataType.date, required: false },

@@ -328,6 +328,33 @@ describe('API - Deals - GET', () => {
     expect(parsedBody.data.total).toBe(1);
   });
 
+  it('Success - Should get deals filtering by customerUuid', async () => {
+    const event = APIGatewayProxyEventBuilder.make()
+      .withUserAndTenant({
+        tenantUuid: tenantsGlobal[0].external_uuid,
+        userCognitoUuid: usersGlobal[0].cognito_uuid,
+      })
+      .withQueryStringParameters({
+        limit: '5',
+        offset: '0',
+        customerUuid: customersGlobal[1].external_uuid,
+      })
+      .build();
+
+    // Run the handler
+    const res = (await handler(event)) as APIGatewayProxyStructuredResultV2;
+
+    // Validate the API response
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toBeDefined();
+
+    const parsedBody = JSON.parse(res.body!);
+    expect(parsedBody.type).toBe('FetchSuccess');
+    expect(parsedBody.data.items).toBeDefined();
+    expect(parsedBody.data.items.length).toBe(1);
+    expect(parsedBody.data.total).toBe(1);
+  });
+
   it('Error - Should return a 400 error if the query parameters are missing', async () => {
     // Event missing the uuid path parameter
     const event = APIGatewayProxyEventBuilder.make()

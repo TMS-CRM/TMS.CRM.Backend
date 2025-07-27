@@ -94,6 +94,10 @@ export async function selectDeals(tenantId: number, filters: GetDealListFilter):
     });
   }
 
+  if (filters.customerUuid) {
+    baseQuery.where(`${customerTableName}.external_uuid`, filters.customerUuid);
+  }
+
   // Get the deals
   const deals = (await baseQuery
     .clone()
